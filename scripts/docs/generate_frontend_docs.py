@@ -1,8 +1,8 @@
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
-OUTPUT_DIR = PROJECT_ROOT / "docs"
+OUTPUT_DIR = PROJECT_ROOT / "scripts" / "docs"
 OUTPUT_FILE = OUTPUT_DIR / "frontend_code_documentation.md"
 
 IGNORED_DIRS = {
@@ -42,6 +42,8 @@ def should_include(file_path: Path) -> bool:
     if should_ignore(file_path):
         return False
     if not file_path.is_file():
+        return False
+    if file_path.name == "package-lock.json":
         return False
     if file_path.name in INCLUDED_FILENAMES:
         return True
