@@ -1,0 +1,99 @@
+.app-header {
+  position: relative;
+  z-index: 3;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.app-header__brand .welcome-logo {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.app-header__brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.app-header__brand-title {
+  font-size: 15px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #102f33;
+  letter-spacing: -0.02em;
+}
+
+.app-header__brand-subtitle {
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 500;
+  color: #66757a;
+}
+
+.app-header__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+@media (max-height: 900px) and (min-width: 901px) {
+  .app-header {
+    min-height: 52px;
+  }
+
+  .app-header__brand .welcome-logo {
+    width: 37px;
+    height: 37px;
+  }
+
+  .app-header__brand-title {
+    font-size: 14px;
+  }
+
+  .app-header__brand-subtitle {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    min-height: auto;
+  }
+
+  .app-header__brand {
+    gap: 9px;
+  }
+
+  .app-header__brand .welcome-logo {
+    width: 34px;
+    height: 34px;
+  }
+
+  .app-header__brand-title {
+    font-size: 14px;
+  }
+
+  .app-header__brand-subtitle {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-header__brand-subtitle {
+    display: none;
+  }
+}

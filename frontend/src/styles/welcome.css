@@ -70,50 +70,10 @@
   padding: 18px 36px 24px;
 }
 
-.welcome-header {
-  position: relative;
-  z-index: 3;
-  max-width: 1200px;
-  margin: 0 auto;
-  min-height: 58px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.welcome-brand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  min-width: 0;
-}
-
 .welcome-logo {
   width: 40px;
   height: 40px;
   flex-shrink: 0;
-}
-
-.welcome-brand-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.welcome-brand-title {
-  font-size: 15px;
-  line-height: 1.1;
-  font-weight: 800;
-  color: var(--welcome-text-main);
-  letter-spacing: -0.02em;
-}
-
-.welcome-brand-subtitle {
-  font-size: 12px;
-  line-height: 1.2;
-  font-weight: 500;
-  color: var(--welcome-text-soft);
 }
 
 .welcome-login-button {
@@ -465,21 +425,9 @@
     padding-bottom: 16px;
   }
 
-  .welcome-header {
-    min-height: 52px;
-  }
-
   .welcome-logo {
     width: 37px;
     height: 37px;
-  }
-
-  .welcome-brand-title {
-    font-size: 14px;
-  }
-
-  .welcome-brand-subtitle {
-    font-size: 11px;
   }
 
   .welcome-login-button {
@@ -584,11 +532,6 @@
     padding: 16px 18px 22px;
   }
 
-  .welcome-header {
-    min-height: auto;
-    gap: 14px;
-  }
-
   .welcome-hero {
     max-width: 760px;
     margin-top: 16px;
@@ -641,27 +584,9 @@
     padding: 14px 12px 20px;
   }
 
-  .welcome-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .welcome-brand {
-    gap: 9px;
-  }
-
   .welcome-logo {
     width: 34px;
     height: 34px;
-  }
-
-  .welcome-brand-title {
-    font-size: 14px;
-  }
-
-  .welcome-brand-subtitle {
-    font-size: 11px;
   }
 
   .welcome-login-button {
@@ -787,10 +712,6 @@
   .welcome-page {
     padding-left: 10px;
     padding-right: 10px;
-  }
-
-  .welcome-brand-subtitle {
-    display: none;
   }
 
   .welcome-title {

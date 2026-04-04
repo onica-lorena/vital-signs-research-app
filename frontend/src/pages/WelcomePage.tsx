@@ -1,5 +1,6 @@
 import "../styles/welcome.css";
-import LogoIcon from "../components/welcome/LogoIcon";
+import AppHeader from "../components/layout/AppHeader";
+import { useNavigate } from "react-router-dom";
 
 function LoginIcon() {
   return (
@@ -112,6 +113,7 @@ function InsightFeatureIcon() {
 }
 
 export default function WelcomePage() {
+  const navigate = useNavigate();
   return (
     <main className="welcome-page">
       <div className="welcome-bg-shape welcome-bg-shape--left" aria-hidden="true">
@@ -124,15 +126,8 @@ export default function WelcomePage() {
 
       <div className="welcome-wave" aria-hidden="true" />
 
-      <header className="welcome-header">
-        <div className="welcome-brand">
-          <LogoIcon />
-          <div className="welcome-brand-copy">
-            <span className="welcome-brand-title">VitalStudy</span>
-            <span className="welcome-brand-subtitle">Platformă de cercetare</span>
-          </div>
-        </div>
-      </header>
+      <AppHeader />
+
 
       <section className="welcome-hero">
          {/*<div className="welcome-badge">CERCETARE • DATE • ANALIZĂ</div>*/}
@@ -164,7 +159,11 @@ export default function WelcomePage() {
               Gestionează studii, analizează datele colectate și generează rapoarte.
             </p>
 
-            <button className="welcome-card__button welcome-card__button--primary" type="button">
+            <button
+              className="welcome-card__button welcome-card__button--primary"
+              type="button"
+              onClick={() => navigate("/autentificare")}
+            >
               <span className="welcome-card__button-icon">
                 <LoginIcon />
               </span>
