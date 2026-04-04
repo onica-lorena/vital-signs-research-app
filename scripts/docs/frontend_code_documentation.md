@@ -492,19 +492,45 @@ function ResearcherIllustration() {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <ellipse cx="110" cy="95" rx="82" ry="18" fill="#E5F1EC" />
-      <rect x="72" y="34" width="76" height="48" rx="4" fill="#2A7A73" />
-      <rect x="77" y="39" width="66" height="38" rx="2" fill="#DFF1E5" />
-      <rect x="85" y="84" width="50" height="5" rx="2.5" fill="#2A7A73" />
-      <rect x="68" y="89" width="84" height="10" rx="5" fill="#2A7A73" />
+      {/* umbra */}
+      <ellipse cx="110" cy="90" rx="86" ry="18" fill="#E2EDE8" />
+
+      {/* ecran laptop */}
+      <rect x="66" y="24" width="88" height="58" rx="3" fill="#2A7A73" />
+      <rect x="71" y="29" width="78" height="48" rx="1.5" fill="#EAF4EC" />
+
+      {/* bază laptop */}
       <path
-        d="M104 68L112 50H120L128 68H123L121 63H111L109 68H104Z"
-        fill="#60C0B8"
+        d="M58 85H162C162 85 160 95 151 95H69C60 95 58 85 58 85Z"
+        fill="#2A7A73"
       />
-      <path d="M113 60H119L116 52L113 60Z" fill="#2A7A73" />
-      <circle cx="137" cy="52" r="6" fill="#A7DCCF" />
-      <line x1="110" y1="46" x2="122" y2="46" stroke="#2A7A73" strokeWidth="2" />
-      <line x1="116" y1="46" x2="116" y2="39" stroke="#2A7A73" strokeWidth="2" />
+      <path
+        d="M100 85H120L117 89H103L100 85Z"
+        fill="#DDEAE3"
+      />
+
+      {/* eprubetă */}
+      <path
+        d="M103 44H117"
+        stroke="#49B7AE"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M106 44V49L98 64.5C97.2 66.1 98.3 68 100.1 68H119.9C121.7 68 122.8 66.1 122 64.5L114 49V44"
+        fill="#F7FBF9"
+        stroke="#49B7AE"
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M101.5 61.5C104.5 59.5 107 61.8 110 59.9C112.5 58.3 115 59.7 118.2 57.9C119.1 57.4 120 57.6 120.8 58.2L122 64.5C122.3 66 121.2 67 119.9 67H100.1C98.8 67 97.7 66 98 64.5L101.5 61.5Z"
+        fill="#62C7BE"
+      />
+      <circle cx="110" cy="60.5" r="3" fill="#8DDDD4" opacity="0.55" />
+
+      {/* bulină decorativă */}
+      <circle cx="132.5" cy="53" r="6.5" fill="#A6DCCF" />
     </svg>
   );
 }
@@ -518,29 +544,34 @@ function StudyCodeIllustration() {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <ellipse cx="110" cy="95" rx="82" ry="18" fill="#E5F1EC" />
-      <rect x="58" y="28" width="110" height="58" rx="10" fill="#8CD3CB" />
-      <rect x="67" y="37" width="92" height="40" rx="8" fill="#DDF4F0" />
-      <circle cx="86" cy="57" r="12" fill="#6BB64E" />
+      <ellipse cx="110" cy="90" rx="86" ry="18" fill="#E2EDE8" />
+
+      <rect x="58" y="34" width="110" height="58" rx="10" fill="#8CD3CB" />
+      <rect x="67" y="43" width="92" height="40" rx="8" fill="#DDF4F0" />
+
+      <circle cx="86" cy="63" r="12" fill="#6BB64E" />
       <path
-        d="M81 57L85 61L92 52"
+        d="M81 63L85 67L92 58"
         stroke="white"
         strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <rect x="105" y="49" width="28" height="4" rx="2" fill="#53B8AF" />
-      <rect x="105" y="58" width="20" height="4" rx="2" fill="#9EDBD3" />
-      <circle cx="139" cy="71" r="10" fill="#53B8AF" />
+
+      <rect x="105" y="55" width="28" height="4" rx="2" fill="#53B8AF" />
+      <rect x="105" y="64" width="20" height="4" rx="2" fill="#9EDBD3" />
+
+      <circle cx="139" cy="77" r="10" fill="#53B8AF" />
       <path
-        d="M146 78L156 88"
+        d="M146 84L156 94"
         stroke="#53B8AF"
         strokeWidth="6"
         strokeLinecap="round"
       />
-      <circle cx="139" cy="71" r="4" fill="#DDF4F0" />
-      <rect x="83" y="38" width="20" height="4" rx="2" fill="#DDF4F0" opacity="0.85" />
-      <rect x="109" y="38" width="36" height="4" rx="2" fill="#B9E6E0" />
+      <circle cx="139" cy="77" r="4" fill="#DDF4F0" />
+
+      <rect x="83" y="44" width="20" height="4" rx="2" fill="#DDF4F0" opacity="0.85" />
+      <rect x="109" y="44" width="36" height="4" rx="2" fill="#B9E6E0" />
     </svg>
   );
 }
@@ -613,21 +644,126 @@ function LeftPlant() {
   return (
     <svg
       className="plant-left"
-      viewBox="0 0 280 220"
+      viewBox="0 0 360 230"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <ellipse cx="165" cy="190" rx="115" ry="34" fill="#BEE8E1" />
-      <ellipse cx="115" cy="202" rx="120" ry="42" fill="#8BD0C7" opacity="0.65" />
-      <path d="M72 200C72 156 84 114 96 72" stroke="#67BFB7" strokeWidth="4" strokeLinecap="round" />
-      <path d="M95 92C77 92 58 84 46 67C67 62 89 69 95 92Z" fill="#6BC1B6" />
-      <path d="M90 118C70 119 48 112 35 94C58 88 81 95 90 118Z" fill="#A3D79C" />
-      <path d="M86 145C62 149 34 143 15 123C41 115 69 123 86 145Z" fill="#63B66A" />
-      <path d="M78 170C50 177 22 172 2 152C30 143 59 149 78 170Z" fill="#4FA79D" />
-      <path d="M109 131C124 115 146 105 170 104C161 128 137 138 109 131Z" fill="#89C866" />
-      <path d="M102 170C121 149 151 136 184 139C171 170 138 181 102 170Z" fill="#7CC66A" />
-      <path d="M121 196C146 169 182 157 222 162C206 195 168 208 121 196Z" fill="#4B9F97" />
+      {/* bază */}
+      <path
+        d="M-12 166C22 154 55 145 88 148C125 152 156 173 191 182C226 191 260 188 320 205C338 208 350 214 360 222L360 230H-12V166Z"
+        fill="#D8ECE9"
+      />
+      <path
+        d="M-12 176C18 170 50 168 81 171C112 175 140 186 171 191C204 196 244 197 320 210C338 214 350 219 360 224L360 230H-12V176Z"
+        fill="#9FD9D3"
+        opacity="0.72"
+      />
+      <path
+        d="M-12 180C20 176 50 174 76 176C103 178 127 184 154 187C184 190 224 192 320 214C338 218 350 222 360 226L360 230H-12V180Z"
+        fill="#7ECAC3"
+        opacity="0.42"
+      />
+      {/* tulpini */}
+      <path
+        d="M92 196C86 165 86 139 92 112"
+        stroke="#79C9C3"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M96 196C105 161 116 129 128 92"
+        stroke="#79C9C3"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M98 196C123 176 149 162 181 151"
+        stroke="#79C9C3"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M102 196C96 173 95 151 99 128"
+        stroke="#8BD4CE"
+        strokeWidth="3"
+        strokeLinecap="round"
+        opacity="0.9"
+      />
+
+      {/* frunză mică în spate */}
+      <path
+        d="M86 150C82 130 87 107 101 84C118 95 128 113 128 136C116 145 102 150 86 150Z"
+        fill="#8ED4C9"
+        opacity="0.9"
+      />
+      <path
+        d="M101 94C107 108 110 121 109 136"
+        stroke="#EDF8F5"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        opacity="0.45"
+      />
+
+      {/* frunza stânga */}
+      <path
+        d="M50 171C42 141 48 111 70 81C94 92 108 118 112 154C94 165 74 171 50 171Z"
+        fill="#9BCB69"
+      />
+      <path
+        d="M67 94C79 113 88 133 93 154"
+        stroke="#EEF8F2"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        opacity="0.78"
+      />
+      <path
+        d="M58 116C69 120 78 126 86 133"
+        stroke="#EEF8F2"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        opacity="0.42"
+      />
+      <path
+        d="M68 137C77 140 85 145 91 151"
+        stroke="#EEF8F2"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        opacity="0.34"
+      />
+
+      {/* frunza verticală din centru */}
+      <path
+        d="M97 108C90 78 97 45 116 12C136 32 145 61 142 96C126 105 111 109 97 108Z"
+        fill="#71CAC3"
+      />
+      <path
+        d="M119 24C125 46 128 69 127 95"
+        stroke="#EAF7F4"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        opacity="0.74"
+      />
+      <path
+        d="M112 47C118 52 123 59 127 68"
+        stroke="#EAF7F4"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        opacity="0.34"
+      />
+
+       {/* frunza mare dreapta */}
+      <path
+        d="M123 168C145 148 174 136 210 136C198 156 173 170 140 173C134 171 128 170 123 168Z"
+        fill="#2F9D98"
+      />
+      <path
+        d="M140 163C158 153 176 147 193 145"
+        stroke="#DDF3EE"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        opacity="0.78"
+      />
     </svg>
   );
 }
@@ -641,14 +777,104 @@ function RightPlant() {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <ellipse cx="110" cy="194" rx="92" ry="30" fill="#CFEFE8" />
-      <path d="M120 188C119 156 121 128 126 96" stroke="#66BFB8" strokeWidth="4" strokeLinecap="round" />
-      <path d="M126 110C108 104 94 90 88 71C108 73 124 87 126 110Z" fill="#8BD18D" />
-      <path d="M126 135C145 128 162 113 171 92C150 94 132 110 126 135Z" fill="#5BBDB3" />
-      <path d="M122 153C101 148 82 131 72 108C95 111 115 129 122 153Z" fill="#A9D98C" />
-      <path d="M129 170C149 165 171 148 186 124C163 124 140 142 129 170Z" fill="#7AC56E" />
-      <path d="M117 184C96 180 72 163 55 137C80 139 104 157 117 184Z" fill="#64B9B0" />
-      <path d="M124 78C117 64 116 48 122 34C136 43 139 60 124 78Z" fill="#B7DFA3" />
+      {/* fundal moale */}
+      <ellipse cx="132" cy="200" rx="74" ry="24" fill="#CDEEE7" />
+      <ellipse cx="144" cy="210" rx="94" ry="26" fill="#9FD9D3" opacity="0.58" />
+
+      {/* tulpină */}
+      <path
+        d="M128 198C126 166 127 136 132 98"
+        stroke="#63BFB7"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      {/* frunze stânga */}
+      <path
+        d="M125 174C106 170 87 154 73 131C95 132 113 147 125 174Z"
+        fill="#65BFB5"
+      />
+      <path
+        d="M119 166C105 160 93 149 82 136"
+        stroke="#DFF5F1"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        opacity="0.72"
+      />
+
+      <path
+        d="M123 149C105 144 91 129 81 109C100 110 115 124 123 149Z"
+        fill="#A1D782"
+      />
+      <path
+        d="M118 143C106 136 96 125 87 113"
+        stroke="#EEF8E8"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        opacity="0.72"
+      />
+
+      <path
+        d="M127 126C112 121 99 108 92 89C109 91 121 103 127 126Z"
+        fill="#82CC72"
+      />
+      <path
+        d="M122 121C112 114 104 104 97 94"
+        stroke="#EEF8E8"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        opacity="0.72"
+      />
+
+      {/* frunze dreapta */}
+      <path
+        d="M133 178C153 172 173 156 188 133C166 134 147 149 133 178Z"
+        fill="#7DCC73"
+      />
+      <path
+        d="M139 170C153 162 166 151 178 138"
+        stroke="#EEF8E8"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        opacity="0.72"
+      />
+
+      <path
+        d="M135 152C153 146 168 131 179 111C160 113 146 126 135 152Z"
+        fill="#5EC0B6"
+      />
+      <path
+        d="M140 146C152 138 162 127 171 115"
+        stroke="#DFF5F1"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        opacity="0.72"
+      />
+
+      <path
+        d="M135 126C150 121 162 108 169 91C153 93 141 104 135 126Z"
+        fill="#9AD68B"
+      />
+      <path
+        d="M140 121C150 114 157 104 163 95"
+        stroke="#EEF8E8"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        opacity="0.72"
+      />
+
+      {/* frunza de sus */}
+      <path
+        d="M131 101C122 86 120 64 124 41C139 51 144 71 131 101Z"
+        fill="#B8E0A5"
+      />
+      <path
+        d="M130 92C131 78 131 64 129 49"
+        stroke="#EEF8E8"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        opacity="0.72"
+      />
     </svg>
   );
 }
@@ -660,7 +886,7 @@ export default function WelcomePage() {
         <div className="welcome-left">
           <div className="welcome-brand">
             <LogoIcon />
-            <span className="welcome-brand-text">MedStudy</span>
+            {/*<span className="welcome-brand-text">MedStudy</span>*/}
           </div>
 
           <div className="welcome-copy">
@@ -674,9 +900,7 @@ export default function WelcomePage() {
 
           <Cloud className="cloud-left-top" />
           <Cloud className="cloud-left-middle" />
-
-          <LeftMedicalIcons />
-          <HeartbeatLine />
+          
           <LeftPlant />
         </div>
 
@@ -706,13 +930,7 @@ export default function WelcomePage() {
               </button>
             </article>
           </div>
-
-          <div className="welcome-footer">
-            <span>Nu ai cont?</span>
-            <a href="/">Creează un cont de cercetător</a>
-          </div>
-
-          <RightPlant />
+          {/*<RightPlant />*/}
         </div>
       </section>
     </main>
@@ -728,17 +946,22 @@ export default function WelcomePage() {
 
 ```css
 :root {
-  --welcome-bg-left: #8fd2db;
-  --welcome-panel-left: #eef6f7;
-  --welcome-panel-right: #ffffff;
-  --welcome-text-main: #175c63;
-  --welcome-text-soft: #5c7680;
-  --welcome-border: #d8ebec;
-  --welcome-green: #6cb452;
-  --welcome-green-hover: #5ea247;
-  --welcome-teal: #79cfc8;
-  --welcome-teal-hover: #67c1ba;
-  --welcome-shadow: 0 20px 50px rgba(76, 130, 136, 0.12);
+  --welcome-bg-left: #bfe2de;
+  --welcome-panel-left: #edf5f3;
+  --welcome-panel-right: #fffefd;
+
+  --welcome-text-main: #0f5960;
+  --welcome-text-soft: #5f7880;
+
+  --welcome-border: #d5e7e4;
+
+  --welcome-green: #6fb857;
+  --welcome-green-hover: #63a94d;
+
+  --welcome-teal: #79cbc8;
+  --welcome-teal-hover: #6abfbc;
+
+  --welcome-shadow: 0 20px 50px rgba(78, 129, 132, 0.12);
 }
 
 * {
@@ -747,9 +970,10 @@ export default function WelcomePage() {
 
 body {
   margin: 0;
+  overflow-y: hidden;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  background: linear-gradient(90deg, var(--welcome-bg-left) 0 36.8%, #f2f4f5 36.8% 100%);
+  background: #f3f4f2;
 }
 
 a {
@@ -762,33 +986,47 @@ button {
 
 .welcome-page {
   min-height: 100vh;
-  padding: 50px 50px 0 50px;
+  padding: 3rem 3rem 0 3rem;
   display: flex;
   align-items: stretch;
   justify-content: center;
+  background:
+    linear-gradient(
+      180deg,
+      #79c9dc 0%,
+      #8fd5e4 24%,
+      #a8dfeb 52%,
+      #c7edf1 78%,
+      #e6f6f6 100%
+    ) left / 38% 100% no-repeat,
+    #f3f4f2;
 }
 
 .welcome-shell {
-  width: min(1180px, 100%);
+  width: 100%;
+  max-width: 1180px;
   min-height: calc(100vh - 50px);
   display: grid;
   grid-template-columns: 37% 63%;
   border-radius: 28px 28px 0 0;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: var(--welcome-shadow);
+  background: linear-gradient(
+    90deg,
+    var(--welcome-panel-left) 0 37%,
+    var(--welcome-panel-right) 37% 100%
+  );
 }
 
 .welcome-left {
   position: relative;
-  background: var(--welcome-panel-left);
-  padding: 30px 30px 20px 30px;
-  overflow: hidden;
+  padding: 1.875rem 1.875rem 1.25rem 1.875rem;
+  overflow: visible;
 }
 
 .welcome-right {
   position: relative;
-  background: var(--welcome-panel-right);
-  padding: 34px 28px 18px 28px;
+  padding: 2.125rem 1.75rem 1.125rem 1.75rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -804,10 +1042,10 @@ button {
 }
 
 .welcome-brand-text {
-  font-size: 24px;
+  font-size: 1.5rem;
   line-height: 1;
   font-weight: 700;
-  color: #10585f;
+  color: #0b5a61;
   letter-spacing: -0.02em;
 }
 
@@ -821,23 +1059,23 @@ button {
 .welcome-copy {
   position: relative;
   z-index: 2;
-  margin-top: 52px;
-  max-width: 250px;
+  margin-top: 3.25rem;
+  max-width: 15.625rem;
 }
 
 .welcome-copy h1 {
-  margin: 0 0 14px;
+  margin: 0 0 0.875rem;
   color: var(--welcome-text-main);
-  font-size: 34px;
+  font-size: clamp(2rem, 2.5vw, 2.625rem);
   line-height: 1.08;
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: -0.03em;
 }
 
 .welcome-copy p {
   margin: 0;
   color: var(--welcome-text-soft);
-  font-size: 15px;
+  font-size: 0.95rem;
   line-height: 1.5;
   font-weight: 500;
 }
@@ -845,60 +1083,60 @@ button {
 .welcome-cards {
   position: relative;
   z-index: 2;
-  margin-top: 42px;
+  margin-top: 8rem;
+  gap: 4rem;
   display: flex;
   align-items: stretch;
   justify-content: center;
-  gap: 16px;
 }
 
 .welcome-card {
-  width: min(260px, 100%);
-  min-height: 290px;
+  width: min(16.25rem, 100%);
+  min-height: 18.125rem;
+  padding: 1rem 1rem 0.875rem;
   background: #ffffff;
-  border: 1.5px solid var(--welcome-border);
+  border: 1.5px solid #d4e5e2;
+  box-shadow: 0 10px 22px rgba(91, 145, 148, 0.10);
   border-radius: 20px;
-  padding: 16px 16px 14px;
-  box-shadow: 0 8px 18px rgba(111, 158, 162, 0.08);
   text-align: center;
 }
 
 .welcome-card-illustration {
-  width: 78%;
-  height: 82px;
+  width: 76%;
+  height: 88px;
   display: block;
-  margin: 0 auto 6px;
+  margin: 0 auto 10px;
 }
 
 .welcome-card h2 {
-  margin: 2px 0 8px;
+  margin: 0.125rem 0 0.5rem;
   color: var(--welcome-text-main);
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1.2;
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: -0.02em;
 }
 
 .welcome-card p {
-  margin: 0 auto 14px;
-  max-width: 180px;
+  margin: 0 auto 0.875rem;
+  max-width: 11.25rem;
   color: var(--welcome-text-soft);
-  font-size: 13px;
+  font-size: 0.85rem;
   line-height: 1.45;
   font-weight: 500;
 }
 
 .welcome-btn {
   width: 100%;
-  height: 42px;
+  min-height: 2.625rem;
   border: none;
-  border-radius: 13px;
+  border-radius: 0.8125rem;
   color: white;
-  font-size: 14px;
+  font-size: 0.95rem;
   font-weight: 800;
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
-  box-shadow: 0 8px 18px rgba(102, 160, 150, 0.16);
+  box-shadow: 0 10px 20px rgba(89, 156, 137, 0.18);
 }
 
 .welcome-btn:hover {
@@ -925,23 +1163,21 @@ button {
   position: relative;
   z-index: 2;
   margin-top: 18px;
-  border-top: 1.5px solid #e7eeee;
   padding-top: 14px;
   text-align: center;
-  color: #728891;
+  border-top: 1.5px solid #dde8e6;
+  color: #667e86;
   font-size: 13px;
   font-weight: 500;
 }
 
 .welcome-footer a {
   margin-left: 8px;
-  color: #5a9959;
+  color: #5aa14f;
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-
-/* Clouds */
 
 .welcome-cloud {
   position: absolute;
@@ -953,7 +1189,17 @@ button {
 
 .welcome-cloud span {
   display: block;
-  background: #f8fbfb;
+  background: white;
+}
+
+.cloud-right-top {
+  top: 42px;
+  right: 58px;
+  transform: scale(0.82);
+}
+
+.cloud-right-top span {
+  background: #dceff3;
 }
 
 .welcome-cloud span:nth-child(1) {
@@ -978,13 +1224,13 @@ button {
 }
 
 .cloud-left-top {
-  top: 300px;
+  top: 250px;
   right: 10px;
   transform: scale(0.8);
 }
 
 .cloud-left-middle {
-  top: 405px;
+  top: 350px;
   left: 14px;
   transform: scale(0.95);
 }
@@ -997,11 +1243,11 @@ button {
 
 .welcome-medical-icons {
   position: absolute;
-  left: 26px;
-  bottom: 98px;
+  left: 34px;
+  bottom: 116px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   z-index: 2;
 }
 
@@ -1021,44 +1267,40 @@ button {
 }
 
 .medical-badge--teal {
-  background: #166b6e;
+  background: #0f7174;
 }
 
 .medical-badge--orange {
-  background: #d7883a;
+  background: #d98a39;
 }
-
-/* Heartbeat line */
 
 .welcome-heartbeat {
   position: absolute;
-  left: 0;
-  bottom: 42px;
-  width: 250px;
+  left: -6px;
+  bottom: 46px;
+  width: 285px;
   height: auto;
   z-index: 1;
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
 .plant-left {
   position: absolute;
-  left: -16px;
-  bottom: -6px;
-  width: 250px;
+  left: -78px;
+  bottom: -45px;
+  width: 450px;
   height: auto;
-  z-index: 0;
+  z-index: 1;
 }
 
 .plant-right {
   position: absolute;
-  right: -6px;
-  bottom: -4px;
-  width: 120px;
+  right: -22px;
+  bottom: -10px;
+  width: 200px;
   height: auto;
   z-index: 0;
 }
-
-/* Responsive */
 
 @media (max-width: 1200px) {
   .welcome-page {
@@ -1127,11 +1369,13 @@ button {
   }
 
   .plant-left {
-    width: 240px;
+    width: 255px;
+    left: -26px;
   }
 
   .plant-right {
-    width: 120px;
+    width: 150px;
+    right: -14px;
   }
 
   .welcome-medical-icons {

@@ -1,122 +1,38 @@
 import "../styles/welcome.css";
 import LogoIcon from "../components/welcome/LogoIcon";
 
-function ResearcherIllustration() {
+function LoginIcon() {
   return (
-    <svg
-      className="welcome-card-illustration"
-      viewBox="0 0 220 120"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      {/* umbra */}
-      <ellipse cx="110" cy="90" rx="86" ry="18" fill="#E2EDE8" />
-
-      {/* ecran laptop */}
-      <rect x="66" y="24" width="88" height="58" rx="3" fill="#2A7A73" />
-      <rect x="71" y="29" width="78" height="48" rx="1.5" fill="#EAF4EC" />
-
-      {/* bază laptop */}
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="6" y="10" width="12" height="10" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
       <path
-        d="M58 85H162C162 85 160 95 151 95H69C60 95 58 85 58 85Z"
-        fill="#2A7A73"
-      />
-      <path
-        d="M100 85H120L117 89H103L100 85Z"
-        fill="#DDEAE3"
-      />
-
-      {/* eprubetă */}
-      <path
-        d="M103 44H117"
-        stroke="#49B7AE"
-        strokeWidth="2.5"
+        d="M9 10V7.8C9 6.14 10.34 4.8 12 4.8C13.66 4.8 15 6.14 15 7.8V10"
+        stroke="currentColor"
+        strokeWidth="1.8"
         strokeLinecap="round"
       />
-      <path
-        d="M106 44V49L98 64.5C97.2 66.1 98.3 68 100.1 68H119.9C121.7 68 122.8 66.1 122 64.5L114 49V44"
-        fill="#F7FBF9"
-        stroke="#49B7AE"
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M101.5 61.5C104.5 59.5 107 61.8 110 59.9C112.5 58.3 115 59.7 118.2 57.9C119.1 57.4 120 57.6 120.8 58.2L122 64.5C122.3 66 121.2 67 119.9 67H100.1C98.8 67 97.7 66 98 64.5L101.5 61.5Z"
-        fill="#62C7BE"
-      />
-      <circle cx="110" cy="60.5" r="3" fill="#8DDDD4" opacity="0.55" />
-
-      {/* bulină decorativă */}
-      <circle cx="132.5" cy="53" r="6.5" fill="#A6DCCF" />
     </svg>
   );
 }
 
-function StudyCodeIllustration() {
+function UserShieldIcon() {
   return (
-    <svg
-      className="welcome-card-illustration"
-      viewBox="0 0 220 120"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <ellipse cx="110" cy="90" rx="86" ry="18" fill="#E2EDE8" />
-
-      <rect x="58" y="34" width="110" height="58" rx="10" fill="#8CD3CB" />
-      <rect x="67" y="43" width="92" height="40" rx="8" fill="#DDF4F0" />
-
-      <circle cx="86" cy="63" r="12" fill="#6BB64E" />
+    <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <circle cx="27" cy="19" r="7" stroke="currentColor" strokeWidth="2.8" />
       <path
-        d="M81 63L85 67L92 58"
+        d="M14 39.5C14 32.6 19.6 27 26.5 27H27.5C34.4 27 40 32.6 40 39.5"
+        stroke="currentColor"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M44 28.5L51.5 31.4V36.8C51.5 42.2 48.1 47 43 48.8C37.9 47 34.5 42.2 34.5 36.8V31.4L42 28.5C42.64 28.25 43.36 28.25 44 28.5Z"
+        fill="#65b55c"
+      />
+      <path
+        d="M40.2 36.8L42.2 38.8L46.1 34.6"
         stroke="white"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      <rect x="105" y="55" width="28" height="4" rx="2" fill="#53B8AF" />
-      <rect x="105" y="64" width="20" height="4" rx="2" fill="#9EDBD3" />
-
-      <circle cx="139" cy="77" r="10" fill="#53B8AF" />
-      <path
-        d="M146 84L156 94"
-        stroke="#53B8AF"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
-      <circle cx="139" cy="77" r="4" fill="#DDF4F0" />
-
-      <rect x="83" y="44" width="20" height="4" rx="2" fill="#DDF4F0" opacity="0.85" />
-      <rect x="109" y="44" width="36" height="4" rx="2" fill="#B9E6E0" />
-    </svg>
-  );
-}
-
-function Cloud({ className }: { className: string }) {
-  return (
-    <div className={`welcome-cloud ${className}`} aria-hidden="true">
-      <span />
-      <span />
-      <span />
-    </div>
-  );
-}
-
-function HeartbeatLine() {
-  return (
-    <svg
-      className="welcome-heartbeat"
-      viewBox="0 0 420 90"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M0 58H120H170L182 58L188 30L199 70L212 42L223 58H420"
-        stroke="#8FCFCA"
-        strokeWidth="4"
+        strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -124,275 +40,73 @@ function HeartbeatLine() {
   );
 }
 
-function LeftMedicalIcons() {
+function ParticipantIcon() {
   return (
-    <div className="welcome-medical-icons" aria-hidden="true">
-      <div className="medical-badge medical-badge--teal">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path
-            d="M6 12h4l1.2-3.5L13 16l1.5-4H18"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
-
-      <div className="medical-badge medical-badge--orange">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path
-            d="M12 20s-7-4.35-7-9.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7 3.5C19 15.65 12 20 12 20Z"
-            fill="currentColor"
-          />
-          <path
-            d="M7.5 12h2.5l1.1-2.2 1.3 4.4 1.1-2.2h2.9"
-            stroke="white"
-            strokeWidth="1.3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-function LeftPlant() {
-  return (
-    <svg
-      className="plant-left"
-      viewBox="0 0 360 230"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      {/* bază */}
+    <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <circle cx="25" cy="19" r="7" stroke="currentColor" strokeWidth="2.8" />
       <path
-        d="M-12 166C22 154 55 145 88 148C125 152 156 173 191 182C226 191 260 188 320 205C338 208 350 214 360 222L360 230H-12V166Z"
-        fill="#D8ECE9"
-      />
-      <path
-        d="M-12 176C18 170 50 168 81 171C112 175 140 186 171 191C204 196 244 197 320 210C338 214 350 219 360 224L360 230H-12V176Z"
-        fill="#9FD9D3"
-        opacity="0.72"
-      />
-      <path
-        d="M-12 180C20 176 50 174 76 176C103 178 127 184 154 187C184 190 224 192 320 214C338 218 350 222 360 226L360 230H-12V180Z"
-        fill="#7ECAC3"
-        opacity="0.42"
-      />
-      {/* tulpini */}
-      <path
-        d="M92 196C86 165 86 139 92 112"
-        stroke="#79C9C3"
-        strokeWidth="4"
+        d="M12 39.5C12 32.6 17.6 27 24.5 27H25.5C32.4 27 38 32.6 38 39.5"
+        stroke="currentColor"
+        strokeWidth="2.8"
         strokeLinecap="round"
       />
+      <circle cx="43.5" cy="20.5" r="5.5" stroke="currentColor" strokeWidth="2.8" />
       <path
-        d="M96 196C105 161 116 129 128 92"
-        stroke="#79C9C3"
-        strokeWidth="4"
-        strokeLinecap="round"
+        d="M43.5 49C49.55 45.65 53.5 41.4 53.5 35.95C53.5 32.88 51.06 30.5 48.2 30.5C46.28 30.5 44.88 31.34 43.5 33.02C42.12 31.34 40.72 30.5 38.8 30.5C35.94 30.5 33.5 32.88 33.5 35.95C33.5 41.4 37.45 45.65 43.5 49Z"
+        fill="#ef9647"
       />
       <path
-        d="M98 196C123 176 149 162 181 151"
-        stroke="#79C9C3"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      <path
-        d="M102 196C96 173 95 151 99 128"
-        stroke="#8BD4CE"
-        strokeWidth="3"
-        strokeLinecap="round"
-        opacity="0.9"
-      />
-
-      {/* frunză mică în spate */}
-      <path
-        d="M86 150C82 130 87 107 101 84C118 95 128 113 128 136C116 145 102 150 86 150Z"
-        fill="#8ED4C9"
-        opacity="0.9"
-      />
-      <path
-        d="M101 94C107 108 110 121 109 136"
-        stroke="#EDF8F5"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        opacity="0.45"
-      />
-
-      {/* frunza stânga */}
-      <path
-        d="M50 171C42 141 48 111 70 81C94 92 108 118 112 154C94 165 74 171 50 171Z"
-        fill="#9BCB69"
-      />
-      <path
-        d="M67 94C79 113 88 133 93 154"
-        stroke="#EEF8F2"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        opacity="0.78"
-      />
-      <path
-        d="M58 116C69 120 78 126 86 133"
-        stroke="#EEF8F2"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        opacity="0.42"
-      />
-      <path
-        d="M68 137C77 140 85 145 91 151"
-        stroke="#EEF8F2"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        opacity="0.34"
-      />
-
-      {/* frunza verticală din centru */}
-      <path
-        d="M97 108C90 78 97 45 116 12C136 32 145 61 142 96C126 105 111 109 97 108Z"
-        fill="#71CAC3"
-      />
-      <path
-        d="M119 24C125 46 128 69 127 95"
-        stroke="#EAF7F4"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        opacity="0.74"
-      />
-      <path
-        d="M112 47C118 52 123 59 127 68"
-        stroke="#EAF7F4"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        opacity="0.34"
-      />
-
-       {/* frunza mare dreapta */}
-      <path
-        d="M123 168C145 148 174 136 210 136C198 156 173 170 140 173C134 171 128 170 123 168Z"
-        fill="#2F9D98"
-      />
-      <path
-        d="M140 163C158 153 176 147 193 145"
-        stroke="#DDF3EE"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        opacity="0.78"
+        d="M41.2 37.1H42.7V35.6C42.7 35.1 43.1 34.7 43.6 34.7C44.1 34.7 44.5 35.1 44.5 35.6V37.1H46C46.5 37.1 46.9 37.5 46.9 38C46.9 38.5 46.5 38.9 46 38.9H44.5V40.4C44.5 40.9 44.1 41.3 43.6 41.3C43.1 41.3 42.7 40.9 42.7 40.4V38.9H41.2C40.7 38.9 40.3 38.5 40.3 38C40.3 37.5 40.7 37.1 41.2 37.1Z"
+        fill="white"
       />
     </svg>
   );
 }
 
-function RightPlant() {
+function SearchIcon() {
   return (
-    <svg
-      className="plant-right"
-      viewBox="0 0 220 220"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      {/* fundal moale */}
-      <ellipse cx="132" cy="200" rx="74" ry="24" fill="#CDEEE7" />
-      <ellipse cx="144" cy="210" rx="94" ry="26" fill="#9FD9D3" opacity="0.58" />
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="2" />
+      <path d="M16 16L21 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
 
-      {/* tulpină */}
+function ShieldFeatureIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M128 198C126 166 127 136 132 98"
-        stroke="#63BFB7"
-        strokeWidth="4"
-        strokeLinecap="round"
+        d="M12 3L18.5 5.5V10.2C18.5 15 15.55 19.27 12 20.5C8.45 19.27 5.5 15 5.5 10.2V5.5L12 3Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
       />
+      <path
+        d="M9.5 11.8L11.2 13.5L14.8 9.7"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
-      {/* frunze stânga */}
-      <path
-        d="M125 174C106 170 87 154 73 131C95 132 113 147 125 174Z"
-        fill="#65BFB5"
-      />
-      <path
-        d="M119 166C105 160 93 149 82 136"
-        stroke="#DFF5F1"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        opacity="0.72"
-      />
+function ChartFeatureIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4.5 18.5H19.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M6.5 16L10 12.5L12.8 14.8L17.5 9.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M15.5 9.5H17.5V11.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
-      <path
-        d="M123 149C105 144 91 129 81 109C100 110 115 124 123 149Z"
-        fill="#A1D782"
-      />
-      <path
-        d="M118 143C106 136 96 125 87 113"
-        stroke="#EEF8E8"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        opacity="0.72"
-      />
-
-      <path
-        d="M127 126C112 121 99 108 92 89C109 91 121 103 127 126Z"
-        fill="#82CC72"
-      />
-      <path
-        d="M122 121C112 114 104 104 97 94"
-        stroke="#EEF8E8"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        opacity="0.72"
-      />
-
-      {/* frunze dreapta */}
-      <path
-        d="M133 178C153 172 173 156 188 133C166 134 147 149 133 178Z"
-        fill="#7DCC73"
-      />
-      <path
-        d="M139 170C153 162 166 151 178 138"
-        stroke="#EEF8E8"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        opacity="0.72"
-      />
-
-      <path
-        d="M135 152C153 146 168 131 179 111C160 113 146 126 135 152Z"
-        fill="#5EC0B6"
-      />
-      <path
-        d="M140 146C152 138 162 127 171 115"
-        stroke="#DFF5F1"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        opacity="0.72"
-      />
-
-      <path
-        d="M135 126C150 121 162 108 169 91C153 93 141 104 135 126Z"
-        fill="#9AD68B"
-      />
-      <path
-        d="M140 121C150 114 157 104 163 95"
-        stroke="#EEF8E8"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        opacity="0.72"
-      />
-
-      {/* frunza de sus */}
-      <path
-        d="M131 101C122 86 120 64 124 41C139 51 144 71 131 101Z"
-        fill="#B8E0A5"
-      />
-      <path
-        d="M130 92C131 78 131 64 129 49"
-        stroke="#EEF8E8"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        opacity="0.72"
-      />
+function InsightFeatureIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 7V12L15.5 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -400,56 +114,117 @@ function RightPlant() {
 export default function WelcomePage() {
   return (
     <main className="welcome-page">
-      <section className="welcome-shell">
-        <div className="welcome-left">
-          <div className="welcome-brand">
-            <LogoIcon />
-            {/*<span className="welcome-brand-text">MedStudy</span>*/}
-          </div>
+      <div className="welcome-bg-shape welcome-bg-shape--left" aria-hidden="true">
+        <div className="welcome-dots" />
+      </div>
 
-          <div className="welcome-copy">
-            <h1>Bine ai venit!</h1>
+      <div className="welcome-bg-shape welcome-bg-shape--right" aria-hidden="true">
+        <div className="welcome-dots" />
+      </div>
+
+      <div className="welcome-wave" aria-hidden="true" />
+
+      <header className="welcome-header">
+        <div className="welcome-brand">
+          <LogoIcon />
+          <div className="welcome-brand-copy">
+            <span className="welcome-brand-title">VitalStudy</span>
+            <span className="welcome-brand-subtitle">Platformă de cercetare</span>
+          </div>
+        </div>
+      </header>
+
+      <section className="welcome-hero">
+         {/*<div className="welcome-badge">CERCETARE • DATE • ANALIZĂ</div>*/}
+
+        <h1 className="welcome-title">
+          Sprijin pentru cercetarea medicală
+          <br />
+          prin <span>semne vitale</span>
+        </h1>
+
+        <p className="welcome-description">
+          VitalStudy este o platformă destinată colectării, analizei și interpretării
+          datelor privind semnele vitale în cadrul studiilor clinice.
+        </p>
+
+        <p className="welcome-section-label">Alege modul în care vrei să continui:</p>
+
+        <div className="welcome-cards">
+          <article className="welcome-card welcome-card--researcher">
+            <div className="welcome-card__icon-wrap">
+              <div className="welcome-card__icon">
+                <UserShieldIcon />
+              </div>
+            </div>
+
+            <h2>Cercetător</h2>
+
             <p>
-              Platforma pentru studiile de
-              <br />
-              monitorizare a semnelor vitale.
+              Gestionează studii, analizează datele colectate și generează rapoarte.
             </p>
-          </div>
 
-          <Cloud className="cloud-left-top" />
-          <Cloud className="cloud-left-middle" />
-          
-          <LeftPlant />
+            <button className="welcome-card__button welcome-card__button--primary" type="button">
+              <span className="welcome-card__button-icon">
+                <LoginIcon />
+              </span>
+              Autentificare
+            </button>
+          </article>
+
+          <article className="welcome-card welcome-card--participant">
+            <div className="welcome-card__icon-wrap welcome-card__icon-wrap--warm">
+              <div className="welcome-card__icon">
+                <ParticipantIcon />
+              </div>
+            </div>
+
+            <h2>Participant la studiu</h2>
+
+            <p>
+            Introdu codul studiului pentru a trimite datele solicitate și a urmări progresul.
+          </p>
+
+            <button className="welcome-card__button welcome-card__button--secondary" type="button">
+              <span className="welcome-card__button-icon">
+                <SearchIcon />
+              </span>
+              Introdu codul
+            </button>
+          </article>
         </div>
+      </section>
 
-        <div className="welcome-right">
-          <Cloud className="cloud-right-top" />
-
-          <div className="welcome-cards">
-            <article className="welcome-card">
-              <ResearcherIllustration />
-              <h2>Sunt cercetător</h2>
-              <p>
-                Autentifică-te pentru
-                <br />
-                gestionarea studiilor.
-              </p>
-              <button className="welcome-btn welcome-btn--green">
-                Intră în cont
-              </button>
-            </article>
-
-            <article className="welcome-card">
-              <StudyCodeIllustration />
-              <h2>Particip la un studiu</h2>
-              <p>Introdu codul pentru a continua.</p>
-              <button className="welcome-btn welcome-btn--teal">
-                Cod de studiu
-              </button>
-            </article>
+      <section className="welcome-features">
+        <article className="welcome-feature">
+          <div className="welcome-feature__icon">
+            <ShieldFeatureIcon />
           </div>
-          {/*<RightPlant />*/}
-        </div>
+          <div>
+            <h3>Date confidențiale</h3>
+            <p>Datele introduse sunt gestionate în mod confidențial.</p>
+          </div>
+        </article>
+
+        <article className="welcome-feature">
+          <div className="welcome-feature__icon">
+            <ChartFeatureIcon />
+          </div>
+          <div>
+            <h3>Studii organizate</h3>
+            <p>Gestionarea datelor și a etapelor studiului într-un singur loc.</p>
+          </div>
+        </article>
+
+        <article className="welcome-feature">
+          <div className="welcome-feature__icon">
+            <InsightFeatureIcon />
+          </div>
+          <div>
+            <h3>Rezultate relevante</h3>
+            <p>Datele colectate sunt sintetizate în rezultate ușor de interpretat.</p>
+          </div>
+        </article>
       </section>
     </main>
   );
