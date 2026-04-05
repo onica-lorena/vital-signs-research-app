@@ -1,6 +1,8 @@
+import { useState } from "react";
 import "../styles/login.css";
 import AppHeader from "../components/layout/AppHeader";
 import { useNavigate } from "react-router-dom";
+import { saveAuthSession, saveTemporaryAuthSession } from "../auth/authStorage";
 
 function BackIcon() {
   return (
@@ -111,8 +113,80 @@ function LoginIcon() {
   );
 }
 
+type LoginResponse = {
+  access_token: string;
+  token_type: string;
+  user: {
+    id: number;
+    email: string;
+    full_name: string;
+    role: "admin" | "researcher";
+    is_active: boolean;
+    is_verified: boolean;
+    created_at: string;
+  };
+};
+
 export default function LoginPage() {
   const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [keepSignedIn, setKeepSignedIn] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setErrorMessage("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+    const data: unknown = await response.json();
+
+      if (!response.ok) {
+        const errorData = data as { detail?: string };
+        setErrorMessage(errorData.detail ?? "Autentificarea a eșuat.");
+        return;
+      }
+
+    const loginData = data as LoginResponse;
+
+      if (keepSignedIn) {
+        saveAuthSession(loginData.access_token, loginData.user);
+      } else {
+        saveTemporaryAuthSession(loginData.access_token, loginData.user);
+      }
+
+      if (loginData.user.role === "admin") {
+        navigate("/admin");
+        return;
+      }
+
+      if (loginData.user.role === "researcher") {
+        navigate("/cercetator");
+        return;
+      }
+
+      setErrorMessage("Rol necunoscut.");
+    } catch {
+      setErrorMessage("Nu s-a putut realiza conexiunea cu serverul.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
   return (
     <main className="login-page">
       <div className="login-bg-shape login-bg-shape--left" aria-hidden="true" />
@@ -138,13 +212,12 @@ export default function LoginPage() {
         <div className="login-intro">
           <h1>Bine ai revenit!</h1>
           <p>
-            Autentifică-te pentru a accesa platforma și a continua
-            activitatea de cercetare.
+            Autentifică-te pentru a continua activitatea de cercetare.
           </p>
         </div>
 
         <div className="login-card">
-          <form className="login-form">
+          <form className="login-form" onSubmit={handleSubmit}>
             <div className="login-field">
               <label htmlFor="email">Adresă de email</label>
               <div className="login-input login-input--active">
@@ -152,9 +225,12 @@ export default function LoginPage() {
                   <MailIcon />
                 </span>
                 <input
-                  id="email"
-                  type="email"
-                  placeholder="exemplu@domeniu.ro"
+                    id="email"
+                    type="email"
+                    placeholder="exemplu@domeniu.ro"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    required
                 />
               </div>
             </div>
@@ -166,18 +242,29 @@ export default function LoginPage() {
                   <LockIcon />
                 </span>
                 <input
-                  id="password"
-                  type="password"
-                  placeholder="Introdu parola"
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Introdu parola"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    required
                 />
-                <button type="button" className="login-password-toggle" aria-label="Afișează parola">
-                  <EyeIcon />
+                <button
+                    type="button"
+                    className="login-password-toggle"
+                    aria-label="Afișează parola"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                >
+                    <EyeIcon />
                 </button>
               </div>
             </div>
 
             <div className="login-options">
-              <label className="login-checkbox">
+              <label
+                className="login-checkbox"
+                onClick={() => setKeepSignedIn((prev) => !prev)}
+              >
                 <span className="login-checkbox-box">
                   <CheckIcon />
                 </span>
@@ -189,11 +276,25 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <button type="submit" className="login-primary-btn">
-              <span className="login-btn-icon">
+            {errorMessage ? (
+                <p
+                    style={{
+                    margin: 0,
+                    color: "#c65a4b",
+                    fontSize: "0.92rem",
+                    fontWeight: 700,
+                    textAlign: "center",
+                    }}
+                >
+                    {errorMessage}
+                </p>
+            ) : null}
+
+            <button type="submit" className="login-primary-btn" disabled={isLoading}>
+            <span className="login-btn-icon">
                 <LoginIcon />
-              </span>
-              <span>Autentificare</span>
+            </span>
+            <span>{isLoading ? "Se autentifică..." : "Autentificare"}</span>
             </button>
 
             <div className="login-request-access">
