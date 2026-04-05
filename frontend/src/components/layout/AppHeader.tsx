@@ -13,7 +13,6 @@ export default function AppHeader({ rightContent }: AppHeaderProps) {
         <LogoIcon />
         <div className="app-header__brand-copy">
           <span className="app-header__brand-title">VitalStudy</span>
-          <span className="app-header__brand-subtitle">Platformă de cercetare</span>
         </div>
       </div>
 
