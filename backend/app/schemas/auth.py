@@ -1,12 +1,4 @@
-from pydantic import BaseModel, EmailStr
-
-from app.schemas.user import UserResponse
-
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
+from pydantic import BaseModel
 
 class TokenData(BaseModel):
     sub: str | None = None
@@ -16,4 +8,3 @@ class TokenData(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
-    user: UserResponse

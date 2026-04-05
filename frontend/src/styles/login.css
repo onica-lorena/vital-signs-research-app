@@ -194,6 +194,7 @@
 }
 
 .login-checkbox {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
@@ -201,15 +202,34 @@
   font-size: 0.93rem;
   font-weight: 700;
   cursor: pointer;
+  user-select: none;
+}
+
+.login-checkbox input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
 }
 
 .login-checkbox-box {
   width: 21px;
   height: 21px;
   border-radius: 6px;
-  background: var(--login-green);
+  border: 2px solid #7f8a8f;
+  background: transparent;
   color: white;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.login-checkbox-box.is-checked {
+  background: var(--login-green);
+  border-color: var(--login-green);
 }
 
 .login-checkbox-box svg {

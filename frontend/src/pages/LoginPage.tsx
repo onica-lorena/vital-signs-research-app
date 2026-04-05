@@ -2,7 +2,12 @@ import { useState } from "react";
 import "../styles/login.css";
 import AppHeader from "../components/layout/AppHeader";
 import { useNavigate } from "react-router-dom";
-import { saveAuthSession, saveTemporaryAuthSession } from "../auth/authStorage";
+import {
+  saveAuthSession,
+  saveTemporaryAuthSession,
+  type AppUser,
+} from "../auth/authStorage";
+import { loginRequest, fetchCurrentUser } from "../auth/authApi";
 
 function BackIcon() {
   return (
@@ -113,20 +118,6 @@ function LoginIcon() {
   );
 }
 
-type LoginResponse = {
-  access_token: string;
-  token_type: string;
-  user: {
-    id: number;
-    email: string;
-    full_name: string;
-    role: "admin" | "researcher";
-    is_active: boolean;
-    is_verified: boolean;
-    created_at: string;
-  };
-};
-
 export default function LoginPage() {
   const navigate = useNavigate();
 
@@ -138,55 +129,42 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setErrorMessage("");
-    setIsLoading(true);
+  event.preventDefault();
+  setErrorMessage("");
+  setIsLoading(true);
 
-    try {
-      const response = await fetch("http://127.0.0.1:8000/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
+  try {
+    const tokenData = await loginRequest(email, password);
+    const currentUser = await fetchCurrentUser(tokenData.access_token);
 
-    const data: unknown = await response.json();
-
-      if (!response.ok) {
-        const errorData = data as { detail?: string };
-        setErrorMessage(errorData.detail ?? "Autentificarea a eșuat.");
-        return;
-      }
-
-    const loginData = data as LoginResponse;
-
-      if (keepSignedIn) {
-        saveAuthSession(loginData.access_token, loginData.user);
-      } else {
-        saveTemporaryAuthSession(loginData.access_token, loginData.user);
-      }
-
-      if (loginData.user.role === "admin") {
-        navigate("/admin");
-        return;
-      }
-
-      if (loginData.user.role === "researcher") {
-        navigate("/cercetator");
-        return;
-      }
-
-      setErrorMessage("Rol necunoscut.");
-    } catch {
-      setErrorMessage("Nu s-a putut realiza conexiunea cu serverul.");
-    } finally {
-      setIsLoading(false);
+    if (keepSignedIn) {
+      saveAuthSession(tokenData.access_token, currentUser);
+    } else {
+      saveTemporaryAuthSession(tokenData.access_token, currentUser);
     }
+
+    if (currentUser.role === "admin") {
+      navigate("/admin");
+      return;
+    }
+
+    if (currentUser.role === "researcher") {
+      navigate("/cercetator");
+      return;
+    }
+
+    setErrorMessage("Rol necunoscut.");
+  } catch (error) {
+    if (error instanceof Error) {
+      setErrorMessage(error.message);
+    } else {
+      setErrorMessage("Nu s-a putut realiza conexiunea cu serverul.");
+    }
+  } finally {
+    setIsLoading(false);
   }
+}
+
   return (
     <main className="login-page">
       <div className="login-bg-shape login-bg-shape--left" aria-hidden="true" />
@@ -261,19 +239,23 @@ export default function LoginPage() {
             </div>
 
             <div className="login-options">
-              <label
-                className="login-checkbox"
-                onClick={() => setKeepSignedIn((prev) => !prev)}
-              >
-                <span className="login-checkbox-box">
-                  <CheckIcon />
-                </span>
-                <span>Ține-mă autentificat</span>
-              </label>
+            <label className="login-checkbox">
+                <input
+                type="checkbox"
+                checked={keepSignedIn}
+                onChange={(event) => setKeepSignedIn(event.target.checked)}
+                />
 
-              <button type="button" className="login-text-link">
+                <span className={`login-checkbox-box ${keepSignedIn ? "is-checked" : ""}`}>
+                {keepSignedIn ? <CheckIcon /> : null}
+                </span>
+
+                <span>Ține-mă autentificat</span>
+            </label>
+
+            <button type="button" className="login-text-link">
                 Ai uitat parola?
-              </button>
+            </button>
             </div>
 
             {errorMessage ? (
