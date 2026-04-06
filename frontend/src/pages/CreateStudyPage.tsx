@@ -12,8 +12,8 @@ type StudyFormData = {
   code: string;
   startDate: string;
   studyType: string;
-  duration: string;
-  institution: string;
+  dataEntryMode: string;
+  status: string;
   description: string;
 };
 
@@ -29,16 +29,20 @@ const steps = [
 ] as const;
 
 const studyTypeOptions = [
-  { value: "observational", label: "Observațional" },
-  { value: "interventional", label: "Intervențional" },
-  { value: "pilot", label: "Pilot" },
+  { value: "observational_prospective", label: "Observațional prospectiv" },
+  { value: "observational_retrospective", label: "Observațional retrospectiv" },
+  { value: "observational_mixed", label: "Observațional mixt" },
 ] as const;
 
-const durationOptions = [
-  { value: "1month", label: "1 lună" },
-  { value: "3months", label: "3 luni" },
-  { value: "6months", label: "6 luni" },
-  { value: "12months", label: "12 luni" },
+const dataEntryModeOptions = [
+  { value: "manual", label: "Introducere manuală" },
+  { value: "csv", label: "Import fișier CSV" },
+  { value: "manual_csv", label: "Manual + CSV" },
+] as const;
+
+const studyStatusOptions = [
+  { value: "draft", label: "Ciornă" },
+  { value: "active", label: "Activ" },
 ] as const;
 
 const frequencyOptions = [
@@ -101,6 +105,13 @@ function getInitialParameterSettings(): Record<ParameterId, ParameterSetting> {
       frequency: "La 15 minute",
     },
   };
+}
+
+function generateStudyCode() {
+  const lastCode = Number(localStorage.getItem("lastStudyCode") ?? "104");
+  const nextCode = lastCode + 1;
+  localStorage.setItem("lastStudyCode", String(nextCode));
+  return `VS-${String(nextCode).padStart(3, "0")}`;
 }
 
 function ArrowLeftIcon() {
@@ -419,15 +430,15 @@ export default function CreateStudyPage() {
   const [stepError, setStepError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  const [formData, setFormData] = useState<StudyFormData>({
+  const [formData, setFormData] = useState<StudyFormData>(() => ({
     title: "",
-    code: "",
+    code: generateStudyCode(),
     startDate: "",
     studyType: "",
-    duration: "",
-    institution: "",
+    dataEntryMode: "",
+    status: "",
     description: "",
-  });
+  }));
 
   const [parameterSettings, setParameterSettings] =
     useState<Record<ParameterId, ParameterSetting>>(getInitialParameterSettings);
@@ -482,14 +493,14 @@ export default function CreateStudyPage() {
   function validateStepOne() {
     if (
       !formData.title.trim() ||
-      !formData.code.trim() ||
       !formData.startDate ||
       !formData.studyType ||
-      !formData.duration
+      !formData.dataEntryMode ||
+      !formData.status
     ) {
-      return "Completează titlul, codul, data de început, tipul și durata estimată.";
+      return "Completează titlul, data de început, tipul studiului, modul de furnizare a datelor și statusul studiului.";
     }
-
+  
     return "";
   }
 
@@ -575,9 +586,9 @@ export default function CreateStudyPage() {
           infoText:
             "Creează studii pentru a organiza colectarea și analiza datelor fiziologice. Poți adăuga participanți și rula analize după salvare.",
           tips: [
-            "Alege un titlu clar și concis",
-            "Descrie obiectivele principale",
-            "Verifică parametrii înainte de salvare",
+            "Alege un titlu clar și ușor de recunoscut",
+            "Selectează tipul de studiu potrivit pentru datele colectate",
+            "Verifică statusul inițial înainte de continuare",
           ],
           nextVariant: "icons",
           next: [
@@ -656,11 +667,14 @@ export default function CreateStudyPage() {
               },
             ],
           };
+  const dataEntryModeLabel =
+    dataEntryModeOptions.find((option) => option.value === formData.dataEntryMode)?.label ?? "—";
+  
+  const studyStatusLabel =
+    studyStatusOptions.find((option) => option.value === formData.status)?.label ?? "—";
+
   const studyTypeLabel =
     studyTypeOptions.find((option) => option.value === formData.studyType)?.label ?? "—";
-
-  const durationLabel =
-    durationOptions.find((option) => option.value === formData.duration)?.label ?? "—";
 
   function renderStepContent() {
     if (currentStep === 1) {
@@ -683,25 +697,6 @@ export default function CreateStudyPage() {
             </label>
 
             <label className="create-study-field">
-              <span className="create-study-field__label">Cod studiu *</span>
-              <input
-                type="text"
-                placeholder="Ex: VS-105"
-                value={formData.code}
-                onChange={(event) => updateField("code", event.target.value)}
-              />
-            </label>
-
-            <label className="create-study-field">
-              <span className="create-study-field__label">Data de început *</span>
-              <input
-                type="date"
-                value={formData.startDate}
-                onChange={(event) => updateField("startDate", event.target.value)}
-              />
-            </label>
-
-            <label className="create-study-field">
               <span className="create-study-field__label">Tip studiu *</span>
               <select
                 value={formData.studyType}
@@ -715,32 +710,46 @@ export default function CreateStudyPage() {
                 ))}
               </select>
             </label>
-
+            
             <label className="create-study-field">
-              <span className="create-study-field__label">Durată estimată *</span>
+              <span className="create-study-field__label">Data de început *</span>
+              <input
+                type="date"
+                value={formData.startDate}
+                onChange={(event) => updateField("startDate", event.target.value)}
+              />
+            </label>
+            
+            <label className="create-study-field">
+              <span className="create-study-field__label">Mod de furnizare a datelor *</span>
               <select
-                value={formData.duration}
-                onChange={(event) => updateField("duration", event.target.value)}
+                value={formData.dataEntryMode}
+                onChange={(event) => updateField("dataEntryMode", event.target.value)}
               >
-                <option value="">Selectează durata</option>
-                {durationOptions.map((option) => (
+                <option value="">Selectează modul</option>
+                {dataEntryModeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
             </label>
-
-            <label className="create-study-field create-study-field--full">
-              <span className="create-study-field__label">Instituție / departament</span>
-              <input
-                type="text"
-                placeholder="Ex: Universitatea de Vest din Timișoara"
-                value={formData.institution}
-                onChange={(event) => updateField("institution", event.target.value)}
-              />
+            
+            <label className="create-study-field">
+              <span className="create-study-field__label">Status studiu *</span>
+              <select
+                value={formData.status}
+                onChange={(event) => updateField("status", event.target.value)}
+              >
+                <option value="">Selectează statusul</option>
+                {studyStatusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
-
+            
             <label className="create-study-field create-study-field--full">
               <span className="create-study-field__label">Descriere</span>
               <textarea
@@ -863,7 +872,7 @@ export default function CreateStudyPage() {
               </div>
 
               <div>
-                <dt>Cod</dt>
+                <dt>Cod de studiu</dt>
                 <dd>{formData.code || "—"}</dd>
               </div>
 
@@ -873,13 +882,18 @@ export default function CreateStudyPage() {
               </div>
 
               <div>
-                <dt>Tip</dt>
+                <dt>Tip studiu</dt>
                 <dd>{studyTypeLabel}</dd>
               </div>
 
               <div>
-                <dt>Durată</dt>
-                <dd>{durationLabel}</dd>
+                <dt>Mod de furnizare a datelor</dt>
+                <dd>{dataEntryModeLabel}</dd>
+              </div>
+              
+              <div>
+                <dt>Status studiu</dt>
+                <dd>{studyStatusLabel}</dd>
               </div>
 
               <div>
@@ -895,15 +909,6 @@ export default function CreateStudyPage() {
               {formData.description.trim()
                 ? formData.description
                 : "Nu a fost introdusă o descriere pentru acest studiu."}
-            </p>
-
-            <div className="create-study-review-divider" />
-
-            <h3>Instituție</h3>
-            <p className="create-study-review-description">
-              {formData.institution.trim()
-                ? formData.institution
-                : "Nu a fost introdusă o instituție."}
             </p>
           </article>
         </div>
