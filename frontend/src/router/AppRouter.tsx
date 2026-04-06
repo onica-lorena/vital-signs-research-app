@@ -3,6 +3,8 @@ import WelcomePage from "../pages/WelcomePage";
 import LoginPage from "../pages/LoginPage";
 import AdminPage from "../pages/AdminPage";
 import ResearcherPage from "../pages/ResearcherPage";
+import StudiesPage from "../pages/StudiesPage";
+import CreateStudyPage from "../pages/CreateStudyPage";
 import ProtectedRoute from "./ProtectedRoute";
 import { getCurrentUser } from "../auth/authStorage";
 
@@ -47,6 +49,25 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/cercetator/studii"
+        element={
+          <ProtectedRoute allowedRole="researcher">
+            <StudiesPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/cercetator/studii/creare"
+        element={
+          <ProtectedRoute allowedRole="researcher">
+            <CreateStudyPage />
+          </ProtectedRoute>
+        }
+      />
+      
 
       <Route path="/redirect" element={<RoleRedirect />} />
 

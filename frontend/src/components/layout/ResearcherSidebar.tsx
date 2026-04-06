@@ -3,10 +3,13 @@ import LogoIcon from "../welcome/LogoIcon";
 import { clearAuthSession } from "../../auth/authStorage";
 
 type ResearcherSidebarProps = {
+  activeItem: NavigationKey;
   isSidebarCollapsed: boolean;
   onToggleBrandClick: () => void;
   onCloseMobileSidebar: () => void;
 };
+
+type NavigationKey = "dashboard" | "studii" | "analize" | "rapoarte";
 
 function DashboardIcon() {
   return (
@@ -104,14 +107,19 @@ function LogoutIcon() {
   );
 }
 
-const navigationItems = [
-  { label: "Pagina principală", icon: DashboardIcon, isActive: true },
-  { label: "Studii", icon: StudyIcon, isActive: false },
-  { label: "Analize", icon: AnalysisIcon, isActive: false },
-  { label: "Rapoarte", icon: ReportIcon, isActive: false },
+const navigationItems: {
+  key: NavigationKey;
+  label: string;
+  icon: React.ComponentType;
+}[] = [
+  { key: "dashboard", label: "Pagina principală", icon: DashboardIcon },
+  { key: "studii", label: "Studii", icon: StudyIcon },
+  { key: "analize", label: "Analize", icon: AnalysisIcon },
+  { key: "rapoarte", label: "Rapoarte", icon: ReportIcon },
 ];
 
 export default function ResearcherSidebar({
+  activeItem,
   isSidebarCollapsed,
   onToggleBrandClick,
   onCloseMobileSidebar,
@@ -121,6 +129,28 @@ export default function ResearcherSidebar({
   function handleLogout() {
     clearAuthSession();
     navigate("/autentificare");
+  }
+
+  function handleNavigation(itemKey: NavigationKey) {
+    onCloseMobileSidebar();
+  
+    if (itemKey === "dashboard") {
+      navigate("/cercetator");
+      return;
+    }
+  
+    if (itemKey === "studii") {
+      navigate("/cercetator/studii");
+      return;
+    }
+  
+    if (itemKey === "analize") {
+      return;
+    }
+  
+    if (itemKey === "rapoarte") {
+      return;
+    }
   }
 
   return (
@@ -146,18 +176,20 @@ export default function ResearcherSidebar({
       </div>
 
       <nav className="researcher-sidebar__nav" aria-label="Navigație principală">
-        {navigationItems.map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <button
-              key={item.label}
-              type="button"
-              className={`researcher-sidebar__link ${item.isActive ? "is-active" : ""}`}
-              aria-current={item.isActive ? "page" : undefined}
-              title={item.label}
-              onClick={onCloseMobileSidebar}
-            >
+      {navigationItems.map((item) => {
+        const Icon = item.icon;
+      
+        return (
+          <button
+            key={item.label}
+            type="button"
+            className={`researcher-sidebar__link ${
+              item.key === activeItem ? "is-active" : ""
+            }`}
+            aria-current={item.key === activeItem ? "page" : undefined}
+            title={item.label}
+            onClick={() => handleNavigation(item.key)}
+          >
               <span className="researcher-sidebar__icon">
                 <Icon />
               </span>

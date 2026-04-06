@@ -1,16 +1,6 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import ResearcherLayout from "../components/layout/ResearcherLayout";
 import "../styles/researcher-dashboard.css";
-import ResearcherSidebar from "../components/layout/ResearcherSidebar";
-
-function MenuIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4.5 7.5H19.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-      <path d="M4.5 12H19.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-      <path d="M4.5 16.5H19.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 function ChevronRightIcon() {
   return (
@@ -176,219 +166,166 @@ const chartData = [
 const maxChartValue = 1500;
 
 export default function ResearcherPage() {
-
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-
-  function closeMobileSidebar() {
-    setIsMobileSidebarOpen(false);
-  }
-
-  function handleSidebarBrandClick() {
-    if (window.innerWidth <= 1023) {
-      setIsMobileSidebarOpen(false);
-      return;
-    }   
-    setIsSidebarCollapsed((prev) => !prev);
-  }
+  const navigate = useNavigate();
 
   return (
-    <main
-      className={`researcher-dashboard ${isSidebarCollapsed ? "sidebar-collapsed" : ""} ${
-        isMobileSidebarOpen ? "mobile-sidebar-open" : ""
-      }`}
-    >
-      {isMobileSidebarOpen ? (
+    <ResearcherLayout
+      activeItem="dashboard"
+      title="Pagina principală"
+      subtitle="Privire de ansamblu asupra studiilor, datelor colectate și rezultatelor recente."
+      actions={
         <button
           type="button"
-          className="researcher-overlay"
-          aria-label="Închide meniul lateral"
-          onClick={closeMobileSidebar}
-        />
-      ) : null}
+          className="researcher-create-btn"
+          onClick={() => navigate("/cercetator/studii/creare")}
+        >
+          <PlusIcon />
+          <span>Creează studiu</span>
+        </button>
+      }
+    >
+      <section className="researcher-stats">
+        {stats.map((item) => {
+          const Icon = item.icon;
 
-      <ResearcherSidebar
-      isSidebarCollapsed={isSidebarCollapsed}
-      onToggleBrandClick={handleSidebarBrandClick}
-      onCloseMobileSidebar={closeMobileSidebar}
-      />
-
-      <section className="researcher-main">
-        <div className="researcher-main__shape researcher-main__shape--right" aria-hidden="true" />
-        <div className="researcher-main__shape researcher-main__shape--bottom" aria-hidden="true" />
-        <div className="researcher-main__dots" aria-hidden="true" />
-        <div className="researcher-main__wave" aria-hidden="true" />
-
-        <div className="researcher-main__content">
-          <header className="researcher-topbar">
-            <div className="researcher-topbar__left">
-              <button
-                type="button"
-                className="researcher-mobile-toggle"
-                aria-label="Deschide meniul"
-                onClick={() => setIsMobileSidebarOpen(true)}
-              >
-                <MenuIcon />
-              </button>
-
-              <div>
-                <h1 className="researcher-topbar__title">Pagina principală</h1>
+          return (
+            <article key={item.label} className="researcher-stat-card">
+              <div className="researcher-stat-card__icon">
+                <Icon />
               </div>
-            </div>
 
-            <div className="researcher-topbar__right">
+              <div className="researcher-stat-card__content">
+                <div className="researcher-stat-card__label">{item.label}</div>
+                <div className="researcher-stat-card__value">{item.value}</div>
+                <div className="researcher-stat-card__helper">{item.helper}</div>
+              </div>
+            </article>
+          );
+        })}
+      </section>
 
-              <button type="button" className="researcher-create-btn">
-                <PlusIcon />
-                <span>Creează studiu</span>
-              </button>
-            </div>
-          </header>
+      <section className="researcher-dashboard-grid">
+        <article className="researcher-card researcher-card--studies">
+          <div className="researcher-card__header">
+            <h2 className="researcher-card__title">Studiile mele</h2>
 
-          <section className="researcher-stats">
-            {stats.map((item) => {
+            <button type="button" className="researcher-action-link">
+              <span>Vezi toate studiile</span>
+              <ChevronRightIcon />
+            </button>
+          </div>
+
+          <div className="researcher-table-wrap">
+            <table className="researcher-table">
+              <thead>
+                <tr>
+                  <th>Studiu</th>
+                  <th>Cod</th>
+                  <th>Status</th>
+                  <th>Participanți</th>
+                  <th>Detalii</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {studies.map((study) => (
+                  <tr key={study.code}>
+                    <td className="researcher-table__study-cell">
+                      <div className="researcher-table__study">
+                        <span className={`researcher-table__dot researcher-table__dot--${study.dotClass}`} />
+                        <span>{study.name}</span>
+                      </div>
+                    </td>
+
+                    <td>{study.code}</td>
+
+                    <td>
+                      <span className={`researcher-status researcher-status--${study.statusClass}`}>
+                        {study.status}
+                      </span>
+                    </td>
+
+                    <td>{study.participants}</td>
+
+                    <td>
+                      <button type="button" className="researcher-table__detail-btn" aria-label={`Detalii ${study.code}`}>
+                        <ChevronRightIcon />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article className="researcher-card researcher-card--activity">
+          <div className="researcher-card__header">
+            <h2 className="researcher-card__title">Activitate recentă</h2>
+          </div>
+
+          <div className="researcher-activity-list">
+            {recentActivity.map((item) => {
               const Icon = item.icon;
 
               return (
-                <article key={item.label} className="researcher-stat-card">
-                  <div className="researcher-stat-card__icon">
+                <div key={`${item.text}-${item.time}`} className="researcher-activity__item">
+                  <div className="researcher-activity__icon">
                     <Icon />
                   </div>
 
-                  <div className="researcher-stat-card__content">
-                    <div className="researcher-stat-card__label">{item.label}</div>
-                    <div className="researcher-stat-card__value">{item.value}</div>
-                    <div className="researcher-stat-card__helper">{item.helper}</div>
+                  <div className="researcher-activity__main">
+                    <div className="researcher-activity__text">{item.text}</div>
                   </div>
-                </article>
+
+                  <div className="researcher-activity__time">{item.time}</div>
+                </div>
               );
             })}
-          </section>
+          </div>
 
-          <section className="researcher-dashboard-grid">
-            <article className="researcher-card researcher-card--studies">
-              <div className="researcher-card__header">
-                <h2 className="researcher-card__title">Studiile mele</h2>
+          <div className="researcher-card__footer-link">
+            <button type="button" className="researcher-action-link">
+              <span>Vezi toată activitatea</span>
+              <ChevronRightIcon />
+            </button>
+          </div>
+        </article>
 
-                <button type="button" className="researcher-action-link">
-                  <span>Vezi toate studiile</span>
-                  <ChevronRightIcon />
-                </button>
-              </div>
+        <article className="researcher-card researcher-card--chart">
+          <div className="researcher-card__header">
+            <h2 className="researcher-card__title">Evoluția colectării datelor</h2>
 
-              <div className="researcher-table-wrap">
-                <table className="researcher-table">
-                  <thead>
-                    <tr>
-                      <th>Studiu</th>
-                      <th>Cod</th>
-                      <th>Status</th>
-                      <th>Participanți</th>
-                      <th>Detalii</th>
-                    </tr>
-                  </thead>
+            <button type="button" className="researcher-filter-btn">
+              <span>6 săptămâni</span>
+              <CaretDownIcon />
+            </button>
+          </div>
 
-                  <tbody>
-                    {studies.map((study) => (
-                      <tr key={study.code}>
-                        <td className="researcher-table__study-cell">
-                          <div className="researcher-table__study">
-                            <span className={`researcher-table__dot researcher-table__dot--${study.dotClass}`} />
-                            <span>{study.name}</span>
-                          </div>
-                        </td>
+          <div className="researcher-chart">
+            <div className="researcher-chart__axis">
+              <span className="researcher-chart__axis-label">1.500</span>
+              <span className="researcher-chart__axis-label">1.200</span>
+              <span className="researcher-chart__axis-label">900</span>
+              <span className="researcher-chart__axis-label">600</span>
+              <span className="researcher-chart__axis-label">300</span>
+              <span className="researcher-chart__axis-label">0</span>
+            </div>
 
-                        <td>{study.code}</td>
-
-                        <td>
-                          <span className={`researcher-status researcher-status--${study.statusClass}`}>
-                            {study.status}
-                          </span>
-                        </td>
-
-                        <td>{study.participants}</td>
-
-                        <td>
-                          <button type="button" className="researcher-table__detail-btn" aria-label={`Detalii ${study.code}`}>
-                            <ChevronRightIcon />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </article>
-
-            <article className="researcher-card researcher-card--activity">
-              <div className="researcher-card__header">
-                <h2 className="researcher-card__title">Activitate recentă</h2>
-              </div>
-
-              <div className="researcher-activity-list">
-                {recentActivity.map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <div key={`${item.text}-${item.time}`} className="researcher-activity__item">
-                      <div className="researcher-activity__icon">
-                        <Icon />
-                      </div>
-
-                      <div className="researcher-activity__main">
-                        <div className="researcher-activity__text">{item.text}</div>
-                      </div>
-
-                      <div className="researcher-activity__time">{item.time}</div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="researcher-card__footer-link">
-                <button type="button" className="researcher-action-link">
-                  <span>Vezi toată activitatea</span>
-                  <ChevronRightIcon />
-                </button>
-              </div>
-            </article>
-
-            <article className="researcher-card researcher-card--chart">
-              <div className="researcher-card__header">
-                <h2 className="researcher-card__title">Evoluția colectării datelor</h2>
-
-                <button type="button" className="researcher-filter-btn">
-                  <span>6 săptămâni</span>
-                  <CaretDownIcon />
-                </button>
-              </div>
-
-              <div className="researcher-chart">
-                <div className="researcher-chart__axis">
-                  <span className="researcher-chart__axis-label">1.500</span>
-                  <span className="researcher-chart__axis-label">1.200</span>
-                  <span className="researcher-chart__axis-label">900</span>
-                  <span className="researcher-chart__axis-label">600</span>
-                  <span className="researcher-chart__axis-label">300</span>
-                  <span className="researcher-chart__axis-label">0</span>
+            <div className="researcher-chart__plot">
+              {chartData.map((item) => (
+                <div key={item.label} className="researcher-chart__bar-group">
+                  <div
+                    className="researcher-chart__bar"
+                    style={{ height: `${(item.value / maxChartValue) * 100}%` }}
+                  />
+                  <div className="researcher-chart__label">{item.label}</div>
                 </div>
-
-                <div className="researcher-chart__plot">
-                  {chartData.map((item) => (
-                    <div key={item.label} className="researcher-chart__bar-group">
-                      <div
-                        className="researcher-chart__bar"
-                        style={{ height: `${(item.value / maxChartValue) * 100}%` }}
-                      />
-                      <div className="researcher-chart__label">{item.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </article>
-          </section>
-        </div>
+              ))}
+            </div>
+          </div>
+        </article>
       </section>
-    </main>
+    </ResearcherLayout>
   );
 }
