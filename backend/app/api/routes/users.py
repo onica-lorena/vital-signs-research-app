@@ -54,6 +54,11 @@ def create_user(
         role=payload.role,
         is_active=True,
         is_verified=True,
+        institution=payload.institution,
+        department=payload.department,
+        specialization=payload.specialization,
+        phone=payload.phone,
+        bio=payload.bio,
     )
 
     db.add(user)
@@ -80,18 +85,17 @@ def update_my_profile(
 ):
     data = payload.model_dump(exclude_unset=True)
 
-    if "email" in data:
-        new_email = str(data["email"]).strip().lower()
-        existing_user = get_user_by_email(db, new_email)
-        if existing_user and existing_user.id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Există deja un utilizator cu acest email.",
-            )
-        current_user.email = new_email
-
-    if "full_name" in data:
+    if "full_name" in data and data["full_name"] is not None:
         current_user.full_name = data["full_name"]
+
+    if "specialization" in data:
+        current_user.specialization = data["specialization"]
+
+    if "phone" in data:
+        current_user.phone = data["phone"]
+
+    if "bio" in data:
+        current_user.bio = data["bio"]
 
     db.add(current_user)
     db.commit()
@@ -148,36 +152,40 @@ def update_user(
     user = _get_user_or_404(db, user_id)
     data = payload.model_dump(exclude_unset=True)
 
-    if "email" in data:
-        new_email = str(data["email"]).strip().lower()
-        existing_user = get_user_by_email(db, new_email)
-        if existing_user and existing_user.id != user.id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Există deja un utilizator cu acest email.",
-            )
-        user.email = new_email
-
-    if "full_name" in data:
+    if "full_name" in data and data["full_name"] is not None:
         user.full_name = data["full_name"]
-
-    if "role" in data:
+    
+    if "role" in data and data["role"] is not None:
         if current_admin.id == user.id and data["role"] != UserRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Nu îți poți schimba propriul rol din admin în alt rol.",
             )
         user.role = data["role"]
-
-    if "is_verified" in data:
+    
+    if "is_verified" in data and data["is_verified"] is not None:
         user.is_verified = data["is_verified"]
+
+    if "institution" in data:
+        user.institution = data["institution"]
+
+    if "department" in data:
+        user.department = data["department"]
+
+    if "specialization" in data:
+        user.specialization = data["specialization"]
+
+    if "phone" in data:
+        user.phone = data["phone"]
+
+    if "bio" in data:
+        user.bio = data["bio"]
 
     db.add(user)
     db.commit()
     db.refresh(user)
 
     return UserResponse.model_validate(user)
-
 
 @router.patch("/{user_id}/password", response_model=MessageResponse)
 def admin_reset_user_password(
