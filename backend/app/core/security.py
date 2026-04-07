@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
+import hashlib
+import secrets
 
-from jose import JWTError, jwt
+from jose import jwt
 from pwdlib import PasswordHash
 
 from app.core.config import settings
@@ -43,3 +45,11 @@ def decode_token(token: str) -> dict[str, Any]:
         settings.secret_key,
         algorithms=[settings.algorithm],
     )
+
+
+def generate_password_reset_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def hash_password_reset_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
