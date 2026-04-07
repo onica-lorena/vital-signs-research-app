@@ -5,20 +5,13 @@ Revises: fa38395193f2
 Create Date: 2026-04-07 11:26:59.688442
 
 """
-"""add profile fields to users
-
-Revision ID: <ID_GENERAT_DE_ALEMBIC>
-Revises: fa38395193f2
-Create Date: 2026-04-07
-
-"""
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
 
 
-revision: str = "<ID_GENERAT_DE_ALEMBIC>"
+revision: str = "40ab3a189f78"
 down_revision: Union[str, Sequence[str], None] = "fa38395193f2"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
