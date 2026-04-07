@@ -1,11 +1,10 @@
 import { useState } from "react";
 import "../styles/login.css";
 import AppHeader from "../components/layout/AppHeader";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   saveAuthSession,
   saveTemporaryAuthSession,
-  type AppUser,
 } from "../auth/authStorage";
 import { loginRequest, fetchCurrentUser } from "../auth/authApi";
 
@@ -121,6 +120,13 @@ function LoginIcon() {
 export default function LoginPage() {
   const navigate = useNavigate();
 
+  const [searchParams] = useSearchParams();
+
+  const sessionExpired =
+    searchParams.get("reason") === "session_expired";
+
+  const redirectPath = searchParams.get("redirect");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -129,41 +135,51 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault();
-  setErrorMessage("");
-  setIsLoading(true);
+    event.preventDefault();
+    setErrorMessage("");
+    setIsLoading(true);
 
-  try {
-    const tokenData = await loginRequest(email, password);
-    const currentUser = await fetchCurrentUser(tokenData.access_token);
+    try {
+      const tokenData = await loginRequest(email, password);
+      const currentUser = await fetchCurrentUser(tokenData.access_token);
 
-    if (keepSignedIn) {
-      saveAuthSession(tokenData.access_token, currentUser);
-    } else {
-      saveTemporaryAuthSession(tokenData.access_token, currentUser);
+      if (keepSignedIn) {
+        saveAuthSession(tokenData.access_token, currentUser);
+      } else {
+        saveTemporaryAuthSession(tokenData.access_token, currentUser);
+      }
+
+      const safeRedirect =
+        redirectPath && redirectPath.startsWith("/")
+          ? redirectPath
+          : null;
+
+      if (safeRedirect) {
+        navigate(safeRedirect, { replace: true });
+        return;
+      }
+
+      if (currentUser.role === "admin") {
+        navigate("/admin", { replace: true });
+        return;
+      }
+
+      if (currentUser.role === "researcher") {
+        navigate("/cercetator", { replace: true });
+        return;
+      }
+
+      setErrorMessage("Rol necunoscut.");
+    } catch (error) {
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("Nu s-a putut realiza conexiunea cu serverul.");
+      }
+    } finally {
+      setIsLoading(false);
     }
-
-    if (currentUser.role === "admin") {
-      navigate("/admin");
-      return;
-    }
-
-    if (currentUser.role === "researcher") {
-      navigate("/cercetator");
-      return;
-    }
-
-    setErrorMessage("Rol necunoscut.");
-  } catch (error) {
-    if (error instanceof Error) {
-      setErrorMessage(error.message);
-    } else {
-      setErrorMessage("Nu s-a putut realiza conexiunea cu serverul.");
-    }
-  } finally {
-    setIsLoading(false);
   }
-}
 
   return (
     <main className="login-page">
@@ -196,6 +212,19 @@ export default function LoginPage() {
 
         <div className="login-card">
           <form className="login-form" onSubmit={handleSubmit}>
+            {sessionExpired ? (
+              <p
+                style={{
+                  margin: 0,
+                  color: "#c65a4b",
+                  fontSize: "0.92rem",
+                  fontWeight: 700,
+                  textAlign: "center",
+                }}
+              >
+                Sesiunea a expirat. Te rugăm să te autentifici din nou.
+              </p>
+            ) : null}
             <div className="login-field">
               <label htmlFor="email">Adresă de email</label>
               <div className="login-input login-input--active">

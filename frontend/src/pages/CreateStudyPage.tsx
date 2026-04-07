@@ -4,12 +4,13 @@ import { getCurrentUser } from "../auth/authStorage";
 import ResearcherLayout from "../components/layout/ResearcherLayout";
 import "../styles/researcher-dashboard.css";
 import "../styles/create-study.css";
+import { createStudyRequest } from "../studies/studiesApi";
+import { SESSION_EXPIRED_ERROR } from "../auth/authFetch";
 
 type ParameterId = "heartRate" | "respiratoryRate" | "spo2" | "temperature";
 
 type StudyFormData = {
   title: string;
-  code: string;
   startDate: string;
   studyType: string;
   dataEntryMode: string;
@@ -105,13 +106,6 @@ function getInitialParameterSettings(): Record<ParameterId, ParameterSetting> {
       frequency: "La 15 minute",
     },
   };
-}
-
-function generateStudyCode() {
-  const lastCode = Number(localStorage.getItem("lastStudyCode") ?? "104");
-  const nextCode = lastCode + 1;
-  localStorage.setItem("lastStudyCode", String(nextCode));
-  return `VS-${String(nextCode).padStart(3, "0")}`;
 }
 
 function ArrowLeftIcon() {
@@ -425,14 +419,13 @@ export default function CreateStudyPage() {
   const currentUser = getCurrentUser();
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [stepError, setStepError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdStudyCode, setCreatedStudyCode] = useState("");
 
   const [formData, setFormData] = useState<StudyFormData>(() => ({
     title: "",
-    code: generateStudyCode(),
     startDate: "",
     studyType: "",
     dataEntryMode: "",
@@ -446,19 +439,6 @@ export default function CreateStudyPage() {
   const selectedParameters = parameterDefinitions.filter(
     (parameter) => parameterSettings[parameter.id].selected
   );
-
-  function closeMobileSidebar() {
-    setIsMobileSidebarOpen(false);
-  }
-
-  function handleSidebarBrandClick() {
-    if (window.innerWidth <= 1023) {
-      setIsMobileSidebarOpen(false);
-      return;
-    }
-
-    setIsSidebarCollapsed((prev) => !prev);
-  }
 
   function updateField<K extends keyof StudyFormData>(
     field: K,
@@ -531,39 +511,62 @@ export default function CreateStudyPage() {
     setCurrentStep((prev) => prev - 1);
   }
 
-  function handleCreateStudy() {
+  async function handleCreateStudy() {
     const stepOneError = validateStepOne();
     if (stepOneError) {
       setStepError(stepOneError);
       setCurrentStep(1);
       return;
     }
-
+  
     const stepTwoError = validateStepTwo();
     if (stepTwoError) {
       setStepError(stepTwoError);
       setCurrentStep(2);
       return;
     }
-
+  
     setStepError("");
-    setSuccessMessage(
-      "Interfața este gata. Următorul pas este conectarea acestei pagini la backend pentru salvarea studiului."
-    );
-
-    setTimeout(() => {
-      navigate("/cercetator/studii");
-    }, 1500);
+    setSuccessMessage("");
+    setIsSubmitting(true);
+  
+    try {
+      const payload = {
+        title: formData.title.trim(),
+        start_date: formData.startDate ? `${formData.startDate}T00:00:00` : null,
+        study_type: formData.studyType,
+        data_entry_mode: formData.dataEntryMode,
+        status: formData.status,
+        description: formData.description.trim() || null,
+        parameters: selectedParameters.map((parameter) => ({
+          parameter_key: parameter.id,
+          measurement_frequency: parameterSettings[parameter.id].frequency,
+        })),
+      };
+  
+      const createdStudy = await createStudyRequest(payload);
+  
+      setCreatedStudyCode(createdStudy.code ?? "");
+      setSuccessMessage(
+        `Studiul ${createdStudy.code ?? ""} a fost creat cu succes.`
+      );
+  
+      setTimeout(() => {
+        navigate("/cercetator/studii");
+      }, 1500);
+    } catch (error) {
+      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) {
+        return;
+      }
     
-    console.log("Payload creare studiu:", {
-      ...formData,
-      researcher: currentUser?.full_name ?? null,
-      parameters: selectedParameters.map((parameter) => ({
-        name: parameter.name,
-        unit: parameter.unit,
-        frequency: parameterSettings[parameter.id].frequency,
-      })),
-    });
+      if (error instanceof Error) {
+        setStepError(error.message);
+      } else {
+        setStepError("A apărut o eroare la crearea studiului.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function formatDate(value: string) {
@@ -873,7 +876,7 @@ export default function CreateStudyPage() {
 
               <div>
                 <dt>Cod de studiu</dt>
-                <dd>{formData.code || "—"}</dd>
+                <dd>{createdStudyCode || "Se generează automat la salvare"}</dd>
               </div>
 
               <div>
@@ -1032,8 +1035,9 @@ export default function CreateStudyPage() {
                       type="button"
                       className="create-study-primary-btn"
                       onClick={handleCreateStudy}
+                      disabled={isSubmitting}
                     >
-                      <span>Creează studiul</span>
+                      <span>{isSubmitting ? "Se creează..." : "Creează studiul"}</span>
                       <CheckIcon />
                     </button>
                   )}

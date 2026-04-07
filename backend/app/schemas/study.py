@@ -10,6 +10,15 @@ from app.models.study import (
     StudyType,
 )
 
+ROMANIAN_FREQUENCY_MAP = {
+    "Continuu": MeasurementFrequency.CONTINUOUS,
+    "La 1 minut": MeasurementFrequency.EVERY_1_MIN,
+    "La 5 minute": MeasurementFrequency.EVERY_5_MIN,
+    "La 15 minute": MeasurementFrequency.EVERY_15_MIN,
+    "La 30 minute": MeasurementFrequency.EVERY_30_MIN,
+    "La 1 oră": MeasurementFrequency.EVERY_1_HOUR,
+}
+
 def normalize_to_utc(value: datetime | None) -> datetime | None:
     if value is None:
         return None
@@ -31,6 +40,13 @@ class SortOrder(str, Enum):
 class StudyParameterCreate(BaseModel):
     parameter_key: StudyParameterKey
     measurement_frequency: MeasurementFrequency
+
+    @field_validator("measurement_frequency", mode="before")
+    @classmethod
+    def normalize_measurement_frequency(cls, value):
+        if isinstance(value, str):
+            return ROMANIAN_FREQUENCY_MAP.get(value, value)
+        return value
 
 
 class StudyCreate(BaseModel):

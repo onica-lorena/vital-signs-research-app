@@ -173,6 +173,7 @@ export default function ResearcherPage() {
       activeItem="dashboard"
       title="Pagina principală"
       subtitle="Privire de ansamblu asupra studiilor, datelor colectate și rezultatelor recente."
+      /*
       actions={
         <button
           type="button"
@@ -182,7 +183,7 @@ export default function ResearcherPage() {
           <PlusIcon />
           <span>Creează studiu</span>
         </button>
-      }
+      }*/
     >
       <section className="researcher-stats">
         {stats.map((item) => {
@@ -209,10 +210,14 @@ export default function ResearcherPage() {
           <div className="researcher-card__header">
             <h2 className="researcher-card__title">Studiile mele</h2>
 
-            <button type="button" className="researcher-action-link">
-              <span>Vezi toate studiile</span>
-              <ChevronRightIcon />
-            </button>
+          <button
+            type="button"
+            className="researcher-action-link"
+            onClick={() => navigate("/cercetator/studii")}
+          >
+            <span>Vezi toate studiile</span>
+            <ChevronRightIcon />
+          </button>
           </div>
 
           <div className="researcher-table-wrap">

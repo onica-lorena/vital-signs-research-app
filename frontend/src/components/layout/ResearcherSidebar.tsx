@@ -1,6 +1,9 @@
 import { useNavigate } from "react-router-dom";
+import type { ComponentType } from "react";
 import LogoIcon from "../welcome/LogoIcon";
 import { clearAuthSession } from "../../auth/authStorage";
+
+export type NavigationKey = "dashboard" | "studii" | "analize" | "rapoarte";
 
 type ResearcherSidebarProps = {
   activeItem: NavigationKey;
@@ -8,8 +11,6 @@ type ResearcherSidebarProps = {
   onToggleBrandClick: () => void;
   onCloseMobileSidebar: () => void;
 };
-
-type NavigationKey = "dashboard" | "studii" | "analize" | "rapoarte";
 
 function DashboardIcon() {
   return (
@@ -110,7 +111,7 @@ function LogoutIcon() {
 const navigationItems: {
   key: NavigationKey;
   label: string;
-  icon: React.ComponentType;
+  icon: ComponentType;
 }[] = [
   { key: "dashboard", label: "Pagina principală", icon: DashboardIcon },
   { key: "studii", label: "Studii", icon: StudyIcon },
