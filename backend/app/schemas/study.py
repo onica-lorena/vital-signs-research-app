@@ -1,7 +1,6 @@
-from datetime import datetime
-from math import ceil
-
-from pydantic import BaseModel, ConfigDict, Field
+from datetime import datetime, timezone
+from enum import Enum
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.study import (
     DataEntryMode,
@@ -11,6 +10,23 @@ from app.models.study import (
     StudyType,
 )
 
+def normalize_to_utc(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+
+    if value.tzinfo is None or value.utcoffset() is None:
+        return value.replace(tzinfo=timezone.utc)
+
+    return value.astimezone(timezone.utc)
+
+class StudySortBy(str, Enum):
+    CREATED_AT = "created_at"
+    TITLE = "title"
+
+
+class SortOrder(str, Enum):
+    ASC = "asc"
+    DESC = "desc"
 
 class StudyParameterCreate(BaseModel):
     parameter_key: StudyParameterKey
@@ -26,6 +42,24 @@ class StudyCreate(BaseModel):
     description: str | None = None
     parameters: list[StudyParameterCreate] = Field(min_length=1)
 
+    @field_validator("start_date")
+    @classmethod
+    def validate_start_date(cls, value: datetime | None) -> datetime | None:
+        return normalize_to_utc(value)
+
+class StudyUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=3, max_length=255)
+    start_date: datetime | None = None
+    study_type: StudyType | None = None
+    data_entry_mode: DataEntryMode | None = None
+    status: StudyStatus | None = None
+    description: str | None = None
+    parameters: list[StudyParameterCreate] | None = Field(default=None, min_length=1)
+
+    @field_validator("start_date")
+    @classmethod
+    def validate_start_date(cls, value: datetime | None) -> datetime | None:
+        return normalize_to_utc(value)
 
 class StudyParameterResponse(BaseModel):
     id: int

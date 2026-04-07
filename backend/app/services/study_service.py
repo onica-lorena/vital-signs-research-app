@@ -1,33 +1,25 @@
 from math import ceil
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.study import (
-    DataEntryMode,
-    MeasurementFrequency,
     Study,
     StudyParameter,
-    StudyParameterKey,
     StudyStatus,
     StudyType,
 )
-from app.schemas.study import StudyCreate
+from app.models.user import User, UserRole
+from app.schemas.study import SortOrder, StudyCreate, StudySortBy, StudyUpdate
 
 
 def generate_next_study_code(db: Session) -> str:
-    stmt = select(Study.code).order_by(Study.id.desc()).limit(1)
-    last_code = db.execute(stmt).scalar_one_or_none()
+    next_number = db.execute(
+        text("SELECT nextval('study_code_seq')")
+    ).scalar_one()
 
-    if not last_code:
-        return "VS-001"
-
-    try:
-        numeric_part = int(last_code.split("-")[-1])
-    except (ValueError, IndexError):
-        numeric_part = 0
-
-    return f"VS-{numeric_part + 1:03d}"
+    return f"VS-{next_number:03d}"
 
 
 def create_study(db: Session, researcher_id: int, payload: StudyCreate) -> Study:
@@ -51,9 +43,13 @@ def create_study(db: Session, researcher_id: int, payload: StudyCreate) -> Study
             )
         )
 
-    db.add(study)
-    db.commit()
-    db.refresh(study)
+    try:
+        db.add(study)
+        db.commit()
+        db.refresh(study)
+    except IntegrityError:
+        db.rollback()
+        raise
 
     return db.execute(
         select(Study)
@@ -70,19 +66,117 @@ def get_study_by_id_for_user(db: Session, study_id: int, researcher_id: int) -> 
     )
     return db.execute(stmt).scalar_one_or_none()
 
-
-def list_studies_for_user(
+def get_study_by_id_for_current_user(
     db: Session,
-    researcher_id: int,
+    study_id: int,
+    current_user: User,
+) -> Study | None:
+    stmt = select(Study).options(selectinload(Study.parameters)).where(Study.id == study_id)
+
+    if current_user.role == UserRole.RESEARCHER:
+        stmt = stmt.where(Study.researcher_id == current_user.id)
+
+    return db.execute(stmt).scalar_one_or_none()
+
+
+def update_study_for_current_user(
+    db: Session,
+    study_id: int,
+    current_user: User,
+    payload: StudyUpdate,
+) -> Study | None:
+    study = get_study_by_id_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+
+    if study is None:
+        return None
+
+    data = payload.model_dump(exclude_unset=True)
+
+    if "title" in data:
+        study.title = data["title"]
+
+    if "start_date" in data:
+        study.start_date = data["start_date"]
+
+    if "study_type" in data:
+        study.study_type = data["study_type"]
+
+    if "data_entry_mode" in data:
+        study.data_entry_mode = data["data_entry_mode"]
+
+    if "status" in data:
+        study.status = data["status"]
+
+    if "description" in data:
+        study.description = data["description"]
+
+    if "parameters" in data:
+        study.parameters.clear()
+
+        for parameter in payload.parameters or []:
+            study.parameters.append(
+                StudyParameter(
+                    parameter_key=parameter.parameter_key,
+                    measurement_frequency=parameter.measurement_frequency,
+                )
+            )
+
+    try:
+        db.add(study)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise
+
+    return get_study_by_id_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+
+
+def delete_study_for_current_user(
+    db: Session,
+    study_id: int,
+    current_user: User,
+) -> bool:
+    study = get_study_by_id_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+
+    if study is None:
+        return False
+
+    try:
+        db.delete(study)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise
+
+    return True
+
+def list_studies_for_current_user(
+    db: Session,
+    current_user: User,
     page: int,
     page_size: int,
     search: str | None = None,
     status: StudyStatus | None = None,
     study_type: StudyType | None = None,
-    sort_by: str = "created_at",
-    sort_order: str = "desc",
+    sort_by: StudySortBy = StudySortBy.CREATED_AT,
+    sort_order: SortOrder = SortOrder.DESC,
 ):
-    filters = [Study.researcher_id == researcher_id]
+    filters = []
+
+    if current_user.role == UserRole.RESEARCHER:
+        filters.append(Study.researcher_id == current_user.id)
 
     if search:
         search_term = f"%{search.strip()}%"
@@ -102,11 +196,13 @@ def list_studies_for_user(
     count_stmt = select(func.count()).select_from(Study).where(*filters)
     total = db.execute(count_stmt).scalar_one()
 
-    sort_column = Study.created_at if sort_by == "created_at" else Study.title
-    if sort_order == "asc":
-        order_clause = sort_column.asc()
-    else:
-        order_clause = sort_column.desc()
+    sort_columns = {
+        StudySortBy.CREATED_AT: Study.created_at,
+        StudySortBy.TITLE: Study.title,
+    }
+    
+    sort_column = sort_columns[sort_by]
+    order_clause = sort_column.asc() if sort_order == SortOrder.ASC else sort_column.desc()
 
     stmt = (
         select(Study)
