@@ -74,7 +74,7 @@
 .login-intro h1 {
   margin: 0;
   color: var(--login-text-main);
-  font-size: clamp(2.1rem, 3.7vw, 3rem);
+  font-size: clamp(2.1rem, 3.5vw, 2.5rem);
   line-height: 1.04;
   font-weight: 900;
   letter-spacing: -0.04em;
@@ -84,7 +84,7 @@
   margin: 0.8rem auto 0;
   max-width: 520px;
   color: var(--login-text-soft);
-  font-size: 0.98rem;
+  font-size: 0.9rem;
   line-height: 1.5;
   font-weight: 600;
 }

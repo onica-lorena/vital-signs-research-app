@@ -7,6 +7,7 @@ import StudiesPage from "../pages/StudiesPage";
 import CreateStudyPage from "../pages/CreateStudyPage";
 import ProtectedRoute from "./ProtectedRoute";
 import { getCurrentUser } from "../auth/authStorage";
+import ParticipantCodePage from "../pages/ParticipantCodePage";
 
 function RoleRedirect() {
   const user = getCurrentUser();
@@ -67,6 +68,8 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       />
+
+      <Route path="/participant/cod-studiu" element={<ParticipantCodePage />} />
       
 
       <Route path="/redirect" element={<RoleRedirect />} />

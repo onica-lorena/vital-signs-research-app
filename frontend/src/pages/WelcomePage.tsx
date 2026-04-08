@@ -184,12 +184,16 @@ export default function WelcomePage() {
             Introdu codul studiului pentru a trimite datele solicitate și a urmări progresul.
           </p>
 
-            <button className="welcome-card__button welcome-card__button--secondary" type="button">
-              <span className="welcome-card__button-icon">
-                <SearchIcon />
-              </span>
-              Introdu codul
-            </button>
+          <button
+            className="welcome-card__button welcome-card__button--secondary"
+            type="button"
+            onClick={() => navigate("/participant/cod-studiu")}
+          >
+            <span className="welcome-card__button-icon">
+              <SearchIcon />
+            </span>
+            Introdu codul
+          </button>
           </article>
         </div>
       </section>
