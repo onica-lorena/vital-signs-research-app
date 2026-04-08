@@ -12,9 +12,10 @@ export default function LogoIcon() {
           M49 26
           C49 20 54 15 60 15
           C66 15 71 20 71 26
-          L71 43
-          L60 51
-          L49 43
+          L71 40
+          Q71 45 66.5 47.5
+          Q60 51 53.5 47.5
+          Q49 45 49 40
           Z
         "
         fill="#39A28D"
@@ -28,7 +29,9 @@ export default function LogoIcon() {
           C18 44 13 48 13 55
           C13 62 18 66 26 66
           L39 66
-          L50 55
+          Q44 66 46.5 61.5
+          Q50 55 46.5 48.5
+          Q44 44 39 44
           Z
         "
         fill="#F28A38"
@@ -42,7 +45,9 @@ export default function LogoIcon() {
           C102 44 107 48 107 55
           C107 62 102 66 94 66
           L81 66
-          L70 55
+          Q76 66 73.5 61.5
+          Q70 55 73.5 48.5
+          Q76 44 81 44
           Z
         "
         fill="#9FCB8B"
@@ -51,9 +56,10 @@ export default function LogoIcon() {
       {/* element jos */}
       <path
         d="
-          M49 69
-          L60 61
-          L71 69
+          M49 72
+          Q49 67 53.5 64.5
+          Q60 61 66.5 64.5
+          Q71 67 71 72
           L71 88
           C71 94 66 99 60 99
           C54 99 49 94 49 88
