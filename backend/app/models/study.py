@@ -91,6 +91,12 @@ class Study(Base):
         cascade="all, delete-orphan",
     )
 
+    participants: Mapped[list["StudyParticipant"]] = relationship(
+        "StudyParticipant",
+        back_populates="study",
+        cascade="all, delete-orphan",
+    )
+
 
 class StudyParameter(Base):
     __tablename__ = "study_parameters"

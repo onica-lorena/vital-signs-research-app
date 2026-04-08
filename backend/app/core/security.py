@@ -19,7 +19,11 @@ def get_password_hash(password: str) -> str:
     return password_hash.hash(password)
 
 
-def create_access_token(subject: str, role: str, expires_delta: timedelta | None = None) -> str:
+def create_access_token(
+    subject: str,
+    expires_delta: timedelta | None = None,
+    extra_claims: dict[str, Any] | None = None,
+) -> str:
     if expires_delta is None:
         expires_delta = timedelta(minutes=settings.access_token_expire_minutes)
 
@@ -27,9 +31,11 @@ def create_access_token(subject: str, role: str, expires_delta: timedelta | None
 
     to_encode: dict[str, Any] = {
         "sub": subject,
-        "role": role,
         "exp": expire,
     }
+
+    if extra_claims:
+        to_encode.update(extra_claims)
 
     encoded_jwt = jwt.encode(
         to_encode,
@@ -53,3 +59,7 @@ def generate_password_reset_token() -> str:
 
 def hash_password_reset_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def generate_numeric_pin(length: int = 6) -> str:
+    return "".join(secrets.choice("0123456789") for _ in range(length))

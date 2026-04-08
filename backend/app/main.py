@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes.auth import router as auth_router
 from app.api.routes.users import router as users_router
 from app.api.routes.studies import router as studies_router
+from app.api.routes.study_participants import router as study_participants_router
+from app.api.routes.participant_access import router as participant_access_router
 
 app = FastAPI(
     title="VitalStudy API",
@@ -24,6 +26,9 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(studies_router)
+app.include_router(study_participants_router)
+app.include_router(participant_access_router)
+
 
 @app.get("/")
 def healthcheck():

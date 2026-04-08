@@ -4,6 +4,7 @@ from sqlalchemy import func, or_, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
+from app.models.participant import ParticipantSubmission, StudyParticipant
 from app.models.study import (
     Study,
     StudyParameter,
@@ -66,6 +67,7 @@ def get_study_by_id_for_user(db: Session, study_id: int, researcher_id: int) -> 
     )
     return db.execute(stmt).scalar_one_or_none()
 
+
 def get_study_by_id_for_current_user(
     db: Session,
     study_id: int,
@@ -96,6 +98,28 @@ def update_study_for_current_user(
 
     data = payload.model_dump(exclude_unset=True)
 
+    if "parameters" in data:
+        submissions_count = db.execute(
+            select(func.count())
+            .select_from(ParticipantSubmission)
+            .where(ParticipantSubmission.study_id == study.id)
+        ).scalar_one()
+
+        if submissions_count > 0:
+            raise ValueError(
+                "Parametrii studiului nu mai pot fi modificați după ce există date trimise de participanți."
+            )
+
+        study.parameters.clear()
+
+        for parameter in payload.parameters or []:
+            study.parameters.append(
+                StudyParameter(
+                    parameter_key=parameter.parameter_key,
+                    measurement_frequency=parameter.measurement_frequency,
+                )
+            )
+
     if "title" in data:
         study.title = data["title"]
 
@@ -113,17 +137,6 @@ def update_study_for_current_user(
 
     if "description" in data:
         study.description = data["description"]
-
-    if "parameters" in data:
-        study.parameters.clear()
-
-        for parameter in payload.parameters or []:
-            study.parameters.append(
-                StudyParameter(
-                    parameter_key=parameter.parameter_key,
-                    measurement_frequency=parameter.measurement_frequency,
-                )
-            )
 
     try:
         db.add(study)
@@ -153,6 +166,18 @@ def delete_study_for_current_user(
     if study is None:
         return False
 
+    if study.status != StudyStatus.DRAFT:
+        raise ValueError("Doar studiile aflate în starea de ciornă pot fi șterse.")
+
+    participants_count = db.execute(
+        select(func.count())
+        .select_from(StudyParticipant)
+        .where(StudyParticipant.study_id == study.id)
+    ).scalar_one()
+
+    if participants_count > 0:
+        raise ValueError("Studiul are participanți înregistrați și nu mai poate fi șters.")
+
     try:
         db.delete(study)
         db.commit()
@@ -161,6 +186,7 @@ def delete_study_for_current_user(
         raise
 
     return True
+
 
 def list_studies_for_current_user(
     db: Session,
@@ -200,7 +226,7 @@ def list_studies_for_current_user(
         StudySortBy.CREATED_AT: Study.created_at,
         StudySortBy.TITLE: Study.title,
     }
-    
+
     sort_column = sort_columns[sort_by]
     order_clause = sort_column.asc() if sort_order == SortOrder.ASC else sort_column.desc()
 

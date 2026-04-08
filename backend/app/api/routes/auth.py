@@ -49,7 +49,10 @@ def login(
 
     access_token = create_access_token(
         subject=str(user.id),
-        role=user.role.value,
+        extra_claims={
+            "role": user.role.value,
+            "token_type": "user",
+        },
     )
 
     return TokenResponse(
@@ -89,8 +92,6 @@ def forgot_password(
     db.add(user)
     db.commit()
 
-    # TODO: aici vei trimite tokenul prin email.
-    # Pentru testare locală, îl poți vedea în terminal:
     print(f"[RESET PASSWORD TOKEN] {email}: {raw_token}")
 
     return MessageResponse(message=generic_message)

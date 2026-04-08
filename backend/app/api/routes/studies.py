@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, require_role
+from app.api.deps import require_role
 from app.core.database import get_db
 from app.models.study import StudyStatus, StudyType
 from app.models.user import User, UserRole
@@ -106,6 +106,7 @@ def get_study_by_id(
 
     return StudyDetailResponse.model_validate(study)
 
+
 @router.patch("/{study_id}", response_model=StudyDetailResponse, summary="Actualizează studiu")
 def update_study(
     study_id: int,
@@ -113,12 +114,18 @@ def update_study(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
 ):
-    study = update_study_for_current_user(
-        db=db,
-        study_id=study_id,
-        current_user=current_user,
-        payload=payload,
-    )
+    try:
+        study = update_study_for_current_user(
+            db=db,
+            study_id=study_id,
+            current_user=current_user,
+            payload=payload,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
 
     if study is None:
         raise HTTPException(
@@ -128,17 +135,24 @@ def update_study(
 
     return StudyDetailResponse.model_validate(study)
 
+
 @router.delete("/{study_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Șterge studiu")
 def delete_study(
     study_id: int,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
 ):
-    deleted = delete_study_for_current_user(
-        db=db,
-        study_id=study_id,
-        current_user=current_user,
-    )
+    try:
+        deleted = delete_study_for_current_user(
+            db=db,
+            study_id=study_id,
+            current_user=current_user,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
 
     if not deleted:
         raise HTTPException(
