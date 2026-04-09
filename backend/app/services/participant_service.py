@@ -12,16 +12,20 @@ from app.core.security import (
     verify_password,
 )
 from app.models.participant import (
+    ParticipantDataEntryMethod,
     ParticipantSubmission,
+    ParticipantSubmissionSession,
     ParticipantSubmissionStatus,
     ParticipantSubmissionValue,
     ParticipantStatus,
     StudyParticipant,
 )
-from app.models.study import Study, StudyStatus
+from app.models.study import DataEntryMode, Study, StudyStatus
 from app.models.user import User, UserRole
 from app.schemas.participant import (
+    ParticipantBulkSubmissionCreate,
     ParticipantCreate,
+    ParticipantHistoryStatus,
     ParticipantSubmissionCreate,
     ParticipantSubmissionUpdate,
     ParticipantUpdate,
@@ -57,6 +61,47 @@ def get_participant_by_id(db: Session, participant_id: int) -> StudyParticipant 
         .where(StudyParticipant.id == participant_id)
     )
     return db.execute(stmt).scalar_one_or_none()
+
+
+def _ensure_allowed_entry_method(
+    participant: StudyParticipant,
+    method: ParticipantDataEntryMethod,
+) -> None:
+    study_mode = participant.study.data_entry_mode
+
+    if study_mode == DataEntryMode.MANUAL:
+        if method != ParticipantDataEntryMethod.MANUAL:
+            raise ValueError("Acest studiu permite doar introducerea manuală a datelor.")
+        return
+
+    if study_mode == DataEntryMode.CSV:
+        if method != ParticipantDataEntryMethod.CSV:
+            raise ValueError("Acest studiu permite doar încărcarea datelor prin CSV.")
+        return
+
+    if study_mode == DataEntryMode.MANUAL_CSV:
+        if participant.selected_data_entry_method is None:
+            participant.selected_data_entry_method = method
+            return
+
+        if participant.selected_data_entry_method != method:
+            raise ValueError("Metoda de furnizare a fost deja aleasă și nu mai poate fi schimbată.")
+        
+
+def _validate_submission_values_against_study(
+    participant: StudyParticipant,
+    values,
+) -> None:
+    allowed_parameters = {parameter.parameter_key for parameter in participant.study.parameters}
+    submitted_parameters = {item.parameter_key for item in values}
+
+    invalid_parameters = submitted_parameters - allowed_parameters
+    if invalid_parameters:
+        raise ValueError("Ai trimis parametri care nu fac parte din configurația studiului.")
+
+    missing_parameters = allowed_parameters - submitted_parameters
+    if missing_parameters:
+        raise ValueError("Trebuie să trimiți toate valorile configurate pentru acest studiu.")        
 
 
 def generate_next_participant_code_for_study(db: Session, study_id: int) -> str:
@@ -415,6 +460,7 @@ def build_participant_context(participant: StudyParticipant) -> dict:
             "submissions_count": participant.submissions_count,
             "last_login_at": participant.last_login_at,
             "last_submission_at": participant.last_submission_at,
+            "selected_data_entry_method": participant.selected_data_entry_method,
         },
         "study": {
             "id": study.id,
@@ -433,14 +479,72 @@ def build_participant_context(participant: StudyParticipant) -> dict:
     }
 
 
+def set_participant_data_entry_method(
+    db: Session,
+    participant: StudyParticipant,
+    method: ParticipantDataEntryMethod,
+) -> StudyParticipant:
+    participant = get_participant_by_id(db, participant.id)
+    if participant is None:
+        raise LookupError("Participantul nu a fost găsit.")
+
+    if participant.study.status != StudyStatus.ACTIVE:
+        raise ValueError("Studiul nu este disponibil pentru alegerea metodei de furnizare.")
+
+    if participant.status != ParticipantStatus.ACTIVE:
+        raise ValueError("Doar participanții activi pot selecta metoda de furnizare.")
+
+    if participant.study.data_entry_mode != DataEntryMode.MANUAL_CSV:
+        raise ValueError("Acest studiu nu permite alegerea între mai multe metode de furnizare.")
+
+    if (
+        participant.selected_data_entry_method is not None
+        and participant.selected_data_entry_method != method
+    ):
+        raise ValueError("Metoda de furnizare a fost deja aleasă și nu mai poate fi schimbată.")
+
+    participant.selected_data_entry_method = method
+
+    db.add(participant)
+    db.commit()
+
+    updated = get_participant_by_id(db, participant.id)
+    if updated is None:
+        raise LookupError("Participantul nu a mai putut fi încărcat.")
+
+    return updated
+
+
 def get_participant_submission_by_id(
     db: Session,
     submission_id: int,
 ) -> ParticipantSubmission | None:
     stmt = (
         select(ParticipantSubmission)
-        .options(selectinload(ParticipantSubmission.values))
+        .options(
+            selectinload(ParticipantSubmission.values),
+            selectinload(ParticipantSubmission.session),
+        )
         .where(ParticipantSubmission.id == submission_id)
+    )
+    return db.execute(stmt).scalar_one_or_none()
+
+
+def get_participant_submission_session_for_current_participant(
+    db: Session,
+    session_id: int,
+    participant: StudyParticipant,
+) -> ParticipantSubmissionSession | None:
+    stmt = (
+        select(ParticipantSubmissionSession)
+        .options(
+            selectinload(ParticipantSubmissionSession.submissions)
+            .selectinload(ParticipantSubmission.values)
+        )
+        .where(
+            ParticipantSubmissionSession.id == session_id,
+            ParticipantSubmissionSession.participant_id == participant.id,
+        )
     )
     return db.execute(stmt).scalar_one_or_none()
 
@@ -460,18 +564,31 @@ def create_participant_submission(
     if participant.status != ParticipantStatus.ACTIVE:
         raise ValueError("Doar participanții activi pot trimite date.")
 
-    allowed_parameters = {parameter.parameter_key for parameter in participant.study.parameters}
-    submitted_parameters = {item.parameter_key for item in payload.values}
+    _ensure_allowed_entry_method(participant, ParticipantDataEntryMethod.MANUAL)
+    _validate_submission_values_against_study(participant, payload.values)
 
-    invalid_parameters = submitted_parameters - allowed_parameters
-    if invalid_parameters:
-        raise ValueError("Ai trimis parametri care nu fac parte din configurația studiului.")
+    now = datetime.now(timezone.utc)
+    measured_moments = [item.measured_at or now for item in payload.values]
+
+    session = ParticipantSubmissionSession(
+        study_id=participant.study_id,
+        participant_id=participant.id,
+        entry_method=ParticipantDataEntryMethod.MANUAL,
+        source_file_name=None,
+        records_count=1,
+        interval_start=min(measured_moments),
+        interval_end=max(measured_moments),
+    )
 
     submission = ParticipantSubmission(
         study_id=participant.study_id,
         participant_id=participant.id,
+        session=session,
+        entry_method=ParticipantDataEntryMethod.MANUAL,
         status=ParticipantSubmissionStatus.SUBMITTED,
-        notes=payload.notes,
+        participant_notes=payload.participant_notes,
+        review_notes=None,
+        reviewed_at=None,
     )
 
     for item in payload.values:
@@ -479,13 +596,14 @@ def create_participant_submission(
             ParticipantSubmissionValue(
                 parameter_key=item.parameter_key,
                 value=item.value,
-                measured_at=item.measured_at or datetime.now(timezone.utc),
+                measured_at=item.measured_at or now,
             )
         )
 
     participant.submissions_count = (participant.submissions_count or 0) + 1
-    participant.last_submission_at = datetime.now(timezone.utc)
+    participant.last_submission_at = now
 
+    db.add(session)
     db.add(submission)
     db.add(participant)
     db.commit()
@@ -495,6 +613,84 @@ def create_participant_submission(
         raise LookupError("Înregistrarea creată nu a mai putut fi încărcată.")
 
     return created_submission
+
+
+def create_bulk_participant_submissions(
+    db: Session,
+    participant: StudyParticipant,
+    payload: ParticipantBulkSubmissionCreate,
+) -> ParticipantSubmissionSession:
+    participant = get_participant_by_id(db, participant.id)
+    if participant is None:
+        raise LookupError("Participantul nu a fost găsit.")
+
+    if participant.study.status != StudyStatus.ACTIVE:
+        raise ValueError("Studiul nu este activ și nu poate primi date noi.")
+
+    if participant.status != ParticipantStatus.ACTIVE:
+        raise ValueError("Doar participanții activi pot trimite date.")
+
+    _ensure_allowed_entry_method(participant, ParticipantDataEntryMethod.CSV)
+
+    now = datetime.now(timezone.utc)
+    all_measured_moments: list[datetime] = []
+
+    session = ParticipantSubmissionSession(
+        study_id=participant.study_id,
+        participant_id=participant.id,
+        entry_method=ParticipantDataEntryMethod.CSV,
+        source_file_name=payload.source_file_name,
+        records_count=len(payload.submissions),
+    )
+
+    for item in payload.submissions:
+        _validate_submission_values_against_study(participant, item.values)
+
+        row_moments = [value.measured_at or now for value in item.values]
+        all_measured_moments.extend(row_moments)
+
+        submission = ParticipantSubmission(
+            study_id=participant.study_id,
+            participant_id=participant.id,
+            session=session,
+            entry_method=ParticipantDataEntryMethod.CSV,
+            status=ParticipantSubmissionStatus.SUBMITTED,
+            participant_notes=payload.participant_notes,
+            review_notes=None,
+            reviewed_at=None,
+        )
+
+        for value in item.values:
+            submission.values.append(
+                ParticipantSubmissionValue(
+                    parameter_key=value.parameter_key,
+                    value=value.value,
+                    measured_at=value.measured_at or now,
+                )
+            )
+
+        db.add(submission)
+
+    if all_measured_moments:
+        session.interval_start = min(all_measured_moments)
+        session.interval_end = max(all_measured_moments)
+
+    participant.submissions_count = (participant.submissions_count or 0) + len(payload.submissions)
+    participant.last_submission_at = now
+
+    db.add(session)
+    db.add(participant)
+    db.commit()
+
+    created_session = get_participant_submission_session_for_current_participant(
+        db=db,
+        session_id=session.id,
+        participant=participant,
+    )
+    if created_session is None:
+        raise LookupError("Sesiunea creată nu a mai putut fi încărcată.")
+
+    return created_session
 
 
 def list_participant_submissions_for_current_participant(
@@ -513,8 +709,13 @@ def list_participant_submissions_for_current_participant(
     return [
         {
             "id": submission.id,
+            "session_id": submission.session_id,
+            "entry_method": submission.entry_method,
             "status": submission.status,
             "submitted_at": submission.submitted_at,
+            "reviewed_at": submission.reviewed_at,
+            "participant_notes": submission.participant_notes,
+            "review_notes": submission.review_notes,
             "values_count": len(submission.values),
         }
         for submission in submissions
@@ -528,7 +729,10 @@ def get_participant_submission_for_current_participant(
 ) -> ParticipantSubmission | None:
     stmt = (
         select(ParticipantSubmission)
-        .options(selectinload(ParticipantSubmission.values))
+        .options(
+            selectinload(ParticipantSubmission.values),
+            selectinload(ParticipantSubmission.session),
+        )
         .where(
             ParticipantSubmission.id == submission_id,
             ParticipantSubmission.participant_id == participant.id,
@@ -678,8 +882,16 @@ def update_study_submission_for_current_user(
     if "status" in data and data["status"] is not None:
         submission.status = data["status"]
 
-    if "notes" in data:
-        submission.notes = data["notes"]
+        if submission.status in {
+            ParticipantSubmissionStatus.VALIDATED,
+            ParticipantSubmissionStatus.REJECTED,
+        }:
+            submission.reviewed_at = datetime.now(timezone.utc)
+        elif submission.status == ParticipantSubmissionStatus.SUBMITTED:
+            submission.reviewed_at = None
+
+    if "review_notes" in data:
+        submission.review_notes = data["review_notes"]
 
     db.add(submission)
     db.commit()
@@ -764,6 +976,223 @@ def _timeline_label(submitted_at: datetime, group_by: str) -> str:
         return submitted_at.strftime("%Y-%m")
 
     raise ValueError("group_by trebuie să fie day, week sau month.")
+
+
+def _get_session_status_summary(session: ParticipantSubmissionSession) -> ParticipantHistoryStatus:
+    statuses = {submission.status for submission in session.submissions}
+
+    if statuses == {ParticipantSubmissionStatus.VALIDATED}:
+        return ParticipantHistoryStatus.VALIDATED
+
+    if statuses == {ParticipantSubmissionStatus.REJECTED}:
+        return ParticipantHistoryStatus.REJECTED
+
+    if ParticipantSubmissionStatus.SUBMITTED in statuses:
+        return ParticipantHistoryStatus.SUBMITTED
+
+    return ParticipantHistoryStatus.PARTIAL
+
+
+def _get_session_status_counts(session: ParticipantSubmissionSession) -> dict[str, int]:
+    validated_count = sum(1 for item in session.submissions if item.status == ParticipantSubmissionStatus.VALIDATED)
+    pending_count = sum(1 for item in session.submissions if item.status == ParticipantSubmissionStatus.SUBMITTED)
+    rejected_count = sum(1 for item in session.submissions if item.status == ParticipantSubmissionStatus.REJECTED)
+
+    return {
+        "validated_count": validated_count,
+        "pending_count": pending_count,
+        "rejected_count": rejected_count,
+    }
+
+
+def _get_common_participant_notes(session: ParticipantSubmissionSession) -> str | None:
+    notes = {item.participant_notes for item in session.submissions if item.participant_notes}
+    return next(iter(notes)) if len(notes) == 1 else None
+
+
+def _get_common_review_notes(session: ParticipantSubmissionSession) -> str | None:
+    notes = {item.review_notes for item in session.submissions if item.review_notes}
+    return next(iter(notes)) if len(notes) == 1 else None
+
+
+def _get_latest_reviewed_at(session: ParticipantSubmissionSession) -> datetime | None:
+    reviewed_values = [item.reviewed_at for item in session.submissions if item.reviewed_at is not None]
+    return max(reviewed_values) if reviewed_values else None
+
+
+def get_participant_history_summary(
+    db: Session,
+    participant: StudyParticipant,
+) -> dict:
+    stmt = (
+        select(ParticipantSubmissionSession)
+        .options(selectinload(ParticipantSubmissionSession.submissions))
+        .where(ParticipantSubmissionSession.participant_id == participant.id)
+        .order_by(ParticipantSubmissionSession.created_at.desc())
+    )
+
+    sessions = list(db.execute(stmt).scalars().all())
+
+    validated_sessions = 0
+    pending_sessions = 0
+    rejected_sessions = 0
+    partial_sessions = 0
+
+    for session in sessions:
+        status_summary = _get_session_status_summary(session)
+
+        if status_summary == ParticipantHistoryStatus.VALIDATED:
+            validated_sessions += 1
+        elif status_summary == ParticipantHistoryStatus.SUBMITTED:
+            pending_sessions += 1
+        elif status_summary == ParticipantHistoryStatus.REJECTED:
+            rejected_sessions += 1
+        elif status_summary == ParticipantHistoryStatus.PARTIAL:
+            partial_sessions += 1
+
+    last_submission_at = sessions[0].created_at if sessions else None
+
+    return {
+        "total_sessions": len(sessions),
+        "validated_sessions": validated_sessions,
+        "pending_sessions": pending_sessions,
+        "rejected_sessions": rejected_sessions,
+        "partial_sessions": partial_sessions,
+        "last_submission_at": last_submission_at,
+    }
+
+
+def list_participant_submission_sessions(
+    db: Session,
+    participant: StudyParticipant,
+    page: int,
+    page_size: int,
+    entry_method: ParticipantDataEntryMethod | None = None,
+    status_summary: ParticipantHistoryStatus | None = None,
+    search: str | None = None,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
+) -> tuple[list[dict], int, int]:
+    stmt = (
+        select(ParticipantSubmissionSession)
+        .options(
+            selectinload(ParticipantSubmissionSession.submissions)
+            .selectinload(ParticipantSubmission.values)
+        )
+        .where(ParticipantSubmissionSession.participant_id == participant.id)
+        .order_by(ParticipantSubmissionSession.created_at.desc())
+    )
+
+    sessions = list(db.execute(stmt).scalars().all())
+
+    filtered: list[ParticipantSubmissionSession] = []
+
+    for session in sessions:
+        session_status = _get_session_status_summary(session)
+
+        if entry_method is not None and session.entry_method != entry_method:
+            continue
+
+        if status_summary is not None and session_status != status_summary:
+            continue
+
+        if start_date is not None and session.created_at < start_date:
+            continue
+
+        if end_date is not None and session.created_at > end_date:
+            continue
+
+        if search:
+            term = search.strip().lower()
+            filename = (session.source_file_name or "").lower()
+
+            if term not in filename and term not in str(session.id):
+                continue
+
+        filtered.append(session)
+
+    total = len(filtered)
+    total_pages = ceil(total / page_size) if total > 0 else 1
+
+    page_items = filtered[(page - 1) * page_size : page * page_size]
+
+    items: list[dict] = []
+
+    for session in page_items:
+        counts = _get_session_status_counts(session)
+
+        items.append(
+            {
+                "id": session.id,
+                "entry_method": session.entry_method,
+                "status_summary": _get_session_status_summary(session),
+                "submitted_at": session.created_at,
+                "interval_start": session.interval_start,
+                "interval_end": session.interval_end,
+                "records_count": session.records_count,
+                "validated_count": counts["validated_count"],
+                "pending_count": counts["pending_count"],
+                "rejected_count": counts["rejected_count"],
+                "source_file_name": session.source_file_name,
+            }
+        )
+
+    return items, total, total_pages
+
+
+def get_participant_submission_session_detail(
+    db: Session,
+    session_id: int,
+    participant: StudyParticipant,
+) -> dict | None:
+    session = get_participant_submission_session_for_current_participant(
+        db=db,
+        session_id=session_id,
+        participant=participant,
+    )
+
+    if session is None:
+        return None
+
+    counts = _get_session_status_counts(session)
+
+    records = [
+        {
+            "submission_id": submission.id,
+            "status": submission.status,
+            "submitted_at": submission.submitted_at,
+            "reviewed_at": submission.reviewed_at,
+            "review_notes": submission.review_notes,
+            "values": [
+                {
+                    "id": value.id,
+                    "parameter_key": value.parameter_key,
+                    "value": value.value,
+                    "measured_at": value.measured_at,
+                }
+                for value in submission.values
+            ],
+        }
+        for submission in sorted(session.submissions, key=lambda item: item.submitted_at, reverse=True)
+    ]
+
+    return {
+        "id": session.id,
+        "entry_method": session.entry_method,
+        "status_summary": _get_session_status_summary(session),
+        "submitted_at": session.created_at,
+        "interval_start": session.interval_start,
+        "interval_end": session.interval_end,
+        "records_count": session.records_count,
+        "validated_count": counts["validated_count"],
+        "pending_count": counts["pending_count"],
+        "rejected_count": counts["rejected_count"],
+        "source_file_name": session.source_file_name,
+        "participant_notes": _get_common_participant_notes(session),
+        "review_notes": _get_common_review_notes(session),
+        "reviewed_at": _get_latest_reviewed_at(session),
+        "records": records,
+    }
 
 
 def get_study_data_timeline(

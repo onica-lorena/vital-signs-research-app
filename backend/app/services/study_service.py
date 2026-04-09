@@ -151,7 +151,27 @@ def update_study_for_current_user(
     if "study_type" in data:
         study.study_type = data["study_type"]
 
-    if "data_entry_mode" in data:
+    if "data_entry_mode" in data and data["data_entry_mode"] != study.data_entry_mode:
+        submissions_count = db.execute(
+            select(func.count())
+            .select_from(ParticipantSubmission)
+            .where(ParticipantSubmission.study_id == study.id)
+        ).scalar_one()
+
+        locked_participants_count = db.execute(
+            select(func.count())
+            .select_from(StudyParticipant)
+            .where(
+                StudyParticipant.study_id == study.id,
+                StudyParticipant.selected_data_entry_method.is_not(None),
+            )
+        ).scalar_one()
+
+        if submissions_count > 0 or locked_participants_count > 0:
+            raise ValueError(
+                "Modul de furnizare a datelor nu mai poate fi modificat după ce participanții au ales metoda sau au trimis deja date."
+            )
+
         study.data_entry_mode = data["data_entry_mode"]
 
     if "status" in data:

@@ -21,6 +21,9 @@ class ParticipantSubmissionStatus(str, Enum):
     VALIDATED = "validated"
     REJECTED = "rejected"
 
+class ParticipantDataEntryMethod(str, Enum):
+    MANUAL = "manual"
+    CSV = "csv"
 
 class StudyParticipant(Base):
     __tablename__ = "study_participants"
@@ -45,6 +48,17 @@ class StudyParticipant(Base):
         SqlEnum(ParticipantStatus, name="participant_status"),
         nullable=False,
         default=ParticipantStatus.INVITED,
+    )
+
+    selected_data_entry_method: Mapped[ParticipantDataEntryMethod | None] = mapped_column(
+        SqlEnum(ParticipantDataEntryMethod, name="participant_data_entry_method"),
+        nullable=True,
+    )
+
+    sessions: Mapped[list["ParticipantSubmissionSession"]] = relationship(
+        "ParticipantSubmissionSession",
+        back_populates="participant",
+        cascade="all, delete-orphan",
     )
 
     pin_hash: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -75,6 +89,57 @@ class StudyParticipant(Base):
         cascade="all, delete-orphan",
     )
 
+class ParticipantSubmissionSession(Base):
+    __tablename__ = "participant_submission_sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+
+    study_id: Mapped[int] = mapped_column(
+        ForeignKey("studies.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    participant_id: Mapped[int] = mapped_column(
+        ForeignKey("study_participants.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    entry_method: Mapped[ParticipantDataEntryMethod] = mapped_column(
+        SqlEnum(ParticipantDataEntryMethod, name="participant_data_entry_method"),
+        nullable=False,
+    )
+
+    source_file_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    records_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    interval_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    interval_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    participant: Mapped["StudyParticipant"] = relationship(
+        "StudyParticipant",
+        back_populates="sessions",
+    )
+
+    submissions: Mapped[list["ParticipantSubmission"]] = relationship(
+        "ParticipantSubmission",
+        back_populates="session",
+        cascade="all, delete-orphan",
+    )
 
 class ParticipantSubmission(Base):
     __tablename__ = "participant_submissions"
@@ -93,13 +158,31 @@ class ParticipantSubmission(Base):
         index=True,
     )
 
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("participant_submission_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
     status: Mapped[ParticipantSubmissionStatus] = mapped_column(
         SqlEnum(ParticipantSubmissionStatus, name="participant_submission_status"),
         nullable=False,
         default=ParticipantSubmissionStatus.SUBMITTED,
     )
 
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    entry_method: Mapped[ParticipantDataEntryMethod] = mapped_column(
+        SqlEnum(ParticipantDataEntryMethod, name="participant_data_entry_method"),
+        nullable=False,
+    )
+
+    participant_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    review_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    session: Mapped["ParticipantSubmissionSession"] = relationship(
+        "ParticipantSubmissionSession",
+        back_populates="submissions",
+    )
 
     submitted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

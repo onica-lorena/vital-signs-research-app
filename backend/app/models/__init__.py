@@ -1,7 +1,6 @@
-from app.models.user import User
-from app.models.study import Study, StudyParameter
 from app.models.participant import (
     StudyParticipant,
+    ParticipantSubmissionSession,
     ParticipantSubmission,
     ParticipantSubmissionValue,
 )
@@ -13,4 +12,5 @@ __all__ = [
     "StudyParticipant",
     "ParticipantSubmission",
     "ParticipantSubmissionValue",
+    "ParticipantSubmissionSession",
 ]

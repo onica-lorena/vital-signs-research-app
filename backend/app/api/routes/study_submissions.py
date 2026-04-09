@@ -38,11 +38,14 @@ def _to_study_submission_list_item(
 
     return StudySubmissionListItemResponse(
         id=submission.id,
+        session_id=submission.session_id,
         participant_id=participant.id,
         participant_code=participant.participant_code,
         participant_full_name=participant.full_name,
+        entry_method=submission.entry_method,
         status=submission.status,
         submitted_at=submission.submitted_at,
+        reviewed_at=submission.reviewed_at,
         values_count=len(submission.values),
     )
 
@@ -54,12 +57,16 @@ def _to_study_submission_detail(
 
     return StudySubmissionDetailResponse(
         id=submission.id,
+        session_id=submission.session_id,
         participant_id=participant.id,
         participant_code=participant.participant_code,
         participant_full_name=participant.full_name,
+        entry_method=submission.entry_method,
         status=submission.status,
-        notes=submission.notes,
+        participant_notes=submission.participant_notes,
+        review_notes=submission.review_notes,
         submitted_at=submission.submitted_at,
+        reviewed_at=submission.reviewed_at,
         values=[
             ParticipantSubmissionValueResponse.model_validate(value)
             for value in submission.values

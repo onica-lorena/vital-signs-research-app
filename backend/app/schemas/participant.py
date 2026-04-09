@@ -1,8 +1,13 @@
 from datetime import datetime, timezone
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.models.participant import ParticipantStatus, ParticipantSubmissionStatus
+from app.models.participant import (
+    ParticipantDataEntryMethod,
+    ParticipantStatus,
+    ParticipantSubmissionStatus,
+)
 from app.models.study import DataEntryMode, MeasurementFrequency, StudyParameterKey, StudyStatus
 
 
@@ -14,6 +19,12 @@ def normalize_to_utc(value: datetime | None) -> datetime | None:
         return value.replace(tzinfo=timezone.utc)
 
     return value.astimezone(timezone.utc)
+
+class ParticipantHistoryStatus(str, Enum):
+    SUBMITTED = "submitted"
+    VALIDATED = "validated"
+    REJECTED = "rejected"
+    PARTIAL = "partial"
 
 
 class ParticipantCreate(BaseModel):
@@ -202,6 +213,7 @@ class ParticipantPortalParticipantInfo(BaseModel):
     submissions_count: int
     last_login_at: datetime | None = None
     last_submission_at: datetime | None = None
+    selected_data_entry_method: ParticipantDataEntryMethod | None = None
 
 
 class ParticipantPortalContextResponse(BaseModel):
@@ -214,6 +226,13 @@ class ParticipantAccessTokenResponse(BaseModel):
     access_token: str
     token_type: str
     context: ParticipantPortalContextResponse
+
+class ParticipantDataEntryMethodSelectRequest(BaseModel):
+    method: ParticipantDataEntryMethod
+
+
+class ParticipantDataEntryMethodSelectResponse(BaseModel):
+    selected_data_entry_method: ParticipantDataEntryMethod
 
 
 class ParticipantSubmissionValueCreate(BaseModel):
@@ -228,10 +247,10 @@ class ParticipantSubmissionValueCreate(BaseModel):
 
 
 class ParticipantSubmissionCreate(BaseModel):
-    notes: str | None = None
+    participant_notes: str | None = None
     values: list[ParticipantSubmissionValueCreate] = Field(min_length=1)
 
-    @field_validator("notes", mode="before")
+    @field_validator("participant_notes", mode="before")
     @classmethod
     def normalize_notes(cls, value):
         if isinstance(value, str):
@@ -245,7 +264,32 @@ class ParticipantSubmissionCreate(BaseModel):
         if len(keys) != len(set(keys)):
             raise ValueError("Nu poți trimite același parametru de mai multe ori în aceeași înregistrare.")
         return self
+    
 
+class ParticipantBulkSubmissionItem(BaseModel):
+    values: list[ParticipantSubmissionValueCreate] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def ensure_unique_parameter_keys(self):
+        keys = [item.parameter_key for item in self.values]
+        if len(keys) != len(set(keys)):
+            raise ValueError("Nu poți trimite același parametru de mai multe ori în aceeași înregistrare.")
+        return self
+
+
+class ParticipantBulkSubmissionCreate(BaseModel):
+    source_file_name: str | None = Field(default=None, max_length=255)
+    participant_notes: str | None = None
+    submissions: list[ParticipantBulkSubmissionItem] = Field(min_length=1)
+
+    @field_validator("source_file_name", "participant_notes", mode="before")
+    @classmethod
+    def normalize_strings(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+    
 
 class ParticipantSubmissionValueResponse(BaseModel):
     id: int
@@ -258,25 +302,35 @@ class ParticipantSubmissionValueResponse(BaseModel):
 
 class ParticipantSubmissionListItemResponse(BaseModel):
     id: int
+    session_id: int
+    entry_method: ParticipantDataEntryMethod
     status: ParticipantSubmissionStatus
     submitted_at: datetime
+    reviewed_at: datetime | None = None
+    participant_notes: str | None = None
+    review_notes: str | None = None
     values_count: int
 
 
 class ParticipantSubmissionDetailResponse(BaseModel):
     id: int
+    session_id: int
+    entry_method: ParticipantDataEntryMethod
     status: ParticipantSubmissionStatus
-    notes: str | None = None
+    participant_notes: str | None = None
+    review_notes: str | None = None
     submitted_at: datetime
+    reviewed_at: datetime | None = None
     values: list[ParticipantSubmissionValueResponse]
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class ParticipantSubmissionUpdate(BaseModel):
     status: ParticipantSubmissionStatus
-    notes: str | None = None
+    review_notes: str | None = None
 
-    @field_validator("notes", mode="before")
+    @field_validator("review_notes", mode="before")
     @classmethod
     def normalize_notes(cls, value):
         if isinstance(value, str):
@@ -287,11 +341,14 @@ class ParticipantSubmissionUpdate(BaseModel):
 
 class StudySubmissionListItemResponse(BaseModel):
     id: int
+    session_id: int
     participant_id: int
     participant_code: str
     participant_full_name: str
+    entry_method: ParticipantDataEntryMethod
     status: ParticipantSubmissionStatus
     submitted_at: datetime
+    reviewed_at: datetime | None = None
     values_count: int
 
 
@@ -305,12 +362,16 @@ class StudySubmissionListResponse(BaseModel):
 
 class StudySubmissionDetailResponse(BaseModel):
     id: int
+    session_id: int
     participant_id: int
     participant_code: str
     participant_full_name: str
+    entry_method: ParticipantDataEntryMethod
     status: ParticipantSubmissionStatus
-    notes: str | None = None
+    participant_notes: str | None = None
+    review_notes: str | None = None
     submitted_at: datetime
+    reviewed_at: datetime | None = None
     values: list[ParticipantSubmissionValueResponse]
 
 
@@ -328,3 +389,61 @@ class StudyDataTimelinePointResponse(BaseModel):
     label: str
     submissions_count: int
     values_count: int
+
+
+class ParticipantHistorySummaryResponse(BaseModel):
+    total_sessions: int
+    validated_sessions: int
+    pending_sessions: int
+    rejected_sessions: int
+    partial_sessions: int
+    last_submission_at: datetime | None = None
+
+
+class ParticipantSubmissionSessionRecordResponse(BaseModel):
+    submission_id: int
+    status: ParticipantSubmissionStatus
+    submitted_at: datetime
+    reviewed_at: datetime | None = None
+    review_notes: str | None = None
+    values: list[ParticipantSubmissionValueResponse]
+
+
+class ParticipantSubmissionSessionListItemResponse(BaseModel):
+    id: int
+    entry_method: ParticipantDataEntryMethod
+    status_summary: ParticipantHistoryStatus
+    submitted_at: datetime
+    interval_start: datetime | None = None
+    interval_end: datetime | None = None
+    records_count: int
+    validated_count: int
+    pending_count: int
+    rejected_count: int
+    source_file_name: str | None = None
+
+
+class ParticipantSubmissionSessionListResponse(BaseModel):
+    items: list[ParticipantSubmissionSessionListItemResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class ParticipantSubmissionSessionDetailResponse(BaseModel):
+    id: int
+    entry_method: ParticipantDataEntryMethod
+    status_summary: ParticipantHistoryStatus
+    submitted_at: datetime
+    interval_start: datetime | None = None
+    interval_end: datetime | None = None
+    records_count: int
+    validated_count: int
+    pending_count: int
+    rejected_count: int
+    source_file_name: str | None = None
+    participant_notes: str | None = None
+    review_notes: str | None = None
+    reviewed_at: datetime | None = None
+    records: list[ParticipantSubmissionSessionRecordResponse]
