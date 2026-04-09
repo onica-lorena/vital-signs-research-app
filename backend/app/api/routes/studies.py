@@ -1,6 +1,9 @@
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -16,6 +19,10 @@ from app.schemas.study import (
     StudySortBy,
     StudySummaryResponse,
     StudyUpdate,
+)
+from app.services.participant_service import (
+    get_participants_summary_for_study,
+    get_study_data_summary,
 )
 from app.services.study_service import (
     create_study as create_study_service,
@@ -84,6 +91,53 @@ def get_studies_summary(
 ):
     summary = get_studies_summary_for_user(db, researcher_id=current_user.id)
     return StudySummaryResponse(**summary)
+
+
+@router.get("/{study_id}/export", summary="Exportă datele esențiale ale studiului")
+def export_study(
+    study_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+):
+    study = get_study_by_id_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+
+    if study is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Studiul nu a fost găsit.",
+        )
+
+    participants_summary = get_participants_summary_for_study(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+
+    data_summary = get_study_data_summary(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+
+    payload = {
+        "exported_at": datetime.now(timezone.utc),
+        "study": StudyDetailResponse.model_validate(study).model_dump(mode="json"),
+        "participants_summary": participants_summary,
+        "data_summary": data_summary,
+    }
+
+    filename = f"{study.code.lower()}-export.json"
+
+    return JSONResponse(
+        content=jsonable_encoder(payload),
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        },
+    )
 
 
 @router.get("/{study_id}", response_model=StudyDetailResponse, summary="Detalii studiu")

@@ -5,14 +5,21 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.participant import ParticipantSubmission, StudyParticipant
-from app.models.study import (
-    Study,
-    StudyParameter,
-    StudyStatus,
-    StudyType,
-)
+from app.models.study import Study, StudyParameter, StudyStatus, StudyType
 from app.models.user import User, UserRole
 from app.schemas.study import SortOrder, StudyCreate, StudySortBy, StudyUpdate
+
+
+def _study_detail_options():
+    return (
+        selectinload(Study.parameters),
+        selectinload(Study.researcher),
+    )
+
+
+def _validate_study_date_interval(start_date, end_date) -> None:
+    if start_date is not None and end_date is not None and end_date < start_date:
+        raise ValueError("Data de finalizare trebuie să fie după data de început.")
 
 
 def generate_next_study_code(db: Session) -> str:
@@ -24,6 +31,8 @@ def generate_next_study_code(db: Session) -> str:
 
 
 def create_study(db: Session, researcher_id: int, payload: StudyCreate) -> Study:
+    _validate_study_date_interval(payload.start_date, payload.end_date)
+
     study = Study(
         title=payload.title,
         code=generate_next_study_code(db),
@@ -32,6 +41,12 @@ def create_study(db: Session, researcher_id: int, payload: StudyCreate) -> Study
         data_entry_mode=payload.data_entry_mode,
         status=payload.status,
         start_date=payload.start_date,
+        end_date=payload.end_date,
+        institution=payload.institution,
+        target_participants=payload.target_participants,
+        collection_rules=payload.collection_rules,
+        inclusion_criteria=payload.inclusion_criteria,
+        administrative_notes=payload.administrative_notes,
         participants_count=0,
         researcher_id=researcher_id,
     )
@@ -54,7 +69,7 @@ def create_study(db: Session, researcher_id: int, payload: StudyCreate) -> Study
 
     return db.execute(
         select(Study)
-        .options(selectinload(Study.parameters))
+        .options(*_study_detail_options())
         .where(Study.id == study.id)
     ).scalar_one()
 
@@ -62,7 +77,7 @@ def create_study(db: Session, researcher_id: int, payload: StudyCreate) -> Study
 def get_study_by_id_for_user(db: Session, study_id: int, researcher_id: int) -> Study | None:
     stmt = (
         select(Study)
-        .options(selectinload(Study.parameters))
+        .options(*_study_detail_options())
         .where(Study.id == study_id, Study.researcher_id == researcher_id)
     )
     return db.execute(stmt).scalar_one_or_none()
@@ -73,7 +88,11 @@ def get_study_by_id_for_current_user(
     study_id: int,
     current_user: User,
 ) -> Study | None:
-    stmt = select(Study).options(selectinload(Study.parameters)).where(Study.id == study_id)
+    stmt = (
+        select(Study)
+        .options(*_study_detail_options())
+        .where(Study.id == study_id)
+    )
 
     if current_user.role == UserRole.RESEARCHER:
         stmt = stmt.where(Study.researcher_id == current_user.id)
@@ -126,6 +145,9 @@ def update_study_for_current_user(
     if "start_date" in data:
         study.start_date = data["start_date"]
 
+    if "end_date" in data:
+        study.end_date = data["end_date"]
+
     if "study_type" in data:
         study.study_type = data["study_type"]
 
@@ -137,6 +159,23 @@ def update_study_for_current_user(
 
     if "description" in data:
         study.description = data["description"]
+
+    if "institution" in data:
+        study.institution = data["institution"]
+
+    if "target_participants" in data:
+        study.target_participants = data["target_participants"]
+
+    if "collection_rules" in data:
+        study.collection_rules = data["collection_rules"]
+
+    if "inclusion_criteria" in data:
+        study.inclusion_criteria = data["inclusion_criteria"]
+
+    if "administrative_notes" in data:
+        study.administrative_notes = data["administrative_notes"]
+
+    _validate_study_date_interval(study.start_date, study.end_date)
 
     try:
         db.add(study)

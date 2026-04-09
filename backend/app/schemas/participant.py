@@ -271,3 +271,60 @@ class ParticipantSubmissionDetailResponse(BaseModel):
     values: list[ParticipantSubmissionValueResponse]
 
     model_config = ConfigDict(from_attributes=True)
+
+class ParticipantSubmissionUpdate(BaseModel):
+    status: ParticipantSubmissionStatus
+    notes: str | None = None
+
+    @field_validator("notes", mode="before")
+    @classmethod
+    def normalize_notes(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class StudySubmissionListItemResponse(BaseModel):
+    id: int
+    participant_id: int
+    participant_code: str
+    participant_full_name: str
+    status: ParticipantSubmissionStatus
+    submitted_at: datetime
+    values_count: int
+
+
+class StudySubmissionListResponse(BaseModel):
+    items: list[StudySubmissionListItemResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class StudySubmissionDetailResponse(BaseModel):
+    id: int
+    participant_id: int
+    participant_code: str
+    participant_full_name: str
+    status: ParticipantSubmissionStatus
+    notes: str | None = None
+    submitted_at: datetime
+    values: list[ParticipantSubmissionValueResponse]
+
+
+class StudyDataSummaryResponse(BaseModel):
+    total_submissions: int
+    total_values: int
+    submitted_count: int
+    validated_count: int
+    rejected_count: int
+    participants_with_submissions: int
+    last_submission_at: datetime | None = None
+
+
+class StudyDataTimelinePointResponse(BaseModel):
+    label: str
+    submissions_count: int
+    values_count: int

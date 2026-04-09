@@ -1,10 +1,17 @@
+from __future__ import annotations
+
 from datetime import datetime, timezone
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum as SqlEnum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.participant import StudyParticipant
+    from app.models.user import User
 
 
 class StudyType(str, Enum):
@@ -65,6 +72,13 @@ class Study(Base):
     )
 
     start_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    end_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    institution: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    target_participants: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    collection_rules: Mapped[str | None] = mapped_column(Text, nullable=True)
+    inclusion_criteria: Mapped[str | None] = mapped_column(Text, nullable=True)
+    administrative_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -86,6 +100,11 @@ class Study(Base):
         index=True,
     )
 
+    researcher: Mapped["User"] = relationship(
+        "User",
+        back_populates="studies",
+    )
+
     parameters: Mapped[list["StudyParameter"]] = relationship(
         back_populates="study",
         cascade="all, delete-orphan",
@@ -96,6 +115,18 @@ class Study(Base):
         back_populates="study",
         cascade="all, delete-orphan",
     )
+
+    @property
+    def can_delete(self) -> bool:
+        return self.status == StudyStatus.DRAFT and self.participants_count == 0
+
+    @property
+    def delete_restriction_reason(self) -> str | None:
+        if self.status != StudyStatus.DRAFT:
+            return "Doar studiile aflate în starea de ciornă pot fi șterse."
+        if self.participants_count > 0:
+            return "Studiul are participanți înregistrați și nu mai poate fi șters."
+        return None
 
 
 class StudyParameter(Base):

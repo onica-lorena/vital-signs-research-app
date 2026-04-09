@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from math import ceil
 
 from sqlalchemy import func, or_, select, text
@@ -23,6 +23,7 @@ from app.models.user import User, UserRole
 from app.schemas.participant import (
     ParticipantCreate,
     ParticipantSubmissionCreate,
+    ParticipantSubmissionUpdate,
     ParticipantUpdate,
 )
 
@@ -563,3 +564,250 @@ def list_participant_submissions_for_researcher(
     )
 
     return list(db.execute(stmt).scalars().all())
+
+def get_study_submission_for_current_user(
+    db: Session,
+    study_id: int,
+    submission_id: int,
+    current_user: User,
+) -> ParticipantSubmission | None:
+    study = get_study_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+    if study is None:
+        raise LookupError("Studiul nu a fost găsit.")
+
+    stmt = (
+        select(ParticipantSubmission)
+        .options(
+            selectinload(ParticipantSubmission.values),
+            selectinload(ParticipantSubmission.participant),
+        )
+        .where(
+            ParticipantSubmission.id == submission_id,
+            ParticipantSubmission.study_id == study_id,
+        )
+    )
+    return db.execute(stmt).scalar_one_or_none()
+
+
+def list_study_submissions(
+    db: Session,
+    study_id: int,
+    current_user: User,
+    page: int,
+    page_size: int,
+    search: str | None = None,
+    status: ParticipantSubmissionStatus | None = None,
+    participant_id: int | None = None,
+) -> tuple[list[ParticipantSubmission], int, int]:
+    study = get_study_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+    if study is None:
+        raise LookupError("Studiul nu a fost găsit.")
+
+    filters = [ParticipantSubmission.study_id == study_id]
+
+    if participant_id is not None:
+        filters.append(ParticipantSubmission.participant_id == participant_id)
+
+    if status is not None:
+        filters.append(ParticipantSubmission.status == status)
+
+    if search:
+        search_term = f"%{search.strip()}%"
+        filters.append(
+            or_(
+                StudyParticipant.full_name.ilike(search_term),
+                StudyParticipant.participant_code.ilike(search_term),
+                StudyParticipant.participant_identifier.ilike(search_term),
+            )
+        )
+
+    count_stmt = (
+        select(func.count())
+        .select_from(ParticipantSubmission)
+        .join(StudyParticipant, StudyParticipant.id == ParticipantSubmission.participant_id)
+        .where(*filters)
+    )
+    total = db.execute(count_stmt).scalar_one()
+
+    stmt = (
+        select(ParticipantSubmission)
+        .join(StudyParticipant, StudyParticipant.id == ParticipantSubmission.participant_id)
+        .options(
+            selectinload(ParticipantSubmission.values),
+            selectinload(ParticipantSubmission.participant),
+        )
+        .where(*filters)
+        .order_by(ParticipantSubmission.submitted_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+
+    items = list(db.execute(stmt).scalars().all())
+    total_pages = ceil(total / page_size) if total > 0 else 1
+
+    return items, total, total_pages
+
+
+def update_study_submission_for_current_user(
+    db: Session,
+    study_id: int,
+    submission_id: int,
+    current_user: User,
+    payload: ParticipantSubmissionUpdate,
+) -> ParticipantSubmission | None:
+    submission = get_study_submission_for_current_user(
+        db=db,
+        study_id=study_id,
+        submission_id=submission_id,
+        current_user=current_user,
+    )
+
+    if submission is None:
+        return None
+
+    data = payload.model_dump(exclude_unset=True)
+
+    if "status" in data and data["status"] is not None:
+        submission.status = data["status"]
+
+    if "notes" in data:
+        submission.notes = data["notes"]
+
+    db.add(submission)
+    db.commit()
+
+    return get_study_submission_for_current_user(
+        db=db,
+        study_id=study_id,
+        submission_id=submission_id,
+        current_user=current_user,
+    )
+
+
+def get_study_data_summary(
+    db: Session,
+    study_id: int,
+    current_user: User,
+) -> dict:
+    study = get_study_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+    if study is None:
+        raise LookupError("Studiul nu a fost găsit.")
+
+    total_submissions = db.execute(
+        select(func.count())
+        .select_from(ParticipantSubmission)
+        .where(ParticipantSubmission.study_id == study_id)
+    ).scalar_one()
+
+    total_values = db.execute(
+        select(func.count())
+        .select_from(ParticipantSubmissionValue)
+        .join(
+            ParticipantSubmission,
+            ParticipantSubmission.id == ParticipantSubmissionValue.submission_id,
+        )
+        .where(ParticipantSubmission.study_id == study_id)
+    ).scalar_one()
+
+    grouped_rows = db.execute(
+        select(ParticipantSubmission.status, func.count())
+        .where(ParticipantSubmission.study_id == study_id)
+        .group_by(ParticipantSubmission.status)
+    ).all()
+
+    grouped = {row[0]: row[1] for row in grouped_rows}
+
+    participants_with_submissions = db.execute(
+        select(func.count(func.distinct(ParticipantSubmission.participant_id)))
+        .where(ParticipantSubmission.study_id == study_id)
+    ).scalar_one()
+
+    last_submission_at = db.execute(
+        select(func.max(ParticipantSubmission.submitted_at))
+        .where(ParticipantSubmission.study_id == study_id)
+    ).scalar_one()
+
+    return {
+        "total_submissions": total_submissions,
+        "total_values": total_values,
+        "submitted_count": grouped.get(ParticipantSubmissionStatus.SUBMITTED, 0),
+        "validated_count": grouped.get(ParticipantSubmissionStatus.VALIDATED, 0),
+        "rejected_count": grouped.get(ParticipantSubmissionStatus.REJECTED, 0),
+        "participants_with_submissions": participants_with_submissions,
+        "last_submission_at": last_submission_at,
+    }
+
+
+def _timeline_label(submitted_at: datetime, group_by: str) -> str:
+    submitted_at = submitted_at.astimezone(timezone.utc)
+
+    if group_by == "day":
+        return submitted_at.strftime("%Y-%m-%d")
+
+    if group_by == "week":
+        week_start = (submitted_at - timedelta(days=submitted_at.weekday())).date()
+        return week_start.isoformat()
+
+    if group_by == "month":
+        return submitted_at.strftime("%Y-%m")
+
+    raise ValueError("group_by trebuie să fie day, week sau month.")
+
+
+def get_study_data_timeline(
+    db: Session,
+    study_id: int,
+    current_user: User,
+    group_by: str = "week",
+) -> list[dict]:
+    study = get_study_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+    if study is None:
+        raise LookupError("Studiul nu a fost găsit.")
+
+    submissions = list(
+        db.execute(
+            select(ParticipantSubmission)
+            .options(selectinload(ParticipantSubmission.values))
+            .where(ParticipantSubmission.study_id == study_id)
+            .order_by(ParticipantSubmission.submitted_at.asc())
+        ).scalars().all()
+    )
+
+    timeline: dict[str, dict[str, int]] = {}
+
+    for submission in submissions:
+        label = _timeline_label(submission.submitted_at, group_by)
+
+        if label not in timeline:
+            timeline[label] = {
+                "submissions_count": 0,
+                "values_count": 0,
+            }
+
+        timeline[label]["submissions_count"] += 1
+        timeline[label]["values_count"] += len(submission.values)
+
+    return [
+        {
+            "label": label,
+            "submissions_count": values["submissions_count"],
+            "values_count": values["values_count"],
+        }
+        for label, values in timeline.items()
+    ]

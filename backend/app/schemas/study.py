@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from enum import Enum
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from app.models.study import (
     DataEntryMode,
@@ -19,6 +20,7 @@ ROMANIAN_FREQUENCY_MAP = {
     "La 1 oră": MeasurementFrequency.EVERY_1_HOUR,
 }
 
+
 def normalize_to_utc(value: datetime | None) -> datetime | None:
     if value is None:
         return None
@@ -28,6 +30,7 @@ def normalize_to_utc(value: datetime | None) -> datetime | None:
 
     return value.astimezone(timezone.utc)
 
+
 class StudySortBy(str, Enum):
     CREATED_AT = "created_at"
     TITLE = "title"
@@ -36,6 +39,15 @@ class StudySortBy(str, Enum):
 class SortOrder(str, Enum):
     ASC = "asc"
     DESC = "desc"
+
+
+class StudyResearcherResponse(BaseModel):
+    id: int
+    full_name: str
+    email: EmailStr
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class StudyParameterCreate(BaseModel):
     parameter_key: StudyParameterKey
@@ -52,30 +64,60 @@ class StudyParameterCreate(BaseModel):
 class StudyCreate(BaseModel):
     title: str = Field(min_length=3, max_length=255)
     start_date: datetime | None = None
+    end_date: datetime | None = None
     study_type: StudyType
     data_entry_mode: DataEntryMode
     status: StudyStatus = StudyStatus.DRAFT
     description: str | None = None
+
+    institution: str | None = Field(default=None, max_length=255)
+    target_participants: int | None = Field(default=None, ge=0)
+    collection_rules: str | None = None
+    inclusion_criteria: str | None = None
+    administrative_notes: str | None = None
+
     parameters: list[StudyParameterCreate] = Field(min_length=1)
 
-    @field_validator("start_date")
+    @field_validator("start_date", "end_date")
     @classmethod
-    def validate_start_date(cls, value: datetime | None) -> datetime | None:
+    def validate_dates(cls, value: datetime | None) -> datetime | None:
         return normalize_to_utc(value)
+
+    @model_validator(mode="after")
+    def validate_date_interval(self):
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValueError("Data de finalizare trebuie să fie după data de început.")
+        return self
+
 
 class StudyUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=3, max_length=255)
     start_date: datetime | None = None
+    end_date: datetime | None = None
     study_type: StudyType | None = None
     data_entry_mode: DataEntryMode | None = None
     status: StudyStatus | None = None
     description: str | None = None
+
+    institution: str | None = Field(default=None, max_length=255)
+    target_participants: int | None = Field(default=None, ge=0)
+    collection_rules: str | None = None
+    inclusion_criteria: str | None = None
+    administrative_notes: str | None = None
+
     parameters: list[StudyParameterCreate] | None = Field(default=None, min_length=1)
 
-    @field_validator("start_date")
+    @field_validator("start_date", "end_date")
     @classmethod
-    def validate_start_date(cls, value: datetime | None) -> datetime | None:
+    def validate_dates(cls, value: datetime | None) -> datetime | None:
         return normalize_to_utc(value)
+
+    @model_validator(mode="after")
+    def validate_partial_date_interval(self):
+        if self.start_date is not None and self.end_date is not None and self.end_date < self.start_date:
+            raise ValueError("Data de finalizare trebuie să fie după data de început.")
+        return self
+
 
 class StudyParameterResponse(BaseModel):
     id: int
@@ -106,11 +148,26 @@ class StudyDetailResponse(BaseModel):
     study_type: StudyType
     data_entry_mode: DataEntryMode
     status: StudyStatus
+
     start_date: datetime | None = None
+    end_date: datetime | None = None
+
+    institution: str | None = None
+    target_participants: int | None = None
+    collection_rules: str | None = None
+    inclusion_criteria: str | None = None
+    administrative_notes: str | None = None
+
     participants_count: int
     researcher_id: int
+    researcher: StudyResearcherResponse
+
     created_at: datetime
     updated_at: datetime
+
+    can_delete: bool
+    delete_restriction_reason: str | None = None
+
     parameters: list[StudyParameterResponse]
 
     model_config = ConfigDict(from_attributes=True)
