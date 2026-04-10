@@ -228,7 +228,7 @@ export default function ResearcherSidebar({
           <span className="researcher-sidebar__icon">
             <LogoutIcon />
           </span>
-          <span className="researcher-sidebar__footer-text">Logout</span>
+          <span className="researcher-sidebar__footer-text">Deconectare</span>
         </button>
       </div>
     </aside>

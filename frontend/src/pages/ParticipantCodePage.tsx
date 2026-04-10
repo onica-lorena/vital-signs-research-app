@@ -1,7 +1,14 @@
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import AppHeader from "../components/layout/AppHeader";
 import "../styles/participant-code.css";
+import {
+  getParticipantContext,
+  isParticipantAuthenticated,
+  saveParticipantSession,
+} from "../participant/participantStorage";
+import { participantLoginRequest } from "../participant/participantApi";
+import { getParticipantNextPath } from "../participant/participantRouting";
 
 function BackIcon() {
   return (
@@ -17,31 +24,6 @@ function BackIcon() {
   );
 }
 
-function ParticipantHeroIcon() {
-  return (
-    <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
-      <circle cx="27" cy="20" r="7" stroke="currentColor" strokeWidth="2.6" />
-      <path
-        d="M14 40.8C14 33.95 19.55 28.4 26.4 28.4H27.6C34.45 28.4 40 33.95 40 40.8"
-        stroke="currentColor"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-      />
-      <path
-        d="M43.1 28.2L50.1 30.95V35.95C50.1 41 46.95 45.42 42.2 47.15C37.45 45.42 34.3 41 34.3 35.95V30.95L41.3 28.2C41.86 27.98 42.54 27.98 43.1 28.2Z"
-        fill="#1f6a3f"
-      />
-      <path
-        d="M39.7 35.95L41.7 37.95L45.55 34.1"
-        stroke="#ffffff"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function CodeIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -49,6 +31,42 @@ function CodeIcon() {
       <path d="M16.8 4L15 20" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
       <path d="M4.2 9.1H19.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
       <path d="M3.2 15.1H18.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ParticipantIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="8.2" r="3.1" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M6.5 18.2C7.45 15.8 9.45 14.5 12 14.5C14.55 14.5 16.55 15.8 17.5 18.2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect
+        x="5.2"
+        y="10.2"
+        width="13.6"
+        height="9.2"
+        rx="2.4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M8.6 10.2V8.1C8.6 6.15 10.05 4.7 12 4.7C13.95 4.7 15.4 6.15 15.4 8.1V10.2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -87,68 +105,64 @@ function ShieldCheckIcon() {
   );
 }
 
-function LockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
-      <path
-        d="M8.5 10V7.8C8.5 5.72 10.18 4.04 12.25 4.04C14.32 4.04 16 5.72 16 7.8V10"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function HeartEaseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 19.1L5.8 12.9C4.15 11.25 4.15 8.65 5.8 7C7.45 5.35 10.05 5.35 11.7 7L12 7.3L12.3 7C13.95 5.35 16.55 5.35 18.2 7C19.85 8.65 19.85 11.25 18.2 12.9L12 19.1Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M7.9 12H10.1L11.45 9.7L13.05 14.15L14.2 12H16.15"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function ChartIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4.5 18.5H19.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M7.5 16.1V11.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M12 16.1V8.3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M16.5 16.1V6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export default function ParticipantCodePage() {
   const navigate = useNavigate();
-  const [studyCode, setStudyCode] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [searchParams] = useSearchParams();
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const sessionExpired = searchParams.get("reason") === "session_expired";
+  const studyCodeFromQuery = searchParams.get("studyCode")?.trim().toUpperCase() ?? "";
+
+  const [studyCode, setStudyCode] = useState(studyCodeFromQuery);
+  const [participantCode, setParticipantCode] = useState("");
+  const [pin, setPin] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isParticipantAuthenticated()) {
+      return;
+    }
+
+    const context = getParticipantContext();
+
+    if (context) {
+      navigate(getParticipantNextPath(context), { replace: true });
+    }
+  }, [navigate]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const normalizedCode = studyCode.trim().toUpperCase();
+    const normalizedStudyCode = studyCode.trim().toUpperCase();
+    const normalizedParticipantCode = participantCode.trim().toUpperCase();
+    const normalizedPin = pin.trim();
 
-    if (!normalizedCode) {
-      setErrorMessage("Introdu codul studiului primit de la cercetător.");
+    if (!normalizedStudyCode || !normalizedParticipantCode || !normalizedPin) {
+      setErrorMessage("Completează codul studiului, codul participantului și PIN-ul.");
       return;
     }
 
     setErrorMessage("");
-    console.log("Cod introdus:", normalizedCode);
+    setIsLoading(true);
+
+    try {
+      const response = await participantLoginRequest({
+        study_code: normalizedStudyCode,
+        participant_code: normalizedParticipantCode,
+        pin: normalizedPin,
+      });
+
+      saveParticipantSession(response.access_token, response.context);
+      navigate(getParticipantNextPath(response.context), { replace: true });
+    } catch (error) {
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("Autentificarea participantului a eșuat.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -174,23 +188,18 @@ export default function ParticipantCodePage() {
 
       <section className="participant-code-center">
         <div className="participant-code-intro">
-
           <h1>Bun venit la VitalStudy!</h1>
-
           <p>
-            Introdu codul de studiu pentru a te alătura
-            și a începe participarea.
+            Introdu codul studiului și datele tale de acces pentru a continua participarea.
           </p>
         </div>
 
         <article className="participant-code-card">
-          <div className="participant-code-card__header">
-            <h2>Introdu codul studiului</h2>
-            <p>
-              Codul este un identificator unic oferit de cercetătorul tău
-              pentru accesul în studiu.
+          {sessionExpired ? (
+            <p className="participant-code-message participant-code-message--warning">
+              Sesiunea participantului a expirat. Te rugăm să te autentifici din nou.
             </p>
-          </div>
+          ) : null}
 
           <form className="participant-code-form" onSubmit={handleSubmit}>
             <div className="participant-code-field">
@@ -204,7 +213,7 @@ export default function ParticipantCodePage() {
                 <input
                   id="study-code"
                   type="text"
-                  placeholder="Ex: VS-104"
+                  placeholder="Ex: VS-014"
                   value={studyCode}
                   onChange={(event) => {
                     setStudyCode(event.target.value.toUpperCase());
@@ -214,7 +223,53 @@ export default function ParticipantCodePage() {
                   }}
                   maxLength={20}
                   autoComplete="off"
-                  aria-invalid={Boolean(errorMessage)}
+                />
+              </div>
+            </div>
+
+            <div className="participant-code-field">
+              <label htmlFor="participant-code">Cod participant</label>
+
+              <div className="participant-code-input">
+                <span className="participant-code-input__icon">
+                  <ParticipantIcon />
+                </span>
+
+                <input
+                  id="participant-code"
+                  type="text"
+                  placeholder="Ex: P-001"
+                  value={participantCode}
+                  onChange={(event) => {
+                    setParticipantCode(event.target.value.toUpperCase());
+                    if (errorMessage) {
+                      setErrorMessage("");
+                    }
+                  }}
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+
+            <div className="participant-code-field">
+              <label htmlFor="participant-pin">PIN</label>
+
+              <div className="participant-code-input">
+                <span className="participant-code-input__icon">
+                  <LockIcon />
+                </span>
+
+                <input
+                  id="participant-pin"
+                  type="password"
+                  placeholder="Introdu PIN-ul"
+                  value={pin}
+                  onChange={(event) => {
+                    setPin(event.target.value);
+                    if (errorMessage) {
+                      setErrorMessage("");
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -223,8 +278,12 @@ export default function ParticipantCodePage() {
               <p className="participant-code-error">{errorMessage}</p>
             ) : null}
 
-            <button type="submit" className="participant-code-submit">
-              <span>Continuă</span>
+            <button
+              type="submit"
+              className="participant-code-submit"
+              disabled={isLoading}
+            >
+              <span>{isLoading ? "Se autentifică..." : "Continuă"}</span>
               <ArrowRightIcon />
             </button>
           </form>

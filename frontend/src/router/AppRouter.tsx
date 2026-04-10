@@ -8,6 +8,10 @@ import CreateStudyPage from "../pages/CreateStudyPage";
 import ProtectedRoute from "./ProtectedRoute";
 import { getCurrentUser } from "../auth/authStorage";
 import ParticipantCodePage from "../pages/ParticipantCodePage";
+import ParticipantChooseMethodPage from "../pages/ParticipantChooseMethodPage.tsx";
+import ParticipantManualPage from "../pages/ParticipantManualPage";
+import ParticipantCsvPage from "../pages/ParticipantCsvPage";
+import ParticipantProtectedRoute from "./ParticipantProtectedRoute";
 
 function RoleRedirect() {
   const user = getCurrentUser();
@@ -70,7 +74,33 @@ export default function AppRouter() {
       />
 
       <Route path="/participant/cod-studiu" element={<ParticipantCodePage />} />
-      
+
+      <Route
+        path="/participant/alegere-metoda"
+        element={
+          <ParticipantProtectedRoute>
+            <ParticipantChooseMethodPage />
+          </ParticipantProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/participant/furnizare-date/manual"
+        element={
+          <ParticipantProtectedRoute>
+            <ParticipantManualPage />
+          </ParticipantProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/participant/furnizare-date/csv"
+        element={
+          <ParticipantProtectedRoute>
+            <ParticipantCsvPage />
+          </ParticipantProtectedRoute>
+        }
+      />
 
       <Route path="/redirect" element={<RoleRedirect />} />
 

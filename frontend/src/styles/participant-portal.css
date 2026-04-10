@@ -1,0 +1,196 @@
+.participant-portal-page {
+  min-height: 100vh;
+  background: #f6f5f2;
+  padding: 18px 24px 24px;
+}
+
+.participant-portal-shell {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.participant-portal-link-btn {
+  border: none;
+  background: transparent;
+  color: #6b9b6f;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.participant-portal-card {
+  max-width: 780px;
+  margin: 28px auto 0;
+  padding: 24px;
+  border: 1px solid #e2e9e2;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 28px rgba(79, 108, 102, 0.07);
+}
+
+.participant-portal-card__header h1 {
+  margin: 0;
+  color: #123f45;
+  font-size: 1.9rem;
+  line-height: 1.1;
+  font-weight: 850;
+}
+
+.participant-portal-card__header p {
+  margin: 10px 0 0;
+  color: #66767b;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.participant-portal-message {
+  margin: 16px 0 0;
+  color: #66767b;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.participant-portal-message--error {
+  color: #c65a4b;
+}
+
+.participant-method-grid {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.participant-method-card {
+  border: 1px solid #e2e9e2;
+  border-radius: 18px;
+  background: #fafcf9;
+  padding: 18px;
+}
+
+.participant-method-card h2 {
+  margin: 0;
+  color: #123f45;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.participant-method-card p {
+  margin: 10px 0 0;
+  color: #66767b;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.participant-portal-primary-btn {
+  margin-top: 16px;
+  min-height: 44px;
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  background: #76b65c;
+  color: white;
+  font-size: 0.93rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.participant-portal-primary-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.participant-portal-note {
+  margin: 16px 0 0;
+  color: #66767b;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.participant-portal-summary {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.participant-portal-summary div {
+  border: 1px solid #e8ede8;
+  border-radius: 14px;
+  background: #fafcf9;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.participant-portal-summary span {
+  color: #66767b;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.participant-portal-summary strong {
+  color: #123f45;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.participant-portal-parameters {
+  margin-top: 20px;
+}
+
+.participant-portal-parameters h2 {
+  margin: 0 0 12px;
+  color: #123f45;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.participant-portal-parameter-list {
+  display: grid;
+  gap: 10px;
+}
+
+.participant-portal-parameter-card {
+  border: 1px solid #e2e9e2;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.participant-portal-parameter-card strong {
+  color: #123f45;
+  font-size: 0.94rem;
+  font-weight: 800;
+}
+
+.participant-portal-parameter-card span {
+  color: #66767b;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .participant-portal-page {
+    padding: 14px 12px 18px;
+  }
+
+  .participant-portal-card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .participant-portal-card__header h1 {
+    font-size: 1.55rem;
+  }
+
+  .participant-method-grid,
+  .participant-portal-summary {
+    grid-template-columns: 1fr;
+  }
+}
