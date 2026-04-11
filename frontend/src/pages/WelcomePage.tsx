@@ -116,13 +116,9 @@ export default function WelcomePage() {
   const navigate = useNavigate();
   return (
     <main className="welcome-page">
-      <div className="welcome-bg-shape welcome-bg-shape--left" aria-hidden="true">
-        <div className="welcome-dots" />
-      </div>
+      <div className="welcome-bg-shape welcome-bg-shape--left" aria-hidden="true"></div>
 
-      <div className="welcome-bg-shape welcome-bg-shape--right" aria-hidden="true">
-        <div className="welcome-dots" />
-      </div>
+      <div className="welcome-bg-shape welcome-bg-shape--right" aria-hidden="true"></div>
 
       <div className="welcome-wave" aria-hidden="true" />
 
