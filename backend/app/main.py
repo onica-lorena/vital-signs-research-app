@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.auth import router as auth_router
+from app.api.routes.access_requests import router as access_requests_router
 from app.api.routes.participant_access import router as participant_access_router
 from app.api.routes.studies import router as studies_router
 from app.api.routes.study_participants import router as study_participants_router
@@ -25,6 +26,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(access_requests_router)
 app.include_router(users_router)
 app.include_router(studies_router)
 app.include_router(study_participants_router)

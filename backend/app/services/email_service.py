@@ -38,3 +38,41 @@ Echipa VitalStudy
 """.strip()
 
     send_email(to_email=to_email, subject=subject, body=body)
+
+
+def send_researcher_access_approved_email(to_email: str, reset_link: str) -> None:
+    subject = "Solicitare aprobată - setează parola contului VitalStudy"
+    body = f"""
+Salut,
+
+Solicitarea ta de acces în platforma VitalStudy a fost aprobată.
+
+Pentru a activa contul de cercetător și a seta parola, accesează link-ul de mai jos:
+{reset_link}
+
+Acest link expiră în {settings.reset_password_token_expire_minutes} de minute.
+
+Dacă nu ai inițiat această solicitare, te rugăm să ignori acest mesaj.
+
+Cu drag,
+Echipa VitalStudy
+""".strip()
+
+    send_email(to_email=to_email, subject=subject, body=body)
+
+def send_access_request_rejected_email(to_email: str, reason: str | None) -> None:
+    subject = "Solicitare respinsă - VitalStudy"
+    body = f"""
+Salut,
+
+Solicitarea ta de acces în platforma VitalStudy nu a fost aprobată.
+
+{f"Motiv: {reason}" if reason else ""}
+
+Dacă ai întrebări, te rugăm să contactezi administratorul.
+
+Cu drag,
+Echipa VitalStudy
+""".strip()
+
+    send_email(to_email=to_email, subject=subject, body=body)
