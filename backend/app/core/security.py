@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 import hashlib
 import secrets
+import re
 
 from jose import jwt
 from pwdlib import PasswordHash
@@ -9,6 +10,22 @@ from pwdlib import PasswordHash
 from app.core.config import settings
 
 password_hash = PasswordHash.recommended()
+
+def validate_password_strength(password: str) -> None:
+    if len(password) < 8:
+        raise ValueError("Parola trebuie să aibă cel puțin 8 caractere.")
+
+    if not re.search(r"[A-Z]", password):
+        raise ValueError("Parola trebuie să conțină cel puțin o literă mare.")
+
+    if not re.search(r"[a-z]", password):
+        raise ValueError("Parola trebuie să conțină cel puțin o literă mică.")
+
+    if not re.search(r"\d", password):
+        raise ValueError("Parola trebuie să conțină cel puțin o cifră.")
+
+    if not re.search(r"[^\w\s]", password):
+        raise ValueError("Parola trebuie să conțină cel puțin un caracter special.")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

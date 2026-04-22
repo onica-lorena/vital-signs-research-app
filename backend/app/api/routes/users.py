@@ -5,7 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_role
 from app.core.database import get_db
-from app.core.security import get_password_hash, verify_password
+from app.core.security import (
+    get_password_hash,
+    validate_password_strength,
+    verify_password,
+)
 from app.models.user import User, UserRole
 from app.schemas.auth import MessageResponse
 from app.schemas.user import (
@@ -47,6 +51,14 @@ def create_user(
             detail="Există deja un utilizator cu acest email.",
         )
 
+    try:
+        validate_password_strength(payload.password)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+        
     user = User(
         email=email,
         full_name=payload.full_name,
@@ -122,6 +134,14 @@ def change_my_password(
             detail="Noua parolă trebuie să fie diferită de parola curentă.",
         )
 
+    try:
+        validate_password_strength(payload.new_password)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
     current_user.hashed_password = get_password_hash(payload.new_password)
     current_user.reset_password_token_hash = None
     current_user.reset_password_expires_at = None
@@ -195,6 +215,14 @@ def admin_reset_user_password(
     _: Annotated[User, Depends(require_role(UserRole.ADMIN))],
 ):
     user = _get_user_or_404(db, user_id)
+
+    try:
+        validate_password_strength(payload.new_password)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
 
     user.hashed_password = get_password_hash(payload.new_password)
     user.reset_password_token_hash = None
