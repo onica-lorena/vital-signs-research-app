@@ -282,9 +282,13 @@ export default function LoginPage() {
                 <span>Ține-mă autentificat</span>
             </label>
 
-            <button type="button" className="login-text-link">
-                Ai uitat parola?
-            </button>
+           <button
+             type="button"
+             className="login-text-link"
+             onClick={() => navigate("/ai-uitat-parola")}
+           >
+             Ai uitat parola?
+           </button>
             </div>
 
             {errorMessage ? (

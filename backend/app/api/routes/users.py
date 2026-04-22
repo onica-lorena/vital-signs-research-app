@@ -216,6 +216,12 @@ def admin_reset_user_password(
 ):
     user = _get_user_or_404(db, user_id)
 
+    if verify_password(payload.new_password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Noua parolă trebuie să fie diferită de parola actuală.",
+        )
+
     try:
         validate_password_strength(payload.new_password)
     except ValueError as exc:

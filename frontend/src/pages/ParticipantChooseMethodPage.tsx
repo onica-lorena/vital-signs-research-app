@@ -166,9 +166,9 @@ function HeartPanelIcon() {
       />
 
       <path
-        d="M11.5 32H24.2L28.5 22.5L34.2 41.5L39 26.8L43.2 32H52.5"
+        d="M10.2 32H24.2L28.5 22.5L34.2 41.5L39 26.8L43.2 32H53.8"
         stroke="#ffffff"
-        strokeWidth="3.4"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -395,8 +395,21 @@ export default function ParticipantChooseMethodPage() {
   const parameterCount = context?.parameters.length ?? 4;
   const participantName = context?.participant.full_name ?? "Participant";
   const studyCode = context?.study.code ?? "—";
-
-  const parameterWord = parameterCount === 1 ? "semn vital" : "semne vitale";
+  
+  const isSingleParameter = parameterCount === 1;
+  const parameterWord = isSingleParameter ? "semn vital" : "semne vitale";
+  
+  const manualCardDescription = isSingleParameter
+    ? "Completează acum valoarea monitorizată, pas cu pas. Durează doar câteva minute."
+    : `Completează acum cele ${parameterCount} ${parameterWord}, pas cu pas. Durează doar câteva minute.`;
+  
+  const studyPanelTitle = isSingleParameter
+    ? "Semnul vital monitorizat în acest studiu"
+    : `Cele ${parameterCount} ${parameterWord} monitorizate în acest studiu`;
+  
+  const studyPanelDescription = isSingleParameter
+    ? "Furnizarea regulată a datelor ne ajută să înțelegem mai bine evoluția acestui semn vital și să generăm descoperiri valoroase."
+    : "Furnizarea regulată a datelor ne ajută să înțelegem mai bine evoluția acestor semne vitale și să generăm descoperiri valoroase.";
 
   return (
     <ParticipantLayout
@@ -448,10 +461,7 @@ export default function ParticipantChooseMethodPage() {
 
             <h3>Introdu manual valorile</h3>
 
-            <p>
-              Completează acum cele {parameterCount} {parameterWord}, pas cu pas.
-              Durează doar câteva minute.
-            </p>
+            <p>{manualCardDescription}</p>
 
             <button
               type="button"
@@ -536,18 +546,16 @@ export default function ParticipantChooseMethodPage() {
           </div>
 
           <div className="participant-method-study-panel__content">
-            <h3>
-              Cele {parameterCount} {parameterWord} monitorizate în acest studiu
-            </h3>
+            <h3>{studyPanelTitle}</h3>
 
             <p className="participant-method-study-panel__parameters">
               {parameterLabels}
             </p>
 
             <p className="participant-method-study-panel__description">
-              Furnizarea regulată a datelor ne ajută să înțelegem mai bine
-              sănătatea și să generăm descoperiri valoroase.
+              {studyPanelDescription}
             </p>
+            
           </div>
         </section>
       </div>

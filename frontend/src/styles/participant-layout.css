@@ -186,7 +186,6 @@
   padding: 0 12px;
   border: 1px solid var(--pp-border);
   border-radius: 13px;
-  background: rgba(255, 255, 255, 0.88);
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -210,7 +209,6 @@
   padding: 0 10px 0 8px;
   border: 1px solid var(--pp-border);
   border-radius: 13px;
-  background: rgba(255, 255, 255, 0.88);
   display: inline-flex;
   align-items: center;
   gap: 8px;
