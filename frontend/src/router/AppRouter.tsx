@@ -14,6 +14,7 @@ import ParticipantCsvPage from "../pages/ParticipantCsvPage";
 import ParticipantProtectedRoute from "./ParticipantProtectedRoute";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
+import RequestAccessPage from "../pages/RequestAccessPage";
 
 function RoleRedirect() {
   const user = getCurrentUser();
@@ -40,7 +41,8 @@ export default function AppRouter() {
       <Route path="/autentificare" element={<LoginPage />} />
       <Route path="/ai-uitat-parola" element={<ForgotPasswordPage />} />
       <Route path="/resetare-parola" element={<ResetPasswordPage />} />
-
+      <Route path="/solicita-acces" element={<RequestAccessPage />} />
+      
       <Route
         path="/admin"
         element={

@@ -9,6 +9,16 @@ type MessageResponse = {
   message: string;
 };
 
+type AccessRequestPayload = {
+  full_name: string;
+  email: string;
+  institution?: string | null;
+  department?: string | null;
+  specialization?: string | null;
+  phone?: string | null;
+  request_reason?: string | null;
+};
+
 const API_BASE_URL = "http://127.0.0.1:8000";
 
 export async function loginRequest(
@@ -89,6 +99,26 @@ export async function resetPasswordRequest(
 
   if (!response.ok) {
     throw new Error(data.detail ?? "Nu s-a putut reseta parola.");
+  }
+
+  return data as MessageResponse;
+}
+
+export async function requestAccessRequest(
+  payload: AccessRequestPayload
+): Promise<MessageResponse> {
+  const response = await fetch(`${API_BASE_URL}/access-requests`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail ?? "Nu s-a putut trimite solicitarea de acces.");
   }
 
   return data as MessageResponse;

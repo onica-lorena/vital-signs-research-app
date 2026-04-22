@@ -302,10 +302,7 @@
   padding: 0;
 }
 
-.login-request-access-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
+
 
 .login-btn-icon svg {
   width: 19px;
