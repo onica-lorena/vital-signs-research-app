@@ -241,6 +241,7 @@
   color: var(--ad-sidebar-text);
   cursor: pointer;
   transition: background-color 0.2s ease;
+  margin-top: 53px;
 }
 
 .admin-sidebar__footer-button:hover {
@@ -365,11 +366,11 @@
 }
 
 .admin-main__content--default {
-  max-width: 980px;
+  max-width: 1025px;
 }
 
 .admin-main__content--wide {
-  max-width: 1240px;
+  max-width: 980px;
 }
 
 .admin-topbar {
@@ -384,6 +385,7 @@
   align-items: flex-start;
   gap: 10px;
   min-width: 0;
+  padding-left: 20px;
 }
 
 .admin-topbar__title {

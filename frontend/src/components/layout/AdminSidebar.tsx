@@ -109,6 +109,19 @@ function StudyIcon() {
   );
 }
 
+function ProfileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.9" />
+      <path
+        d="M5.5 19C5.5 15.69 8.19 13 11.5 13H12.5C15.81 13 18.5 15.69 18.5 19"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 function LogoutIcon() {
   return (
@@ -136,8 +149,8 @@ const navigationItems: {
   label: string;
   icon: ComponentType;
 }[] = [
-  { key: "dashboard", label: "Dashboard", icon: DashboardIcon },
-  { key: "access_requests", label: "Cereri acces", icon: AccessRequestIcon },
+  /*{ key: "dashboard", label: "Dashboard", icon: DashboardIcon },*/
+  { key: "access_requests", label: "Acces cereri", icon: AccessRequestIcon },
   { key: "users", label: "Utilizatori", icon: UsersIcon },
   { key: "studies", label: "Studii", icon: StudyIcon },
 ];
@@ -217,6 +230,22 @@ export default function AdminSidebar({
       <div className="admin-sidebar__spacer" />
 
       <div className="admin-sidebar__footer">
+        <button
+          type="button"
+          className="admin-sidebar__footer-button"
+          title="Profil"
+          onClick={() => {
+            if (window.innerWidth <= 1023) {
+              onCloseMobileSidebar();
+            }
+          }}
+        >
+          <span className="admin-sidebar__icon">
+            <ProfileIcon />
+          </span>
+          <span className="admin-sidebar__footer-text">Profil</span>
+        </button>
+      
         <button
           type="button"
           className="admin-sidebar__footer-button"

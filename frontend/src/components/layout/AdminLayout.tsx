@@ -26,7 +26,7 @@ export default function AdminLayout({
   subtitle,
   actions,
   children,
-  contentWidth = "wide",
+  contentWidth = "default",
   activeItem,
 }: AdminLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);

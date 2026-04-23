@@ -39,7 +39,6 @@ import {
 import { SESSION_EXPIRED_ERROR } from "../auth/authFetch";
 import AdminLayout from "../components/layout/AdminLayout";
 import type { AdminNavigationKey } from "../components/layout/AdminSidebar";
-import AdminDashboard from "./AdminDashboard";
 import AdminAccessRequests from "./AdminAccessRequests";
 import AdminUsers from "./AdminUsers";
 import AdminStudies from "./AdminStudies";
@@ -79,13 +78,19 @@ function formatDate(value?: string | null): string {
     return "—";
   }
 
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return "—";
+  }
+
   return new Intl.DateTimeFormat("ro-RO", {
     day: "2-digit",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+  }).format(parsed);
 }
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -101,7 +106,12 @@ function downloadBlob(blob: Blob, filename: string) {
 
 export default function AdminPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get("tab") as AdminNavigationKey) || "dashboard";
+
+  const rawTab = searchParams.get("tab") as AdminNavigationKey | null;
+  const activeTab: AdminNavigationKey =
+    rawTab === "users" || rawTab === "studies" || rawTab === "access_requests"
+      ? rawTab
+      : "access_requests";
 
   const [pageError, setPageError] = useState("");
 
@@ -140,7 +150,9 @@ export default function AdminPage() {
   const [studyDetailLoading, setStudyDetailLoading] = useState(false);
   const [studyExportLoading, setStudyExportLoading] = useState(false);
 
-  const [studyParticipants, setStudyParticipants] = useState<ParticipantListItemResponse[]>([]);
+  const [studyParticipants, setStudyParticipants] = useState<
+    ParticipantListItemResponse[]
+  >([]);
   const [studyParticipantsLoading, setStudyParticipantsLoading] = useState(false);
   const [studyParticipantsSummary, setStudyParticipantsSummary] = useState<{
     total_participants: number;
@@ -151,18 +163,22 @@ export default function AdminPage() {
     withdrawn_participants: number;
   } | null>(null);
 
-  const [studySubmissions, setStudySubmissions] = useState<StudySubmissionListItemResponse[]>([]);
+  const [studySubmissions, setStudySubmissions] = useState<
+    StudySubmissionListItemResponse[]
+  >([]);
   const [studySubmissionsLoading, setStudySubmissionsLoading] = useState(false);
   const [selectedSubmission, setSelectedSubmission] =
     useState<StudySubmissionDetailResponse | null>(null);
 
-  const [studyDataSummary, setStudyDataSummary] = useState<StudyDataSummaryResponse | null>(null);
+  const [studyDataSummary, setStudyDataSummary] = useState<StudyDataSummaryResponse | null>(
+    null
+  );
   const [studyTimeline, setStudyTimeline] = useState<StudyDataTimelinePointResponse[]>([]);
   const [studyAnalyticsLoading, setStudyAnalyticsLoading] = useState(false);
 
   function handleTabChange(tab: AdminNavigationKey) {
     if (tab === "dashboard") {
-      setSearchParams({});
+      setSearchParams({ tab: "access_requests" });
       return;
     }
 
@@ -260,8 +276,23 @@ export default function AdminPage() {
     [accessRequests]
   );
 
+  const approvedRequestsCount = useMemo(
+    () => accessRequests.filter((item) => item.status === "approved").length,
+    [accessRequests]
+  );
+
+  const rejectedRequestsCount = useMemo(
+    () => accessRequests.filter((item) => item.status === "rejected").length,
+    [accessRequests]
+  );
+
   const activeUsersCount = useMemo(
     () => users.filter((item) => item.is_active).length,
+    [users]
+  );
+
+  const verifiedUsersCount = useMemo(
+    () => users.filter((item) => item.is_verified).length,
     [users]
   );
 
@@ -275,6 +306,11 @@ export default function AdminPage() {
     [users]
   );
 
+  const inactiveUsersCount = useMemo(
+    () => users.filter((item) => !item.is_active).length,
+    [users]
+  );
+
   const studiesInAnalysisCount = useMemo(
     () => studies.filter((item) => item.status === "in_analysis").length,
     [studies]
@@ -282,6 +318,16 @@ export default function AdminPage() {
 
   const activeStudiesCount = useMemo(
     () => studies.filter((item) => item.status === "active").length,
+    [studies]
+  );
+
+  const completedStudiesCount = useMemo(
+    () => studies.filter((item) => item.status === "completed").length,
+    [studies]
+  );
+
+  const draftStudiesCount = useMemo(
+    () => studies.filter((item) => item.status === "draft").length,
     [studies]
   );
 
@@ -609,8 +655,7 @@ export default function AdminPage() {
     <AdminLayout
       activeItem={activeTab}
       title="Administrare VitalStudy"
-      subtitle="Panou central pentru cereri de acces, utilizatori, studii și informații de monitorizare."
-      contentWidth="wide"
+      subtitle="Panou central pentru cereri de acces, utilizatori, studii și monitorizarea administrativă."
     >
       <div className="admin-page">
         <section className="admin-shell">
@@ -620,31 +665,10 @@ export default function AdminPage() {
             <div className="admin-banner admin-banner--success">{userActionMessage}</div>
           ) : null}
 
-          {activeTab === "dashboard" ? (
-            <AdminDashboard
-              usersCount={users.length}
-              activeUsersCount={activeUsersCount}
-              pendingRequestsCount={pendingRequestsCount}
-              accessRequestsTotal={accessRequestsTotal}
-              studiesCount={studies.length}
-              activeStudiesCount={activeStudiesCount}
-              studiesInAnalysisCount={studiesInAnalysisCount}
-              adminsCount={adminsCount}
-              researchersCount={researchersCount}
-              accessRequests={accessRequests}
-              studies={studies}
-              accessRequestStatusLabels={ACCESS_REQUEST_STATUS_LABELS}
-              studyStatusLabels={STUDY_STATUS_LABELS}
-              onOpenRecentAccessRequest={(accessRequestId) => {
-                handleTabChange("access_requests");
-                void handleOpenAccessRequest(accessRequestId);
-              }}
-            />
-          ) : null}
-
           {activeTab === "access_requests" ? (
             <AdminAccessRequests
               accessRequests={accessRequests}
+              accessRequestsTotal={accessRequestsTotal}
               accessRequestsLoading={accessRequestsLoading}
               accessRequestStatusFilter={accessRequestStatusFilter}
               setAccessRequestStatusFilter={setAccessRequestStatusFilter}
@@ -656,12 +680,17 @@ export default function AdminPage() {
               accessActionLoading={accessActionLoading}
               accessRequestStatusLabels={ACCESS_REQUEST_STATUS_LABELS}
               formatDate={formatDate}
-              onReloadAccessRequests={() => void loadAccessRequests()}
-              onOpenAccessRequest={(accessRequestId) =>
-                void handleOpenAccessRequest(accessRequestId)
-              }
-              onApproveAccessRequest={() => void handleApproveAccessRequest()}
-              onRejectAccessRequest={() => void handleRejectAccessRequest()}
+              pendingRequestsCount={pendingRequestsCount}
+              approvedRequestsCount={approvedRequestsCount}
+              rejectedRequestsCount={rejectedRequestsCount}
+              onReloadAccessRequests={loadAccessRequests}
+              onOpenAccessRequest={handleOpenAccessRequest}
+              onApproveAccessRequest={handleApproveAccessRequest}
+              onRejectAccessRequest={handleRejectAccessRequest}
+              onCloseAccessRequest={() => {
+                setSelectedAccessRequest(null);
+                setAccessReviewNotes("");
+              }}
             />
           ) : null}
 
@@ -693,6 +722,13 @@ export default function AdminPage() {
               newUserBio={newUserBio}
               setNewUserBio={setNewUserBio}
               userRoleLabels={USER_ROLE_LABELS}
+              totalUsers={users.length}
+              activeUsersCount={activeUsersCount}
+              inactiveUsersCount={inactiveUsersCount}
+              verifiedUsersCount={verifiedUsersCount}
+              adminsCount={adminsCount}
+              researchersCount={researchersCount}
+              formatDate={formatDate}
               onOpenUser={(userId) => void handleOpenUser(userId)}
               onSaveUserEdits={() => void handleSaveUserEdits()}
               onToggleUserStatus={() => void handleToggleUserStatus()}
@@ -722,6 +758,11 @@ export default function AdminPage() {
               studyStatusLabels={STUDY_STATUS_LABELS}
               submissionStatusLabels={SUBMISSION_STATUS_LABELS}
               formatDate={formatDate}
+              totalStudies={studies.length}
+              activeStudiesCount={activeStudiesCount}
+              studiesInAnalysisCount={studiesInAnalysisCount}
+              completedStudiesCount={completedStudiesCount}
+              draftStudiesCount={draftStudiesCount}
               onOpenStudy={(studyId) => void handleOpenStudy(studyId)}
               onExportStudy={() => void handleExportStudy()}
               onOpenSubmission={(submissionId) => void handleOpenSubmission(submissionId)}
