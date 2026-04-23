@@ -133,7 +133,9 @@ export default function ResearcherSidebar({
   }
 
   function handleNavigation(itemKey: NavigationKey) {
-    onCloseMobileSidebar();
+    if (window.innerWidth <= 1023) {
+      onCloseMobileSidebar();
+    }
   
     if (itemKey === "dashboard") {
       navigate("/cercetator");
@@ -182,7 +184,7 @@ export default function ResearcherSidebar({
       
         return (
           <button
-            key={item.label}
+            key={item.key}
             type="button"
             className={`researcher-sidebar__link ${
               item.key === activeItem ? "is-active" : ""
@@ -207,12 +209,16 @@ export default function ResearcherSidebar({
       <div className="researcher-sidebar__spacer" />
 
       <div className="researcher-sidebar__footer">
-        <button
-          type="button"
-          className="researcher-sidebar__footer-button"
-          title="Profil"
-          onClick={onCloseMobileSidebar}
-        >
+      <button
+        type="button"
+        className="researcher-sidebar__footer-button"
+        title="Profil"
+        onClick={() => {
+          if (window.innerWidth <= 1023) {
+            onCloseMobileSidebar();
+          }
+        }}
+      >
           <span className="researcher-sidebar__icon">
             <ProfileIcon />
           </span>

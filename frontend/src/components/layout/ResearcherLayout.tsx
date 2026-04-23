@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import "../../styles/researcher-layout.css";
 import ResearcherSidebar, { type NavigationKey } from "./ResearcherSidebar";
 
@@ -44,7 +44,20 @@ export default function ResearcherLayout({
   contentWidth = "default",
   activeItem,
 }: ResearcherLayoutProps) {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+  
+    return window.localStorage.getItem("researcher_sidebar_collapsed") === "true";
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      "researcher_sidebar_collapsed",
+      String(isSidebarCollapsed)
+    );
+  }, [isSidebarCollapsed]);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const rootClassName = [
@@ -78,7 +91,14 @@ export default function ResearcherLayout({
       <ResearcherSidebar
         activeItem={activeItem}
         isSidebarCollapsed={isSidebarCollapsed}
-        onToggleBrandClick={() => setIsSidebarCollapsed((prev) => !prev)}
+        onToggleBrandClick={() => {
+          if (window.innerWidth <= 1023) {
+            setIsMobileSidebarOpen(false);
+            return;
+          }
+        
+          setIsSidebarCollapsed((prev) => !prev);
+        }}
         onCloseMobileSidebar={() => setIsMobileSidebarOpen(false)}
       />
 
