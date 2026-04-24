@@ -9,6 +9,7 @@ from app.api.routes.study_participants import router as study_participants_route
 from app.api.routes.study_submissions import router as study_submissions_router
 from app.api.routes.users import router as users_router
 from app.api.routes.analysis import router as analysis_router
+from app.api.routes.reports import router as reports_router
 
 app = FastAPI(
     title="VitalStudy API",
@@ -34,6 +35,7 @@ app.include_router(study_participants_router)
 app.include_router(study_submissions_router)
 app.include_router(participant_access_router)
 app.include_router(analysis_router)
+app.include_router(reports_router)
 
 
 @app.get("/")
