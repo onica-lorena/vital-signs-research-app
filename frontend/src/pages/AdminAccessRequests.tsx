@@ -303,7 +303,7 @@ export default function AdminAccessRequests({
           <section className="admin-panel">
             <div className="admin-panel__header">
               <div>
-                <div className="admin-panel__hint">Distribuție statusuri</div>
+                {/*<div className="admin-panel__hint">Distribuție statusuri</div>*/}
                 <h2>Starea cererilor de acces</h2>
               </div>
             </div>
@@ -353,7 +353,7 @@ export default function AdminAccessRequests({
           <section className="admin-panel">
             <div className="admin-panel__header">
               <div>
-                <div className="admin-panel__hint">Evoluție recentă</div>
+                {/*<div className="admin-panel__hint">Evoluție recentă</div>*/}
                 <h2>Cereri pe ultimele 6 luni</h2>
               </div>
             </div>
@@ -371,13 +371,12 @@ export default function AdminAccessRequests({
             </div>
           </section>
         </div>
-        
       </section>
 
       <section className="admin-panel admin-panel--wide">
         <div className="admin-panel__header">
           <div>
-            <div className="admin-panel__hint">Administrare</div>
+            {/*<div className="admin-panel__hint">Administrare</div>*/}
             <h2>Gestionare cereri de acces</h2>
           </div>
         </div>

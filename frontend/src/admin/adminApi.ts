@@ -549,9 +549,12 @@ export async function deleteStudyAdminRequest(studyId: number): Promise<void> {
 }
 
 export async function exportStudyAdminRequest(
-  studyId: number
+  studyId: number,
+  format: "json" | "csv" = "csv"
 ): Promise<{ blob: Blob; filename: string }> {
-  const response = await authFetch(`/studies/${studyId}/export`, { method: "GET" });
+  const response = await authFetch(`/studies/${studyId}/export?format=${format}`, {
+    method: "GET",
+  });
 
   if (!response.ok) {
     throw new Error(await parseError(response, "Nu s-a putut exporta studiul."));
@@ -559,7 +562,7 @@ export async function exportStudyAdminRequest(
 
   return {
     blob: await response.blob(),
-    filename: extractFilename(response, `study-${studyId}-export.json`),
+    filename: extractFilename(response, `study-${studyId}-export.${format}`),
   };
 }
 

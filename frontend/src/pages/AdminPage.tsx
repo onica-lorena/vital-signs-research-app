@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import "../styles/admin-dashboard.css";
 import "../styles/admin-layout.css";
 import {
@@ -107,6 +107,8 @@ function downloadBlob(blob: Blob, filename: string) {
 export default function AdminPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const navigate = useNavigate();
+
   const rawTab = searchParams.get("tab") as AdminNavigationKey | null;
   const activeTab: AdminNavigationKey =
     rawTab === "users" || rawTab === "studies" || rawTab === "access_requests"
@@ -133,6 +135,7 @@ export default function AdminPage() {
   const [userPassword, setUserPassword] = useState("");
   const [userActionMessage, setUserActionMessage] = useState("");
   const [userActionLoading, setUserActionLoading] = useState(false);
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
 
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserFullName, setNewUserFullName] = useState("");
@@ -529,6 +532,7 @@ export default function AdminPage() {
       setNewUserSpecialization("");
       setNewUserPhone("");
       setNewUserBio("");
+      setIsCreateUserModalOpen(false);
 
       await loadUsers();
     } catch (error) {
@@ -540,43 +544,8 @@ export default function AdminPage() {
     }
   }
 
-  async function handleOpenStudy(studyId: number) {
-    setStudyDetailLoading(true);
-    setPageError("");
-    setSelectedSubmission(null);
-
-    try {
-      const detail = await getStudyByIdAdminRequest(studyId);
-      setSelectedStudy(detail);
-
-      setStudyParticipantsLoading(true);
-      setStudySubmissionsLoading(true);
-      setStudyAnalyticsLoading(true);
-
-      const [participantsList, participantsSummary, submissionsList, dataSummary, timeline] =
-        await Promise.all([
-          listStudyParticipantsRequest(studyId, { page: 1, page_size: 20 }),
-          getStudyParticipantsSummaryRequest(studyId),
-          listStudySubmissionsRequest(studyId, { page: 1, page_size: 20 }),
-          getStudyDataSummaryRequest(studyId),
-          getStudyDataTimelineRequest(studyId, "week"),
-        ]);
-
-      setStudyParticipants(participantsList.items);
-      setStudyParticipantsSummary(participantsSummary);
-      setStudySubmissions(submissionsList.items);
-      setStudyDataSummary(dataSummary);
-      setStudyTimeline(timeline);
-    } catch (error) {
-      setPageError(
-        error instanceof Error ? error.message : "Nu s-au putut încărca datele studiului."
-      );
-    } finally {
-      setStudyDetailLoading(false);
-      setStudyParticipantsLoading(false);
-      setStudySubmissionsLoading(false);
-      setStudyAnalyticsLoading(false);
-    }
+  function handleOpenStudy(studyId: number) {
+    navigate(`/admin/studii/${studyId}`);
   }
 
   async function handleExportStudy() {
@@ -656,6 +625,17 @@ export default function AdminPage() {
       activeItem={activeTab}
       title="Administrare VitalStudy"
       subtitle="Panou central pentru cereri de acces, utilizatori, studii și monitorizarea administrativă."
+      actions={
+        activeTab === "users" ? (
+          <button
+            type="button"
+            className="admin-btn"
+            onClick={() => setIsCreateUserModalOpen(true)}
+          >
+            Adaugă utilizator
+          </button>
+        ) : undefined
+      }
     >
       <div className="admin-page">
         <section className="admin-shell">
@@ -700,6 +680,8 @@ export default function AdminPage() {
               usersLoading={usersLoading}
               selectedUser={selectedUser}
               setSelectedUser={setSelectedUser}
+              isCreateUserModalOpen={isCreateUserModalOpen}
+              setIsCreateUserModalOpen={setIsCreateUserModalOpen}
               userPassword={userPassword}
               setUserPassword={setUserPassword}
               userActionLoading={userActionLoading}

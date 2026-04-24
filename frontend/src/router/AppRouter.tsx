@@ -15,6 +15,7 @@ import ParticipantProtectedRoute from "./ParticipantProtectedRoute";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
 import RequestAccessPage from "../pages/RequestAccessPage";
+import AdminStudyDetailsPage from "../pages/AdminStudyDetailsPage";
 
 function RoleRedirect() {
   const user = getCurrentUser();
@@ -42,12 +43,21 @@ export default function AppRouter() {
       <Route path="/ai-uitat-parola" element={<ForgotPasswordPage />} />
       <Route path="/resetare-parola" element={<ResetPasswordPage />} />
       <Route path="/solicita-acces" element={<RequestAccessPage />} />
-      
+
       <Route
         path="/admin"
         element={
           <ProtectedRoute allowedRole="admin">
             <AdminPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/studii/:studyId"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <AdminStudyDetailsPage />
           </ProtectedRoute>
         }
       />

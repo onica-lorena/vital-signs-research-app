@@ -18,6 +18,8 @@ type AdminUsersProps = {
   usersLoading: boolean;
   selectedUser: UserResponse | null;
   setSelectedUser: React.Dispatch<React.SetStateAction<UserResponse | null>>;
+  isCreateUserModalOpen: boolean;
+  setIsCreateUserModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   userPassword: string;
   setUserPassword: React.Dispatch<React.SetStateAction<string>>;
   userActionLoading: boolean;
@@ -121,6 +123,20 @@ function ChartIcon() {
   );
 }
 
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3.5 12C5.4 8.6 8.3 6.75 12 6.75C15.7 6.75 18.6 8.6 20.5 12C18.6 15.4 15.7 17.25 12 17.25C8.3 17.25 5.4 15.4 3.5 12Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
 const ROLE_COLORS: Record<UserRole, string> = {
   admin: "#ef9647",
   researcher: "#76b65c",
@@ -131,6 +147,8 @@ export default function AdminUsers({
   usersLoading,
   selectedUser,
   setSelectedUser,
+  isCreateUserModalOpen,
+  setIsCreateUserModalOpen,
   userPassword,
   setUserPassword,
   userActionLoading,
@@ -166,6 +184,7 @@ export default function AdminUsers({
   onResetUserPassword,
   onCreateUser,
 }: AdminUsersProps) {
+
   const roleData = useMemo(
     () =>
       [
@@ -238,7 +257,7 @@ export default function AdminUsers({
               </div>
             </div>
             <strong>{verifiedUsersCount}</strong>
-            <small>Utilizatori marcați ca verificați din totalul existent.</small>
+            <small>Utilizatori marcați ca verificați.</small>
             <div className="admin-kpi-progress">
               <div
                 className="admin-kpi-progress__bar"
@@ -263,7 +282,7 @@ export default function AdminUsers({
           <section className="admin-panel">
             <div className="admin-panel__header">
               <div>
-                <div className="admin-panel__hint">Distribuție roluri</div>
+                {/*<div className="admin-panel__hint">Distribuție roluri</div>*/}
                 <h2>Structura utilizatorilor</h2>
               </div>
             </div>
@@ -311,7 +330,7 @@ export default function AdminUsers({
           <section className="admin-panel">
             <div className="admin-panel__header">
               <div>
-                <div className="admin-panel__hint">Rezumat statusuri</div>
+                {/*<div className="admin-panel__hint">Rezumat statusuri</div>*/}
                 <h2>Activitate și verificare</h2>
               </div>
             </div>
@@ -323,7 +342,7 @@ export default function AdminUsers({
                   <XAxis dataKey="name" tickLine={false} axisLine={false} />
                   <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
                   <Tooltip formatter={(value) => [value, "Utilizatori"]} />
-                  <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#76b65c" />
+                  <Bar dataKey="value" radius={[10, 10, 0, 0]} maxBarSize={70} fill="#76b65c" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -331,11 +350,11 @@ export default function AdminUsers({
         </div>
       </section>
 
-      <div className="admin-section-grid admin-section-grid--users">
+      <div className="admin-section-grid admin-section-grid--users-list">
         <section className="admin-panel">
           <div className="admin-panel__header">
             <div>
-              <div className="admin-panel__hint">Administrare conturi</div>
+              {/*<div className="admin-panel__hint">Administrare conturi</div>*/}
               <h2>Utilizatori existenți</h2>
             </div>
           </div>
@@ -375,10 +394,11 @@ export default function AdminUsers({
                         <td>
                           <button
                             type="button"
-                            className="admin-inline-link"
+                            className="admin-icon-btn"
                             onClick={() => onOpenUser(item.id)}
+                            aria-label={`Vezi detalii pentru ${item.full_name}`}
                           >
-                            Vezi
+                            <EyeIcon />
                           </button>
                         </td>
                       </tr>
@@ -389,16 +409,26 @@ export default function AdminUsers({
             </div>
           )}
         </section>
-
-        <aside className="admin-panel">
-          <div className="admin-panel__header">
-            <div>
-              <div className="admin-panel__hint">Detalii și acțiuni</div>
-              <h2>Utilizator selectat</h2>
+      </div>
+      {selectedUser && (
+        <div className="admin-modal-backdrop">
+          <div className="admin-modal admin-modal--user">
+            <div className="admin-modal__header">
+              <div>
+                <div className="admin-panel__hint">Detalii și acțiuni</div>
+                <h2>Utilizator selectat</h2>
+              </div>
+      
+              <button
+                type="button"
+                className="admin-modal__close"
+                onClick={() => setSelectedUser(null)}
+                aria-label="Închide detaliile utilizatorului"
+              >
+                ×
+              </button>
             </div>
-          </div>
-
-          {selectedUser ? (
+      
             <div className="admin-form">
               <label>
                 <span>Nume complet</span>
@@ -412,21 +442,19 @@ export default function AdminUsers({
                   }
                 />
               </label>
-
+              
               <label>
                 <span>Email</span>
                 <input type="email" value={selectedUser.email} disabled />
               </label>
-
+              
               <label>
                 <span>Rol</span>
                 <select
                   value={selectedUser.role}
                   onChange={(event) =>
                     setSelectedUser((prev) =>
-                      prev
-                        ? { ...prev, role: event.target.value as UserRole }
-                        : prev
+                      prev ? { ...prev, role: event.target.value as UserRole } : prev
                     )
                   }
                 >
@@ -434,7 +462,7 @@ export default function AdminUsers({
                   <option value="researcher">Cercetător</option>
                 </select>
               </label>
-
+              
               <label>
                 <span>Instituție</span>
                 <input
@@ -447,7 +475,7 @@ export default function AdminUsers({
                   }
                 />
               </label>
-
+              
               <label>
                 <span>Departament</span>
                 <input
@@ -460,7 +488,7 @@ export default function AdminUsers({
                   }
                 />
               </label>
-
+              
               <label>
                 <span>Specializare</span>
                 <input
@@ -473,7 +501,7 @@ export default function AdminUsers({
                   }
                 />
               </label>
-
+              
               <label>
                 <span>Telefon</span>
                 <input
@@ -486,7 +514,7 @@ export default function AdminUsers({
                   }
                 />
               </label>
-
+              
               <label>
                 <span>Bio</span>
                 <textarea
@@ -499,7 +527,7 @@ export default function AdminUsers({
                   }
                 />
               </label>
-
+              
               <label className="admin-checkbox">
                 <input
                   type="checkbox"
@@ -512,21 +540,22 @@ export default function AdminUsers({
                 />
                 <span>Cont verificat</span>
               </label>
-
+              
               <div className="admin-detail-block admin-detail-block--surface">
                 <span>Informații suplimentare</span>
                 <p>
                   Creat la: <strong>{formatDate(selectedUser.created_at)}</strong>
                 </p>
                 <p>
-                  Ultima actualizare: <strong>{formatDate(selectedUser.updated_at)}</strong>
+                  Ultima actualizare:{" "}
+                  <strong>{formatDate(selectedUser.updated_at)}</strong>
                 </p>
                 <p>
                   Status curent:{" "}
                   <strong>{selectedUser.is_active ? "Activ" : "Inactiv"}</strong>
                 </p>
               </div>
-
+              
               <div className="admin-actions-row">
                 <button
                   type="button"
@@ -536,6 +565,7 @@ export default function AdminUsers({
                 >
                   Salvează
                 </button>
+              
                 <button
                   type="button"
                   className="admin-btn admin-btn--secondary"
@@ -545,7 +575,7 @@ export default function AdminUsers({
                   {selectedUser.is_active ? "Dezactivează" : "Activează"}
                 </button>
               </div>
-
+              
               <div className="admin-password-box">
                 <span>Resetare parolă</span>
                 <input
@@ -554,6 +584,7 @@ export default function AdminUsers({
                   value={userPassword}
                   onChange={(event) => setUserPassword(event.target.value)}
                 />
+      
                 <button
                   type="button"
                   className="admin-btn admin-btn--warning"
@@ -564,112 +595,134 @@ export default function AdminUsers({
                 </button>
               </div>
             </div>
-          ) : (
-            <p className="admin-empty">Selectează un utilizator din listă.</p>
-          )}
-        </aside>
-
-        <section className="admin-panel">
-          <div className="admin-panel__header">
-            <div>
-              <div className="admin-panel__hint">Creare cont nou</div>
-              <h2>Adaugă utilizator</h2>
-            </div>
           </div>
+        </div>
+      )}
 
-          <form className="admin-form" onSubmit={onCreateUser}>
-            <label>
-              <span>Email</span>
-              <input
-                type="email"
-                value={newUserEmail}
-                onChange={(event) => setNewUserEmail(event.target.value)}
-                required
-              />
-            </label>
-
-            <label>
-              <span>Nume complet</span>
-              <input
-                type="text"
-                value={newUserFullName}
-                onChange={(event) => setNewUserFullName(event.target.value)}
-                required
-              />
-            </label>
-
-            <label>
-              <span>Parolă</span>
-              <input
-                type="password"
-                value={newUserPassword}
-                onChange={(event) => setNewUserPassword(event.target.value)}
-                required
-              />
-            </label>
-
-            <label>
-              <span>Rol</span>
-              <select
-                value={newUserRole}
-                onChange={(event) => setNewUserRole(event.target.value as UserRole)}
+      {isCreateUserModalOpen && (
+        <div className="admin-modal-backdrop">
+          <div className="admin-modal admin-modal--user">
+            <div className="admin-modal__header">
+              <div>
+                <div className="admin-panel__hint">Creare cont nou</div>
+                <h2>Adaugă utilizator</h2>
+              </div>
+      
+              <button
+                type="button"
+                className="admin-modal__close"
+                onClick={() => setIsCreateUserModalOpen(false)}
+                aria-label="Închide formularul de creare utilizator"
               >
-                <option value="researcher">Cercetător</option>
-                <option value="admin">Admin</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Instituție</span>
-              <input
-                type="text"
-                value={newUserInstitution}
-                onChange={(event) => setNewUserInstitution(event.target.value)}
-              />
-            </label>
-
-            <label>
-              <span>Departament</span>
-              <input
-                type="text"
-                value={newUserDepartment}
-                onChange={(event) => setNewUserDepartment(event.target.value)}
-              />
-            </label>
-
-            <label>
-              <span>Specializare</span>
-              <input
-                type="text"
-                value={newUserSpecialization}
-                onChange={(event) => setNewUserSpecialization(event.target.value)}
-              />
-            </label>
-
-            <label>
-              <span>Telefon</span>
-              <input
-                type="text"
-                value={newUserPhone}
-                onChange={(event) => setNewUserPhone(event.target.value)}
-              />
-            </label>
-
-            <label>
-              <span>Bio</span>
-              <textarea
-                rows={4}
-                value={newUserBio}
-                onChange={(event) => setNewUserBio(event.target.value)}
-              />
-            </label>
-
-            <button type="submit" className="admin-btn" disabled={userActionLoading}>
-              Creează utilizator
-            </button>
-          </form>
-        </section>
-      </div>
+                ×
+              </button>
+            </div>
+      
+            <form className="admin-form" onSubmit={onCreateUser}>
+              <label>
+                <span>Email</span>
+                <input
+                  type="email"
+                  value={newUserEmail}
+                  onChange={(event) => setNewUserEmail(event.target.value)}
+                  required
+                />
+              </label>
+      
+              <label>
+                <span>Nume complet</span>
+                <input
+                  type="text"
+                  value={newUserFullName}
+                  onChange={(event) => setNewUserFullName(event.target.value)}
+                  required
+                />
+              </label>
+      
+              <label>
+                <span>Parolă</span>
+                <input
+                  type="password"
+                  value={newUserPassword}
+                  onChange={(event) => setNewUserPassword(event.target.value)}
+                  required
+                />
+              </label>
+      
+              <label>
+                <span>Rol</span>
+                <select
+                  value={newUserRole}
+                  onChange={(event) => setNewUserRole(event.target.value as UserRole)}
+                >
+                  <option value="researcher">Cercetător</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </label>
+      
+              <label>
+                <span>Instituție</span>
+                <input
+                  type="text"
+                  value={newUserInstitution}
+                  onChange={(event) => setNewUserInstitution(event.target.value)}
+                />
+              </label>
+      
+              <label>
+                <span>Departament</span>
+                <input
+                  type="text"
+                  value={newUserDepartment}
+                  onChange={(event) => setNewUserDepartment(event.target.value)}
+                />
+              </label>
+      
+              <label>
+                <span>Specializare</span>
+                <input
+                  type="text"
+                  value={newUserSpecialization}
+                  onChange={(event) => setNewUserSpecialization(event.target.value)}
+                />
+              </label>
+      
+              <label>
+                <span>Telefon</span>
+                <input
+                  type="text"
+                  value={newUserPhone}
+                  onChange={(event) => setNewUserPhone(event.target.value)}
+                />
+              </label>
+      
+              <label>
+                <span>Bio</span>
+                <textarea
+                  rows={4}
+                  value={newUserBio}
+                  onChange={(event) => setNewUserBio(event.target.value)}
+                />
+              </label>
+      
+              <div className="admin-actions-row admin-actions-row--modal">
+                <button
+                  type="button"
+                  className="admin-btn admin-btn--secondary"
+                  onClick={() => setIsCreateUserModalOpen(false)}
+                  disabled={userActionLoading}
+                >
+                  Anulează
+                </button>
+      
+                <button type="submit" className="admin-btn" disabled={userActionLoading}>
+                  Creează utilizator
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }

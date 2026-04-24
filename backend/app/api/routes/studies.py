@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 from typing import Annotated
+import csv
+from io import StringIO
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.encoders import jsonable_encoder
@@ -98,6 +100,7 @@ def export_study(
     study_id: int,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    export_format: str = Query("json", alias="format", pattern="^(json|csv)$"),
 ):
     study = get_study_by_id_for_current_user(
         db=db,
@@ -129,7 +132,99 @@ def export_study(
         "participants_summary": participants_summary,
         "data_summary": data_summary,
     }
+    
+    if export_format == "csv":
+        output = StringIO()
+        output.write("\ufeff")
 
+        writer = csv.writer(output, delimiter=";")
+
+        writer.writerow([
+            "ID studiu",
+            "Titlu",
+            "Cod",
+            "Descriere",
+            "Tip studiu",
+            "Mod colectare",
+            "Status",
+            "Data început",
+            "Data final",
+            "Instituție",
+            "Țintă participanți",
+            "Participanți curenți",
+            "Cercetător",
+            "Email cercetător",
+            "Total participanți",
+            "Invitați",
+            "Activi",
+            "Suspendați",
+            "Finalizați",
+            "Retrăși",
+            "Total trimiteri",
+            "Total valori",
+            "Trimise",
+            "Validate",
+            "Respinse",
+            "Ultima trimitere",
+            "Parametri monitorizați",
+            "Reguli colectare",
+            "Criterii includere",
+            "Note administrative",
+        ])
+
+        study_data = payload["study"]
+        researcher = study_data.get("researcher") or {}
+        parameters = study_data.get("parameters", [])
+
+        parameters_text = "; ".join(
+            f"{parameter.get('parameter_key')} ({parameter.get('measurement_frequency')})"
+            for parameter in parameters
+        )
+
+        writer.writerow([
+            study_data.get("id"),
+            study_data.get("title"),
+            study_data.get("code"),
+            study_data.get("description"),
+            study_data.get("study_type"),
+            study_data.get("data_entry_mode"),
+            study_data.get("status"),
+            study_data.get("start_date"),
+            study_data.get("end_date"),
+            study_data.get("institution"),
+            study_data.get("target_participants"),
+            study_data.get("participants_count"),
+            researcher.get("full_name"),
+            researcher.get("email"),
+            participants_summary.get("total_participants"),
+            participants_summary.get("invited_participants"),
+            participants_summary.get("active_participants"),
+            participants_summary.get("suspended_participants"),
+            participants_summary.get("completed_participants"),
+            participants_summary.get("withdrawn_participants"),
+            data_summary.get("total_submissions"),
+            data_summary.get("total_values"),
+            data_summary.get("submitted_count"),
+            data_summary.get("validated_count"),
+            data_summary.get("rejected_count"),
+            data_summary.get("last_submission_at"),
+            parameters_text,
+            study_data.get("collection_rules"),
+            study_data.get("inclusion_criteria"),
+            study_data.get("administrative_notes"),
+        ])
+
+        filename = f"{study.code.lower()}-export.csv"
+        output.seek(0)
+
+        return Response(
+            content=output.getvalue(),
+            media_type="text/csv; charset=utf-8-sig",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            },
+        )
+    
     filename = f"{study.code.lower()}-export.json"
 
     return JSONResponse(

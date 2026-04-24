@@ -63,13 +63,17 @@
 }
 
 .admin-panel {
-  padding: 12px;
+  padding: 10px;
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--ad-border);
   background: var(--ad-surface);
   box-shadow: var(--ad-shadow);
-  border-radius: 16px;
+  border-radius: 14px;
+}
+
+.admin-section-grid > .admin-panel {
+  height: 100%;
 }
 
 .admin-panel--wide {
@@ -245,15 +249,24 @@
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .admin-section-grid--users {
   grid-template-columns: 1.45fr 1fr 1fr;
 }
 
+.admin-section-grid--users-list {
+  grid-template-columns: 1fr;
+}
+
+.admin-modal--user {
+  width: min(760px, 100%);
+}
+
 .admin-section-grid--access {
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: stretch;
 }
 
 .admin-section-grid > *,
@@ -636,14 +649,20 @@
 
 .admin-chart-box {
   width: 100%;
-  max-width: 320px;
-  height: 240px;
+  max-width: 280px;
+  height: 190px;
   margin: 0 auto;
+}
+
+.admin-chart-box--compact {
+  height: 220px;
+  margin-left: 0;
 }
 
 .admin-chart-box--wide {
   max-width: none;
-  height: 376px;
+  height: 300px;
+  margin-left: -25px;
 }
 
 .admin-chart-box--line {
@@ -652,8 +671,8 @@
 
 .admin-legend-list {
   display: grid;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 6px;
 }
 
 .admin-legend-list div {
@@ -661,9 +680,9 @@
   grid-template-columns: 14px 1fr auto;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 1px solid var(--ad-border-soft);
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fafcf9;
 }
 
@@ -883,6 +902,125 @@
 .admin-chart-box [tabindex]:focus,
 .admin-chart-box [tabindex]:focus-visible {
   outline: none !important;
+}
+
+.admin-study-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px;
+  border: 1px solid var(--ad-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.admin-study-tab {
+  min-height: 34px;
+  padding: 0 13px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ad-text-soft);
+  font-size: 11px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.admin-study-tab.active {
+  background: var(--ad-green-soft);
+  color: var(--ad-green-dark);
+  border-color: #cfe1c7;
+}
+
+.admin-study-content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 12px;
+}
+
+.admin-study-text-block {
+  border: 1px solid var(--ad-border-soft);
+  border-radius: 14px;
+  background: #fafcf9;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.admin-study-text-block span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ad-text-soft);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.admin-study-text-block p {
+  margin: 0;
+  color: var(--ad-text-main);
+  font-size: 12px;
+  line-height: 1.65;
+  font-weight: 500;
+}
+
+.admin-study-parameter-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-study-parameter-card {
+  border: 1px solid var(--ad-border-soft);
+  border-radius: 14px;
+  background: #fafcf9;
+  padding: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-study-parameter-card strong {
+  color: var(--ad-text-main);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.admin-study-parameter-card span {
+  color: var(--ad-text-soft);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.admin-chart-box--study {
+  max-width: none;
+  height: 260px;
+  margin: 18px 0;
+}
+
+.admin-study-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-study-content-grid--overview {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+}
+
+.admin-detail--overview {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-detail--overview > div {
+  grid-template-columns: 1fr;
+  gap: 5px;
+  border: 1px solid var(--ad-border-soft);
+  border-radius: 13px;
+  background: #fafcf9;
+  padding: 12px;
+}
+
+.admin-study-parameter-grid--columns {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 @media (max-width: 1200px) {
