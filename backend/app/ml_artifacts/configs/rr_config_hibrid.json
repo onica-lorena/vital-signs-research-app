@@ -1,0 +1,27 @@
+{
+    "TASK": "rr",
+    "LABEL_COL": "y_rr",
+    "FEATURE_COLS": [
+        "heart_rate",
+        "resp_rate",
+        "spo2",
+        "temperature",
+        "hr_mean_3h",
+        "hr_std_3h",
+        "hr_mean_5h",
+        "hr_std_5h",
+        "rr_mean_3h",
+        "rr_std_3h",
+        "rr_mean_5h",
+        "rr_std_5h",
+        "spo2_mean_3h",
+        "spo2_std_3h",
+        "spo2_mean_5h",
+        "spo2_std_5h",
+        "temp_mean_3h",
+        "temp_std_3h",
+        "temp_mean_5h",
+        "temp_std_5h"
+    ],
+    "WINDOW_SIZE": 24
+}

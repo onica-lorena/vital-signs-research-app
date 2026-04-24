@@ -12,6 +12,9 @@ class Settings(BaseSettings):
 
     frontend_base_url: str = "http://localhost:5173"
 
+    ml_artifacts_dir: str = "ml_artifacts"
+    analysis_risk_threshold: float = 0.5
+
     smtp_host: str
     smtp_port: int = 587
     smtp_username: str

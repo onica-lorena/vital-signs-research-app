@@ -6,3 +6,9 @@ backend/.pytest_cache/
 scripts/docs/
 .env
 *.pyc
+backend/ml_artifacts/
+app/ml_artifacts/
+*.pkl
+*.keras
+*.h5
+*.npz
