@@ -122,14 +122,14 @@ export default function ParticipantLayout({
                 </div>
               ) : null}
   
-              <div className="participant-topbar__profile">
+              {/*<div className="participant-topbar__profile">
                 <span className="participant-topbar__avatar">
                   {getInitials(participantName)}
                 </span>
                 <span className="participant-topbar__name">
                   {participantName ?? "Participant"}
                 </span>
-              </div>
+              </div>*/}
             </div>
           </div>
   

@@ -4,6 +4,8 @@ import type {
   ParticipantPortalContext,
 } from "./participantStorage";
 
+import type { StudyParameterKey } from "../studies/studiesApi";
+
 const API_BASE_URL = "http://127.0.0.1:8000";
 
 type ParticipantLoginResponse = {
@@ -119,4 +121,66 @@ export async function createParticipantSubmissionRequest(
   }
 
   return await response.json();
+}
+
+export type ParticipantBulkSubmissionCreate = {
+  source_file_name: string | null;
+  participant_notes: string | null;
+  submissions: {
+    values: {
+      parameter_key: StudyParameterKey;
+      value: number;
+      measured_at: string | null;
+    }[];
+  }[];
+};
+
+export type ParticipantSubmissionSessionDetailResponse = {
+  id: number;
+  entry_method: "manual" | "csv";
+  status_summary: "submitted" | "validated" | "rejected" | "partial";
+  submitted_at: string;
+  interval_start: string | null;
+  interval_end: string | null;
+  records_count: number;
+  validated_count: number;
+  pending_count: number;
+  rejected_count: number;
+  source_file_name: string | null;
+  participant_notes: string | null;
+  review_notes: string | null;
+  reviewed_at: string | null;
+  records: {
+    submission_id: number;
+    status: "submitted" | "validated" | "rejected";
+    submitted_at: string;
+    reviewed_at: string | null;
+    review_notes: string | null;
+    values: {
+      id: number;
+      parameter_key: StudyParameterKey;
+      value: number;
+      measured_at: string;
+    }[];
+  }[];
+};
+
+export async function createBulkParticipantSubmissionsRequest(
+  payload: ParticipantBulkSubmissionCreate
+): Promise<ParticipantSubmissionSessionDetailResponse> {
+  const response = await participantAuthFetch("/participant-access/submissions/bulk", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await parseError(response, "Nu s-a putut încărca fișierul CSV.")
+    );
+  }
+
+  return (await response.json()) as ParticipantSubmissionSessionDetailResponse;
 }
