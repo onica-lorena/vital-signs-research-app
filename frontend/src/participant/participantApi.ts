@@ -22,6 +22,17 @@ type ParticipantDataEntryMethodSelectResponse = {
   selected_data_entry_method: ParticipantDataEntryMethod;
 };
 
+type ParticipantSubmissionValuePayload = {
+  parameter_key: string;
+  value: number;
+  measured_at: string | null;
+};
+
+type ParticipantSubmissionCreatePayload = {
+  participant_notes: string | null;
+  values: ParticipantSubmissionValuePayload[];
+};
+
 async function parseError(
   response: Response,
   fallbackMessage: string
@@ -88,4 +99,24 @@ export async function selectParticipantDataEntryMethodRequest(
   }
 
   return (await response.json()) as ParticipantDataEntryMethodSelectResponse;
+}
+
+export async function createParticipantSubmissionRequest(
+  payload: ParticipantSubmissionCreatePayload
+): Promise<unknown> {
+  const response = await participantAuthFetch("/participant-access/submissions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await parseError(response, "Nu s-au putut salva datele introduse.")
+    );
+  }
+
+  return await response.json();
 }
