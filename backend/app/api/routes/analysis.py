@@ -39,6 +39,9 @@ def run_study_analysis(
             study_id=study_id,
             current_user=current_user,
             participant_id=payload.participant_id,
+            scope=payload.scope,
+            start_date=payload.start_date,
+            end_date=payload.end_date,
         )
     except LookupError as exc:
         raise HTTPException(

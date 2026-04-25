@@ -88,6 +88,9 @@ def build_study_report(
             risk_label=result.risk_label,
             records_used=result.records_used,
             window_size=result.window_size,
+            analysis_start_date=result.analysis_start_date,
+            analysis_end_date=result.analysis_end_date,
+            analysis_scope=result.analysis_scope,
             created_at=result.created_at,
         )
 
@@ -224,19 +227,28 @@ def build_report_pdf(report: StudyReportResponse) -> bytes:
 
     story.append(Paragraph("Rezultate analiză predictivă", styles["Heading2"]))
 
-    analysis_rows = [["Participant", "Parametru", "Model", "Probabilitate", "Risc"]]
+    analysis_rows = [["Participant", "Parametru", "Model", "Probabilitate", "Risc", "Interval"]]
 
     for item in report.analysis_results:
+        interval_text = "-"
+
+        if item.analysis_start_date and item.analysis_end_date:
+            interval_text = (
+                f"{item.analysis_start_date.date().isoformat()} - "
+                f"{item.analysis_end_date.date().isoformat()}"
+            )
+
         analysis_rows.append([
             item.participant_code,
             PARAMETER_LABELS.get(item.parameter_key.value, item.parameter_key.value),
             item.model_name,
             f"{item.risk_probability:.4f}",
             item.risk_label,
+            interval_text,
         ])
 
     if len(analysis_rows) == 1:
-        analysis_rows.append(["-", "-", "-", "-", "Nu există rezultate."])
+        analysis_rows.append(["-", "-", "-", "-", "-", "Nu există rezultate."])
 
     analysis_table = Table(analysis_rows)
 

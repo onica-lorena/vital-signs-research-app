@@ -1,5 +1,10 @@
+import os
 import json
 from pathlib import Path
+from datetime import datetime, timedelta, timezone
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 import joblib
 import numpy as np
@@ -13,6 +18,7 @@ from app.models.analysis import AnalysisModelType, AnalysisResult
 from app.models.participant import (
     ParticipantSubmission,
     ParticipantSubmissionStatus,
+    ParticipantSubmissionValue,
     StudyParticipant,
 )
 from app.models.study import StudyParameterKey
@@ -24,7 +30,7 @@ from app.services.ml_feature_service import (
     filter_task_prediction_rows,
 )
 from app.services.participant_service import get_study_for_current_user
-
+from app.schemas.analysis import AnalysisScope
 
 TASK_MODEL_CONFIG = {
     "hr": {
@@ -52,11 +58,34 @@ TASK_MODEL_CONFIG = {
 TASK_RISK_THRESHOLDS = {
     "hr": 0.087,
     "spo2": 0.125,
-    "rr": 0.3,      
+    "rr": 0.122,      
     "temp": 0.728,
 }
 
 _MODEL_CACHE = {}
+
+def _resolve_analysis_interval(
+    scope: AnalysisScope,
+    start_date: datetime | None,
+    end_date: datetime | None,
+) -> tuple[datetime, datetime]:
+    now = datetime.now(timezone.utc)
+
+    if scope == AnalysisScope.LAST_24H:
+        return now - timedelta(hours=24), now
+
+    if scope == AnalysisScope.LAST_48H:
+        return now - timedelta(hours=48), now
+
+    if scope == AnalysisScope.LAST_7_DAYS:
+        return now - timedelta(days=7), now
+
+    if scope == AnalysisScope.CUSTOM:
+        if start_date is None or end_date is None:
+            raise ValueError("Pentru interval personalizat trebuie completate start_date și end_date.")
+        return start_date, end_date
+
+    return now - timedelta(hours=48), now
 
 
 def _artifact_path(*parts: str) -> Path:
@@ -123,10 +152,13 @@ def _load_participant_submissions(
     db: Session,
     study_id: int,
     participant_id: int,
+    analysis_start_date: datetime,
+    analysis_end_date: datetime,
 ) -> list[ParticipantSubmission]:
     stmt = (
         select(ParticipantSubmission)
         .options(selectinload(ParticipantSubmission.values))
+        .join(ParticipantSubmission.values)
         .where(
             ParticipantSubmission.study_id == study_id,
             ParticipantSubmission.participant_id == participant_id,
@@ -136,8 +168,11 @@ def _load_participant_submissions(
                     ParticipantSubmissionStatus.VALIDATED,
                 ]
             ),
+            ParticipantSubmissionValue.measured_at >= analysis_start_date,
+            ParticipantSubmissionValue.measured_at <= analysis_end_date,
         )
         .order_by(ParticipantSubmission.submitted_at.asc())
+        .distinct()
     )
 
     return list(db.execute(stmt).scalars().all())
@@ -204,6 +239,9 @@ def run_analysis_for_study(
     study_id: int,
     current_user: User,
     participant_id: int | None = None,
+    scope: AnalysisScope = AnalysisScope.LAST_48H,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
 ) -> list[AnalysisResult]:
     study = get_study_for_current_user(
         db=db,
@@ -214,6 +252,12 @@ def run_analysis_for_study(
 
     if study is None:
         raise LookupError("Studiul nu a fost găsit.")
+    
+    analysis_start_date, analysis_end_date = _resolve_analysis_interval(
+        scope=scope,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
     participant_filters = [StudyParticipant.study_id == study_id]
 
@@ -237,6 +281,8 @@ def run_analysis_for_study(
             db=db,
             study_id=study_id,
             participant_id=participant.id,
+            analysis_start_date=analysis_start_date,
+            analysis_end_date=analysis_end_date,
         )
 
         if not submissions:
@@ -251,6 +297,8 @@ def run_analysis_for_study(
             features_df = build_prediction_features_from_submissions(
                 submissions=submissions,
                 task=task,
+                start_date=analysis_start_date,
+                end_date=analysis_end_date,
             )
 
             if features_df.empty:
@@ -296,6 +344,9 @@ def run_analysis_for_study(
                     risk_label=risk_label,
                     records_used=len(features_df),
                     window_size=window_size,
+                    analysis_start_date=analysis_start_date,
+                    analysis_end_date=analysis_end_date,
+                    analysis_scope=scope.value,
                 )
 
                 db.add(result)

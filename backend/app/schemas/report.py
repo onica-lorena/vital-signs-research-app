@@ -20,6 +20,11 @@ class ReportAnalysisResultItem(BaseModel):
     risk_label: str
     records_used: int
     window_size: int | None = None
+
+    analysis_start_date: datetime | None = None
+    analysis_end_date: datetime | None = None
+    analysis_scope: str
+
     created_at: datetime
 
 

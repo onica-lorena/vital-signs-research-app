@@ -48,6 +48,16 @@ class AnalysisResult(Base):
     records_used: Mapped[int] = mapped_column(Integer, nullable=False)
     window_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
+    analysis_start_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    analysis_end_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    analysis_scope: Mapped[str] = mapped_column(String(50), nullable=False, default="last_48h")
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

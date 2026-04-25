@@ -60,11 +60,21 @@ def detect_current_abnormal_risk(features_df: pd.DataFrame, task: str) -> float 
     return None
 
 
-def build_hourly_vitals_dataframe(submissions) -> pd.DataFrame:
+def build_hourly_vitals_dataframe(
+    submissions,
+    start_date=None,
+    end_date=None,
+) -> pd.DataFrame:
     rows = []
 
     for submission in submissions:
         for value in submission.values:
+            if start_date is not None and value.measured_at < start_date:
+                continue
+
+            if end_date is not None and value.measured_at > end_date:
+                continue
+
             rows.append(
                 {
                     "submission_id": submission.id,
@@ -201,8 +211,17 @@ def detect_current_abnormal_risk(features_df: pd.DataFrame, task: str) -> float 
     return None
 
 
-def build_prediction_features_from_submissions(submissions, task: str) -> pd.DataFrame:
-    hourly_df = build_hourly_vitals_dataframe(submissions)
+def build_prediction_features_from_submissions(
+    submissions,
+    task: str,
+    start_date=None,
+    end_date=None,
+) -> pd.DataFrame:
+    hourly_df = build_hourly_vitals_dataframe(
+        submissions,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
     if hourly_df.empty:
         return pd.DataFrame()
