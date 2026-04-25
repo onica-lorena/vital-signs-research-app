@@ -38,6 +38,27 @@ REQUIRED_FEATURE_COLUMNS = [
     "temp_std_5h",
 ]
 
+NORMAL_RANGES = {
+    "hr": ("heart_rate", 50, 130),
+    "rr": ("resp_rate", 8, 30),
+    "spo2": ("spo2", 90, 100),
+    "temp": ("temperature", 36.1, 37.5),
+}
+
+
+def detect_current_abnormal_risk(features_df: pd.DataFrame, task: str) -> float | None:
+    if features_df.empty or task not in NORMAL_RANGES:
+        return None
+
+    column, low, high = NORMAL_RANGES[task]
+    latest = features_df.sort_values("hour_ts").iloc[-1]
+    value = latest[column]
+
+    if value < low or value > high:
+        return 0.95
+
+    return None
+
 
 def build_hourly_vitals_dataframe(submissions) -> pd.DataFrame:
     rows = []
@@ -151,6 +172,34 @@ def filter_task_prediction_rows(df: pd.DataFrame, task: str) -> pd.DataFrame:
 
     return df.reset_index(drop=True)
 
+def detect_current_abnormal_risk(features_df: pd.DataFrame, task: str) -> float | None:
+    if features_df.empty:
+        return None
+
+    latest = features_df.sort_values("hour_ts").iloc[-1]
+
+    if task == "hr":
+        value = latest["heart_rate"]
+        if value < 50 or value > 130:
+            return 0.95
+
+    elif task == "rr":
+        value = latest["resp_rate"]
+        if value < 8 or value > 30:
+            return 0.95
+
+    elif task == "spo2":
+        value = latest["spo2"]
+        if value < 90:
+            return 0.95
+
+    elif task == "temp":
+        value = latest["temperature"]
+        if value < 36.1 or value > 37.5:
+            return 0.95
+
+    return None
+
 
 def build_prediction_features_from_submissions(submissions, task: str) -> pd.DataFrame:
     hourly_df = build_hourly_vitals_dataframe(submissions)
@@ -160,6 +209,5 @@ def build_prediction_features_from_submissions(submissions, task: str) -> pd.Dat
 
     clean_df = filter_valid_physiological_ranges(hourly_df)
     features_df = add_rolling_features(clean_df)
-    task_df = filter_task_prediction_rows(features_df, task)
 
-    return task_df
+    return features_df.reset_index(drop=True)

@@ -20,6 +20,8 @@ from app.models.user import User
 from app.services.ml_feature_service import (
     REQUIRED_FEATURE_COLUMNS,
     build_prediction_features_from_submissions,
+    detect_current_abnormal_risk,
+    filter_task_prediction_rows,
 )
 from app.services.participant_service import get_study_for_current_user
 
@@ -45,6 +47,13 @@ TASK_MODEL_CONFIG = {
         "model_type": AnalysisModelType.XGBOOST,
         "model_name": "xgboost",
     },
+}
+
+TASK_RISK_THRESHOLDS = {
+    "hr": 0.087,
+    "spo2": 0.125,
+    "rr": 0.3,      
+    "temp": 0.728,
 }
 
 _MODEL_CACHE = {}
@@ -151,9 +160,11 @@ def _predict_classical(task: str, model_name: str, features_df) -> float:
         X = X[required_cols]
 
     X_processed = preprocess.transform(X)
-    probability = model.predict_proba(X_processed)[-1, 1]
 
-    return float(probability)
+    probabilities = model.predict_proba(X_processed)[:, 1]
+    probability = float(np.max(probabilities))
+
+    return probability
 
 
 def _predict_lstm(task: str, features_df) -> tuple[float, int]:
@@ -246,22 +257,35 @@ def run_analysis_for_study(
                 continue
 
             try:
-                if cfg["model_type"] == AnalysisModelType.LSTM:
-                    probability, window_size = _predict_lstm(task, features_df)
-                else:
-                    probability = _predict_classical(
-                        task=task,
-                        model_name=cfg["model_name"],
-                        features_df=features_df,
-                    )
+                current_abnormal_probability = detect_current_abnormal_risk(features_df, task)
+
+                if current_abnormal_probability is not None:
+                    probability = current_abnormal_probability
                     window_size = None
+                else:
+                    prediction_df = filter_task_prediction_rows(features_df, task)
+
+                    if prediction_df.empty:
+                        continue
+
+                    if cfg["model_type"] == AnalysisModelType.LSTM:
+                        probability, window_size = _predict_lstm(task, prediction_df)
+                    else:
+                        probability = _predict_classical(
+                            task=task,
+                            model_name=cfg["model_name"],
+                            features_df=prediction_df,
+                        )
+                        window_size = None
+
+                threshold = TASK_RISK_THRESHOLDS.get(task, settings.analysis_risk_threshold)
 
                 risk_label = (
                     "high_risk"
-                    if probability >= settings.analysis_risk_threshold
+                    if probability >= threshold
                     else "low_risk"
                 )
-
+                
                 result = AnalysisResult(
                     study_id=study_id,
                     participant_id=participant.id,
