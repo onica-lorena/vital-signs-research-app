@@ -847,7 +847,7 @@ export default function StudiesPage() {
                               type="button"
                               className="studies-icon-btn"
                               aria-label={`Vezi detalii pentru ${study.code}`}
-                              onClick={() => void handleOpenDetails(study.id)}
+                              onClick={() => navigate(`/cercetator/studii/${study.id}`)}
                               disabled={
                                 detailLoadingId === study.id ||
                                 deleteLoadingId === study.id

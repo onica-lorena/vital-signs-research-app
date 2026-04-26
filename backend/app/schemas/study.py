@@ -45,6 +45,7 @@ class StudyResearcherResponse(BaseModel):
     id: int
     full_name: str
     email: EmailStr
+    institution: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

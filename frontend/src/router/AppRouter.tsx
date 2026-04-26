@@ -16,6 +16,7 @@ import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
 import RequestAccessPage from "../pages/RequestAccessPage";
 import AdminStudyDetailsPage from "../pages/AdminStudyDetailsPage";
+import ResearcherStudyDetailsPage from "../pages/ResearcherStudyDetailsPage";
 
 function RoleRedirect() {
   const user = getCurrentUser();
@@ -85,6 +86,24 @@ export default function AppRouter() {
         element={
           <ProtectedRoute allowedRole="researcher">
             <CreateStudyPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/cercetator/studii/:studyId"
+        element={
+          <ProtectedRoute allowedRole="researcher">
+            <Navigate to="rezumat" replace />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/cercetator/studii/:studyId/:tab"
+        element={
+          <ProtectedRoute allowedRole="researcher">
+            <ResearcherStudyDetailsPage />
           </ProtectedRoute>
         }
       />
