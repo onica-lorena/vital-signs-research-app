@@ -258,28 +258,23 @@
 .studies-distribution {
   display: flex;
   justify-content: center;
-  margin-bottom: 15px;
-  margin-top: 19px;
+  align-items: center;
+  height: 120px;
+  margin-bottom: 8px;
+  margin-top: 8px;
 }
 
-.studies-distribution__donut {
-  width: 98px;
-  height: 98px;
+.studies-distribution__empty-chart {
+  width: 108px;
+  height: 108px;
   border-radius: 50%;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.studies-distribution__hole {
-  position: absolute;
-  inset: 18px;
-  border-radius: 50%;
-  background: #ffffff;
+  background: radial-gradient(circle, #ffffff 0 48%, transparent 49%),
+    conic-gradient(#eef2ef 0deg 360deg);
 }
 
 .studies-distribution__legend {
   display: grid;
-  gap: 12px;
+  gap: 9.5px;
 }
 
 .studies-distribution__legend-item {

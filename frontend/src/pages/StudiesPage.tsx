@@ -19,6 +19,13 @@ import {
 } from "../studies/studiesApi";
 import "../styles/researcher-dashboard.css";
 import "../styles/studies-page.css";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
 
 const PAGE_SIZE = 7;
 
@@ -656,27 +663,11 @@ export default function StudiesPage() {
     });
   }, [summary]);
 
-  const donutBackground = useMemo(() => {
-    const total = distributionItems.reduce((accumulator, item) => accumulator + item.count, 0);
-
-    if (total === 0) {
-      return "conic-gradient(#eef2ef 0deg 360deg)";
-    }
-
-    let currentDegree = 0;
-
-    const segments = distributionItems
-      .filter((item) => item.count > 0)
-      .map((item) => {
-        const size = (item.count / total) * 360;
-        const start = currentDegree;
-        const end = currentDegree + size;
-        currentDegree = end;
-        return `${item.color} ${start}deg ${end}deg`;
-      });
-
-    return `conic-gradient(${segments.join(", ")})`;
-  }, [distributionItems]);
+  const chartDistributionItems = useMemo(
+    () =>
+      distributionItems.filter((item) => item.count > 0),
+    [distributionItems]
+  );
 
   return (
     <ResearcherLayout
@@ -992,12 +983,38 @@ export default function StudiesPage() {
               ) : (
                 <>
                   <div className="studies-distribution">
-                    <div
-                      className="studies-distribution__donut"
-                      style={{ background: donutBackground }}
-                    >
-                      <div className="studies-distribution__hole" />
-                    </div>
+                    {chartDistributionItems.length === 0 ? (
+                      <div className="studies-distribution__empty-chart" />
+                    ) : (
+                      <ResponsiveContainer width="100%" height={140}>
+                        <PieChart>
+                          <Tooltip
+                            formatter={(value, _name, props) => [
+                              `${value} studii`,
+                              props.payload.label,
+                            ]}
+                          />
+                  
+                          <Pie
+                            data={chartDistributionItems}
+                            dataKey="count"
+                            nameKey="label"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={38}
+                            outerRadius={60}
+                            paddingAngle={2}
+                            cornerRadius={2}
+                            stroke="none"
+                            strokeWidth={0}
+                          >
+                            {chartDistributionItems.map((item) => (
+                              <Cell key={item.studyType} fill={item.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
                   </div>
 
                   <div className="studies-distribution__legend">
