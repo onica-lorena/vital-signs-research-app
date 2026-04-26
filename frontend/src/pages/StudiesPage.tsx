@@ -791,7 +791,6 @@ export default function StudiesPage() {
                       <th>Status</th>
                       <th>Participanți</th>
                       <th>Data creării</th>
-                      <th>Acțiuni</th>
                     </tr>
                   </thead>
 
@@ -811,9 +810,12 @@ export default function StudiesPage() {
                                 <StudyVisualIcon />
                               </span>
                               
-                              <div className="studies-study-row__content">
-                                <strong>{study.title}</strong>
-                              </div>
+                            <div
+                              className="studies-study-row__content"
+                              onClick={() => navigate(`/cercetator/studii/${study.id}`)}
+                            >
+                              <strong>{study.title}</strong>
+                            </div>
                             </div>
                           </td>
                               
@@ -833,33 +835,6 @@ export default function StudiesPage() {
                             
                           <td>{formatDate(study.created_at)}</td>
                             
-                          <td className="studies-table__actions">
-                            <button
-                              type="button"
-                              className="studies-icon-btn"
-                              aria-label={`Vezi detalii pentru ${study.code}`}
-                              onClick={() => navigate(`/cercetator/studii/${study.id}`)}
-                              disabled={
-                                detailLoadingId === study.id ||
-                                deleteLoadingId === study.id
-                              }
-                            >
-                              <EyeIcon />
-                            </button>
-                            
-                            <button
-                              type="button"
-                              className="studies-icon-btn studies-icon-btn--danger"
-                              aria-label={`Șterge studiul ${study.code}`}
-                              onClick={() => void handleDeleteStudy(study)}
-                              disabled={
-                                detailLoadingId === study.id ||
-                                deleteLoadingId === study.id
-                              }
-                            >
-                              <TrashIcon />
-                            </button>
-                          </td>
                         </tr>
                       );
                     })}
