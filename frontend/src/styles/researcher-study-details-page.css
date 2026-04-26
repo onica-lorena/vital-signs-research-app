@@ -364,7 +364,7 @@
   display: grid;
   grid-template-columns: 110px minmax(0, 1fr);
   gap: 10px;
-  padding-bottom: 22px;
+  padding-bottom: 30px;
   border-bottom: 1px solid var(--rd-border-soft);
 }
 

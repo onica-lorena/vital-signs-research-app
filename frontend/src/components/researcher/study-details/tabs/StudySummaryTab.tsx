@@ -231,11 +231,6 @@ export default function StudySummaryTab({
               <dd>{study.administrative_notes || "—"}</dd>
             </div>
 
-            <div>
-              <dt>Participanți țintă</dt>
-              <dd>{targetParticipants > 0 ? targetParticipants : "—"}</dd>
-            </div>
-
           </dl>
         </article>
 
