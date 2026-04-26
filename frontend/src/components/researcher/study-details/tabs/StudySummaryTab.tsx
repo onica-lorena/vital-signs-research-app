@@ -1,10 +1,3 @@
-import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-} from "recharts";
 import type { ResearcherStudyDetailResponse } from "../../../../studies/studyDetailsApi";
 import type {
   ParticipantSummaryResponse,
@@ -15,8 +8,6 @@ import type {
 type StudySummaryTabProps = {
   study: ResearcherStudyDetailResponse;
   participantsSummary: ParticipantSummaryResponse | null;
-  dataSummary: StudyDataSummaryResponse | null;
-  timeline: StudyDataTimelinePointResponse[];
 };
 
 const PARAMETER_LABELS = {
@@ -198,30 +189,10 @@ function getPercent(value: number, total: number): number {
 export default function StudySummaryTab({
   study,
   participantsSummary,
-  dataSummary,
-  timeline,
 }: StudySummaryTabProps) {
   const targetParticipants = study.target_participants ?? 0;
   const currentParticipants = participantsSummary?.total_participants ?? study.participants_count;
   const participantPercent = getPercent(currentParticipants, targetParticipants);
-
-  const totalSubmissions = dataSummary?.total_submissions ?? 0;
-  const validated = dataSummary?.validated_count ?? 0;
-  const pending = dataSummary?.submitted_count ?? 0;
-  const rejected = dataSummary?.rejected_count ?? 0;
-
-  const submissionStatusData = [
-  { name: "Validate", value: validated, color: "#76b65c" },
-  { name: "În așteptare", value: pending, color: "#d9b56d" },
-  { name: "Respinse", value: rejected, color: "#d98a72" },
-].filter((item) => item.value > 0);
-
-const hasSubmissionStatusData = submissionStatusData.length > 0;
-
-  const maxTimelineValue = Math.max(
-    ...timeline.map((item) => item.values_count),
-    1
-  );
 
   return (
     <div className="researcher-study-summary-tab">
@@ -234,22 +205,6 @@ const hasSubmissionStatusData = submissionStatusData.length > 0;
               <dt>Descriere</dt>
               <dd>{study.description || "Nu a fost introdusă o descriere."}</dd>
             </div>
-
-            <div>
-              <dt>Instituție</dt>
-              <dd>{study.institution || "—"}</dd>
-            </div>
-
-            <div>
-              <dt>Data început</dt>
-              <dd>{formatDate(study.start_date)}</dd>
-            </div>
-
-            <div>
-              <dt>Data final</dt>
-              <dd>{formatDate(study.end_date)}</dd>
-            </div>
-
             <div>
               <dt>Participanți</dt>
               <dd>
@@ -275,10 +230,16 @@ const hasSubmissionStatusData = submissionStatusData.length > 0;
               <dt>Note administrative</dt>
               <dd>{study.administrative_notes || "—"}</dd>
             </div>
+
+            <div>
+              <dt>Participanți țintă</dt>
+              <dd>{targetParticipants > 0 ? targetParticipants : "—"}</dd>
+            </div>
+
           </dl>
         </article>
 
-        <article className="researcher-study-details-card">
+        <article className="researcher-study-details-card researcher-study-parameters-card">
           <h2>Parametri monitorizați</h2>
 
           <div className="researcher-study-parameter-list">
@@ -303,78 +264,12 @@ const hasSubmissionStatusData = submissionStatusData.length > 0;
               );
             })}
           </div>
-        </article>
-
-        <article className="researcher-study-details-card researcher-study-quick-card">
-          <div className="researcher-study-card-header">
-            <h2>Rezumat rapid</h2>
-          </div>
-        
-          <div className="researcher-study-status-chart">
-            {hasSubmissionStatusData ? (
-              <>
-                <div className="researcher-study-status-chart__visual">
-                  <ResponsiveContainer width="100%" height={112}>
-                    <PieChart>
-                      <Pie
-                        data={submissionStatusData}
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius={28}
-                        outerRadius={44}
-                        paddingAngle={4}
-                        stroke="none"
-                      >
-                        {submissionStatusData.map((entry) => (
-                          <Cell key={entry.name} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-        
-                  <div className="researcher-study-status-chart__center">
-                    <strong>{totalSubmissions}</strong>
-                    <span>total</span>
-                  </div>
-                </div>
-        
-                <div className="researcher-study-status-chart__legend">
-                  {submissionStatusData.map((item) => (
-                    <span key={item.name}>
-                      <i style={{ background: item.color }} />
-                      {item.name}
-                    </span>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p className="researcher-study-empty-text">
-                Nu există încă trimiteri pentru acest studiu.
-              </p>
-            )}
-          </div>
-        
-          <div className="researcher-study-quick-grid">
-            <div className="researcher-study-quick-item">
-              <strong>{currentParticipants}</strong>
-              <span>Participanți</span>
-            </div>
-
-            <div className="researcher-study-quick-item">
-              <strong>{dataSummary?.total_values ?? 0}</strong>
-              <span>Valori colectate</span>
-            </div>
-
-            <div className="researcher-study-quick-item">
-              <strong>{validated}</strong>
-              <span>Validate</span>
-            </div>
-
-            <div className="researcher-study-quick-item">
-              <strong>{pending}</strong>
-              <span>În așteptare</span>
-            </div>
+          <div className="researcher-study-parameters-note">
+            <strong>Configurare parametri</strong>
+            <span>
+              Fiecare înregistrare trimisă de participant trebuie să includă toți
+              parametrii monitorizați în acest studiu.
+            </span>
           </div>
         </article>
       </div>

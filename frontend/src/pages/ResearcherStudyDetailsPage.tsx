@@ -345,8 +345,6 @@ export default function ResearcherStudyDetailsPage() {
                 <StudySummaryTab
                   study={study}
                   participantsSummary={participantsSummary}
-                  dataSummary={dataSummary}
-                  timeline={timeline}
                 />
               ) : null}
 
