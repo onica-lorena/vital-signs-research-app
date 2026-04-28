@@ -10,21 +10,13 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  LineChart,
-  Line,
 } from "recharts";
 import type {
-  ParticipantListItemResponse,
-  ParticipantSubmissionStatus,
-  StudyDataSummaryResponse,
-  StudyDataTimelinePointResponse,
-  StudyDetailResponse,
-  StudySubmissionDetailResponse,
-  StudySubmissionListItemResponse,
+  StudyAdminOverviewResponse,
   StudyType,
 } from "../admin/adminApi";
 
-type StudyStatus = StudyDetailResponse["status"];
+type StudyStatus = StudyAdminOverviewResponse["status"];
 
 type ParticipantSummary = {
   total_participants: number;
@@ -36,26 +28,10 @@ type ParticipantSummary = {
 } | null;
 
 type AdminStudiesProps = {
-  studies: StudyDetailResponse[];
+  studies: StudyAdminOverviewResponse[];
   studiesLoading: boolean;
-  selectedStudy: StudyDetailResponse | null;
-  studyDetailLoading: boolean;
-  studyExportLoading: boolean;
-  studyParticipants: ParticipantListItemResponse[];
-  studyParticipantsLoading: boolean;
-  studyParticipantsSummary: ParticipantSummary;
-  studySubmissions: StudySubmissionListItemResponse[];
-  studySubmissionsLoading: boolean;
-  selectedSubmission: StudySubmissionDetailResponse | null;
-  setSelectedSubmission: React.Dispatch<
-    React.SetStateAction<StudySubmissionDetailResponse | null>
-  >;
-  studyDataSummary: StudyDataSummaryResponse | null;
-  studyTimeline: StudyDataTimelinePointResponse[];
-  studyAnalyticsLoading: boolean;
   studyTypeLabels: Record<StudyType, string>;
   studyStatusLabels: Record<StudyStatus, string>;
-  submissionStatusLabels: Record<ParticipantSubmissionStatus, string>;
   formatDate: (value?: string | null) => string;
   totalStudies: number;
   activeStudiesCount: number;
@@ -63,9 +39,6 @@ type AdminStudiesProps = {
   completedStudiesCount: number;
   draftStudiesCount: number;
   onOpenStudy: (studyId: number) => void;
-  onExportStudy: () => void;
-  onOpenSubmission: (submissionId: number) => void;
-  onUpdateSubmissionStatus: (status: ParticipantSubmissionStatus) => void;
 };
 
 const STUDY_STATUS_COLORS: Record<StudyStatus, string> = {
@@ -107,52 +80,6 @@ function getStudyStatusPillClass(status: StudyStatus) {
   }
 }
 
-function getSubmissionStatusClass(status: ParticipantSubmissionStatus) {
-  switch (status) {
-    case "validated":
-      return "admin-status-pill admin-status-pill--success";
-    case "rejected":
-      return "admin-status-pill admin-status-pill--danger";
-    case "submitted":
-    default:
-      return "admin-status-pill admin-status-pill--warning";
-  }
-}
-
-function formatParameterLabel(value: string) {
-  switch (value) {
-    case "heart_rate":
-      return "Ritm cardiac";
-    case "respiratory_rate":
-      return "Frecvență respiratorie";
-    case "spo2":
-      return "Saturația de oxigen";
-    case "temperature":
-      return "Temperatură";
-    default:
-      return value;
-  }
-}
-
-function formatFrequencyLabel(value: string) {
-  switch (value) {
-    case "continuous":
-      return "Continuu";
-    case "every_1_min":
-      return "La 1 minut";
-    case "every_5_min":
-      return "La 5 minute";
-    case "every_15_min":
-      return "La 15 minute";
-    case "every_30_min":
-      return "La 30 minute";
-    case "every_1_hour":
-      return "La 1 oră";
-    default:
-      return value;
-  }
-}
-
 function formatEntryMethodLabel(value?: string | null) {
   switch (value) {
     case "manual":
@@ -169,32 +96,14 @@ function formatEntryMethodLabel(value?: string | null) {
 export default function AdminStudies({
   studies,
   studiesLoading,
-  selectedStudy,
-  studyDetailLoading,
-  studyExportLoading,
-  studyParticipants,
-  studyParticipantsLoading,
-  studyParticipantsSummary,
-  studySubmissions,
-  studySubmissionsLoading,
-  selectedSubmission,
-  setSelectedSubmission,
-  studyDataSummary,
-  studyTimeline,
-  studyAnalyticsLoading,
   studyTypeLabels,
   studyStatusLabels,
-  submissionStatusLabels,
-  formatDate,
   totalStudies,
   activeStudiesCount,
   studiesInAnalysisCount,
   completedStudiesCount,
   draftStudiesCount,
   onOpenStudy,
-  onExportStudy,
-  onOpenSubmission,
-  onUpdateSubmissionStatus,
 }: AdminStudiesProps) {
   const studyStatusData = useMemo(
     () =>
@@ -252,68 +161,6 @@ export default function AdminStudies({
       };
     });
   }, [studies]);
-
-  const participantsChartData = useMemo(
-    () => [
-      {
-        name: "Invitați",
-        value: studyParticipantsSummary?.invited_participants ?? 0,
-      },
-      {
-        name: "Activi",
-        value: studyParticipantsSummary?.active_participants ?? 0,
-      },
-      {
-        name: "Suspendați",
-        value: studyParticipantsSummary?.suspended_participants ?? 0,
-      },
-      {
-        name: "Finalizați",
-        value: studyParticipantsSummary?.completed_participants ?? 0,
-      },
-      {
-        name: "Retrăși",
-        value: studyParticipantsSummary?.withdrawn_participants ?? 0,
-      },
-    ],
-    [studyParticipantsSummary]
-  );
-
-  const submissionStatusData = useMemo(
-    () => [
-      {
-        name: "Trimise",
-        value: studyDataSummary?.submitted_count ?? 0,
-      },
-      {
-        name: "Validate",
-        value: studyDataSummary?.validated_count ?? 0,
-      },
-      {
-        name: "Respinse",
-        value: studyDataSummary?.rejected_count ?? 0,
-      },
-    ],
-    [studyDataSummary]
-  );
-
-  const studyTypeChartData = useMemo(
-    () =>
-      Object.entries(
-        studies.reduce<Record<string, number>>((acc, study) => {
-          const label = studyTypeLabels[study.study_type] ?? study.study_type;
-          acc[label] = (acc[label] ?? 0) + 1;
-          return acc;
-        }, {})
-      ).map(([name, value]) => ({ name, value })),
-    [studies, studyTypeLabels]
-  );
-
-  const totalSubmissions = studyDataSummary?.total_submissions ?? 0;
-  const validationRate =
-    totalSubmissions > 0
-      ? Math.round(((studyDataSummary?.validated_count ?? 0) / totalSubmissions) * 100)
-      : 0;
 
   return (
     <>

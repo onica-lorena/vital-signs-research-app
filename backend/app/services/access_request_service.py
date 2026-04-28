@@ -157,33 +157,36 @@ def approve_access_request(
     access_request.review_notes = review_notes
     access_request.reviewed_by_user_id = current_admin.id
 
+    setup_link = f"{settings.frontend_base_url}/resetare-parola?token={raw_token}"
+
     try:
         db.add(user)
         db.flush()
 
         access_request.created_user_id = user.id
-
         db.add(access_request)
-        db.commit()
-        db.refresh(access_request)
-    except IntegrityError:
-        db.rollback()
-        raise ValueError("Solicitarea nu a putut fi aprobată.")
-    except Exception:
-        db.rollback()
-        raise
 
-    setup_link = f"{settings.frontend_base_url}/resetare-parola?token={raw_token}"
-
-    try:
         send_researcher_access_approved_email(
             to_email=user.email,
             reset_link=setup_link,
         )
+
+        db.commit()
+        db.refresh(access_request)
+
     except smtplib.SMTPException as exc:
+        db.rollback()
         raise ValueError(
-            "Contul a fost creat, dar emailul de activare nu a putut fi trimis."
+            "Emailul de activare nu a putut fi trimis. Cererea nu a fost aprobată."
         ) from exc
+
+    except IntegrityError:
+        db.rollback()
+        raise ValueError("Solicitarea nu a putut fi aprobată.")
+
+    except Exception:
+        db.rollback()
+        raise
 
     return access_request
 
@@ -208,15 +211,27 @@ def reject_access_request(
 
     try:
         db.add(access_request)
+
+        send_access_request_rejected_email(
+            to_email=access_request.email,
+            reason=review_notes,
+        )
+
         db.commit()
         db.refresh(access_request)
+
+    except smtplib.SMTPException as exc:
+        db.rollback()
+        raise ValueError(
+            "Emailul de respingere nu a putut fi trimis. Cererea nu a fost respinsă."
+        ) from exc
+
     except IntegrityError:
         db.rollback()
         raise ValueError("Solicitarea nu a putut fi respinsă.")
 
-    send_access_request_rejected_email(
-        to_email=access_request.email,
-        reason=review_notes,
-    )
+    except Exception:
+        db.rollback()
+        raise
 
     return access_request

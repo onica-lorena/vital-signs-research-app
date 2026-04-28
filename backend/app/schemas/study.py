@@ -141,6 +141,27 @@ class StudyListItemResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class StudyAdminOverviewResponse(BaseModel):
+    id: int
+    title: str
+    code: str
+    description: str | None = None
+    study_type: StudyType
+    data_entry_mode: DataEntryMode
+    status: StudyStatus
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    institution: str | None = None
+    target_participants: int | None = None
+    participants_count: int
+    researcher_id: int
+    researcher: StudyResearcherResponse
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class StudyDetailResponse(BaseModel):
     id: int
     title: str
@@ -172,6 +193,30 @@ class StudyDetailResponse(BaseModel):
     parameters: list[StudyParameterResponse]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class StudyAdminListItemResponse(BaseModel):
+    id: int
+    title: str
+    code: str
+    study_type: StudyType
+    data_entry_mode: DataEntryMode
+    status: StudyStatus
+    participants_count: int
+    researcher_id: int
+    researcher: StudyResearcherResponse
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StudyAdminListResponse(BaseModel):
+    items: list[StudyAdminListItemResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
 
 
 class StudyListResponse(BaseModel):

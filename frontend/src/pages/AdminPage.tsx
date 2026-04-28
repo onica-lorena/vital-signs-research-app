@@ -5,22 +5,13 @@ import "../styles/admin-layout.css";
 import {
   approveAccessRequestRequest,
   createUserRequest,
-  exportStudyAdminRequest,
   getAccessRequestByIdRequest,
-  getStudyByIdAdminRequest,
-  getStudyDataSummaryRequest,
-  getStudyDataTimelineRequest,
-  getStudyParticipantsSummaryRequest,
-  getStudySubmissionByIdRequest,
   getUserByIdRequest,
   listAccessRequestsRequest,
   listStudiesAdminRequest,
-  listStudyParticipantsRequest,
-  listStudySubmissionsRequest,
   listUsersRequest,
   rejectAccessRequestRequest,
   resetUserPasswordRequest,
-  updateStudySubmissionRequest,
   updateUserRequest,
   updateUserStatusRequest,
   type AccessRequestResponse,
@@ -28,9 +19,7 @@ import {
   type ParticipantListItemResponse,
   type ParticipantSubmissionStatus,
   type StudyDataSummaryResponse,
-  type StudyDataTimelinePointResponse,
-  type StudyDetailResponse,
-  type StudySubmissionDetailResponse,
+  type StudyAdminOverviewResponse,
   type StudySubmissionListItemResponse,
   type StudyType,
   type UserResponse,
@@ -93,17 +82,6 @@ function formatDate(value?: string | null): string {
   }).format(parsed);
 }
 
-function downloadBlob(blob: Blob, filename: string) {
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
-}
-
 export default function AdminPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -147,37 +125,8 @@ export default function AdminPage() {
   const [newUserPhone, setNewUserPhone] = useState("");
   const [newUserBio, setNewUserBio] = useState("");
 
-  const [studies, setStudies] = useState<StudyDetailResponse[]>([]);
+  const [studies, setStudies] = useState<StudyAdminOverviewResponse[]>([]);
   const [studiesLoading, setStudiesLoading] = useState(true);
-  const [selectedStudy, setSelectedStudy] = useState<StudyDetailResponse | null>(null);
-  const [studyDetailLoading, setStudyDetailLoading] = useState(false);
-  const [studyExportLoading, setStudyExportLoading] = useState(false);
-
-  const [studyParticipants, setStudyParticipants] = useState<
-    ParticipantListItemResponse[]
-  >([]);
-  const [studyParticipantsLoading, setStudyParticipantsLoading] = useState(false);
-  const [studyParticipantsSummary, setStudyParticipantsSummary] = useState<{
-    total_participants: number;
-    invited_participants: number;
-    active_participants: number;
-    suspended_participants: number;
-    completed_participants: number;
-    withdrawn_participants: number;
-  } | null>(null);
-
-  const [studySubmissions, setStudySubmissions] = useState<
-    StudySubmissionListItemResponse[]
-  >([]);
-  const [studySubmissionsLoading, setStudySubmissionsLoading] = useState(false);
-  const [selectedSubmission, setSelectedSubmission] =
-    useState<StudySubmissionDetailResponse | null>(null);
-
-  const [studyDataSummary, setStudyDataSummary] = useState<StudyDataSummaryResponse | null>(
-    null
-  );
-  const [studyTimeline, setStudyTimeline] = useState<StudyDataTimelinePointResponse[]>([]);
-  const [studyAnalyticsLoading, setStudyAnalyticsLoading] = useState(false);
 
   function handleTabChange(tab: AdminNavigationKey) {
     if (tab === "dashboard") {
@@ -245,12 +194,8 @@ export default function AdminPage() {
         sort_by: "created_at",
         sort_order: "desc",
       });
-
-      const detailedStudies = await Promise.all(
-        response.items.map((item) => getStudyByIdAdminRequest(item.id))
-      );
-
-      setStudies(detailedStudies);
+      
+      setStudies(response.items);
     } catch (error) {
       if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) {
         return;
@@ -548,78 +493,6 @@ export default function AdminPage() {
     navigate(`/admin/studii/${studyId}`);
   }
 
-  async function handleExportStudy() {
-    if (!selectedStudy) {
-      return;
-    }
-
-    setStudyExportLoading(true);
-    setPageError("");
-
-    try {
-      const result = await exportStudyAdminRequest(selectedStudy.id);
-      downloadBlob(result.blob, result.filename);
-    } catch (error) {
-      setPageError(
-        error instanceof Error ? error.message : "Nu s-a putut exporta studiul."
-      );
-    } finally {
-      setStudyExportLoading(false);
-    }
-  }
-
-  async function handleOpenSubmission(submissionId: number) {
-    if (!selectedStudy) {
-      return;
-    }
-
-    setPageError("");
-
-    try {
-      const detail = await getStudySubmissionByIdRequest(selectedStudy.id, submissionId);
-      setSelectedSubmission(detail);
-    } catch (error) {
-      setPageError(
-        error instanceof Error
-          ? error.message
-          : "Nu s-au putut încărca detaliile trimiterii."
-      );
-    }
-  }
-
-  async function handleUpdateSubmissionStatus(status: ParticipantSubmissionStatus) {
-    if (!selectedStudy || !selectedSubmission) {
-      return;
-    }
-
-    setPageError("");
-
-    try {
-      const updated = await updateStudySubmissionRequest(selectedStudy.id, selectedSubmission.id, {
-        status,
-        review_notes: selectedSubmission.review_notes ?? null,
-      });
-
-      setSelectedSubmission(updated);
-
-      const refreshedSubmissions = await listStudySubmissionsRequest(selectedStudy.id, {
-        page: 1,
-        page_size: 20,
-      });
-
-      setStudySubmissions(refreshedSubmissions.items);
-
-      const refreshedSummary = await getStudyDataSummaryRequest(selectedStudy.id);
-      setStudyDataSummary(refreshedSummary);
-    } catch (error) {
-      setPageError(
-        error instanceof Error
-          ? error.message
-          : "Nu s-a putut actualiza statusul trimiterii."
-      );
-    }
-  }
-
   return (
     <AdminLayout
       activeItem={activeTab}
@@ -723,22 +596,8 @@ export default function AdminPage() {
             <AdminStudies
               studies={studies}
               studiesLoading={studiesLoading}
-              selectedStudy={selectedStudy}
-              studyDetailLoading={studyDetailLoading}
-              studyExportLoading={studyExportLoading}
-              studyParticipants={studyParticipants}
-              studyParticipantsLoading={studyParticipantsLoading}
-              studyParticipantsSummary={studyParticipantsSummary}
-              studySubmissions={studySubmissions}
-              studySubmissionsLoading={studySubmissionsLoading}
-              selectedSubmission={selectedSubmission}
-              setSelectedSubmission={setSelectedSubmission}
-              studyDataSummary={studyDataSummary}
-              studyTimeline={studyTimeline}
-              studyAnalyticsLoading={studyAnalyticsLoading}
               studyTypeLabels={STUDY_TYPE_LABELS}
               studyStatusLabels={STUDY_STATUS_LABELS}
-              submissionStatusLabels={SUBMISSION_STATUS_LABELS}
               formatDate={formatDate}
               totalStudies={studies.length}
               activeStudiesCount={activeStudiesCount}
@@ -746,11 +605,6 @@ export default function AdminPage() {
               completedStudiesCount={completedStudiesCount}
               draftStudiesCount={draftStudiesCount}
               onOpenStudy={(studyId) => void handleOpenStudy(studyId)}
-              onExportStudy={() => void handleExportStudy()}
-              onOpenSubmission={(submissionId) => void handleOpenSubmission(submissionId)}
-              onUpdateSubmissionStatus={(status) =>
-                void handleUpdateSubmissionStatus(status)
-              }
             />
           ) : null}
         </section>

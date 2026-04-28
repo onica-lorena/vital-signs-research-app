@@ -30,7 +30,7 @@ def run_study_analysis(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[
         User,
-        Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN)),
+        Depends(require_role(UserRole.RESEARCHER)),
     ],
 ):
     try:
@@ -66,7 +66,7 @@ def read_analysis_results(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[
         User,
-        Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN)),
+        Depends(require_role(UserRole.RESEARCHER)),
     ],
     participant_id: int | None = Query(None),
 ):

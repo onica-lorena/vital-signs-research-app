@@ -94,18 +94,25 @@ def forgot_password(
         minutes=settings.reset_password_token_expire_minutes
     )
 
-    db.add(user)
-    db.commit()
-
     reset_link = f"{settings.frontend_base_url}/resetare-parola?token={raw_token}"
 
     try:
+        db.add(user)
+
         send_password_reset_email(to_email=email, reset_link=reset_link)
+
+        db.commit()
+
     except smtplib.SMTPException:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Nu s-a putut trimite emailul de resetare. Încearcă din nou mai târziu.",
         )
+
+    except Exception:
+        db.rollback()
+        raise
 
     return MessageResponse(message=generic_message)
 

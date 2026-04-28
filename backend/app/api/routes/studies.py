@@ -14,6 +14,9 @@ from app.models.study import StudyStatus, StudyType
 from app.models.user import User, UserRole
 from app.schemas.study import (
     SortOrder,
+    StudyAdminListItemResponse,
+    StudyAdminListResponse,
+    StudyAdminOverviewResponse,
     StudyCreate,
     StudyDetailResponse,
     StudyListItemResponse,
@@ -30,8 +33,10 @@ from app.services.study_service import (
     create_study as create_study_service,
     delete_study_for_current_user,
     get_studies_summary_for_user,
+    get_study_admin_overview_by_id,
     get_study_by_id_for_current_user,
     list_studies_for_current_user,
+    list_studies_for_admin_overview,
     update_study_for_current_user,
 )
 
@@ -56,7 +61,7 @@ def create_study(
 @router.get("/", response_model=StudyListResponse, summary="Listează studiile")
 def list_studies(
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     search: str | None = Query(None),
@@ -95,11 +100,71 @@ def get_studies_summary(
     return StudySummaryResponse(**summary)
 
 
+@router.get(
+    "/admin-overview",
+    response_model=StudyAdminListResponse,
+    summary="Listează studiile pentru administrare tehnică",
+)
+def list_studies_admin_overview(
+    db: Annotated[Session, Depends(get_db)],
+    current_admin: Annotated[User, Depends(require_role(UserRole.ADMIN))],
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    search: str | None = Query(None),
+    status: StudyStatus | None = Query(None),
+    study_type: StudyType | None = Query(None),
+    sort_by: StudySortBy = Query(StudySortBy.CREATED_AT),
+    sort_order: SortOrder = Query(SortOrder.DESC),
+):
+    items, total, total_pages = list_studies_for_admin_overview(
+        db=db,
+        page=page,
+        page_size=page_size,
+        search=search,
+        status=status,
+        study_type=study_type,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
+
+    return StudyAdminListResponse(
+        items=[StudyAdminListItemResponse.model_validate(item) for item in items],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+    )
+
+
+@router.get(
+    "/admin-overview/{study_id}",
+    response_model=StudyAdminOverviewResponse,
+    summary="Detalii administrative studiu",
+)
+def read_study_admin_overview(
+    study_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_admin: Annotated[User, Depends(require_role(UserRole.ADMIN))],
+):
+    study = get_study_admin_overview_by_id(
+        db=db,
+        study_id=study_id,
+    )
+
+    if study is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Studiul nu a fost găsit.",
+        )
+
+    return StudyAdminOverviewResponse.model_validate(study)
+
+
 @router.get("/{study_id}/export", summary="Exportă datele esențiale ale studiului")
 def export_study(
     study_id: int,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
     export_format: str = Query("json", alias="format", pattern="^(json|csv)$"),
 ):
     study = get_study_by_id_for_current_user(
@@ -239,7 +304,7 @@ def export_study(
 def get_study_by_id(
     study_id: int,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
 ):
     study = get_study_by_id_for_current_user(
         db=db,
@@ -261,7 +326,7 @@ def update_study(
     study_id: int,
     payload: StudyUpdate,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
 ):
     try:
         study = update_study_for_current_user(
@@ -289,7 +354,7 @@ def update_study(
 def delete_study(
     study_id: int,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
 ):
     try:
         deleted = delete_study_for_current_user(

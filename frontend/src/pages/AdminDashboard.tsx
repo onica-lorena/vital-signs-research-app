@@ -13,7 +13,7 @@ import {
 import type {
   AccessRequestResponse,
   AccessRequestStatus,
-  StudyDetailResponse,
+  StudyAdminOverviewResponse
 } from "../admin/adminApi";
 
 type AdminDashboardProps = {
@@ -27,9 +27,9 @@ type AdminDashboardProps = {
   adminsCount: number;
   researchersCount: number;
   accessRequests: AccessRequestResponse[];
-  studies: StudyDetailResponse[];
+  studies: StudyAdminOverviewResponse[];
   accessRequestStatusLabels: Record<AccessRequestStatus, string>;
-  studyStatusLabels: Record<StudyDetailResponse["status"], string>;
+  studyStatusLabels: Record<StudyAdminOverviewResponse["status"], string>;
   onOpenRecentAccessRequest: (accessRequestId: number) => void;
 };
 
@@ -56,7 +56,7 @@ function getAccessRequestStatusClass(status: AccessRequestStatus) {
   }
 }
 
-function getStudyStatusClass(status: StudyDetailResponse["status"]) {
+function getStudyStatusClass(status: StudyAdminOverviewResponse["status"]) {
   switch (status) {
     case "active":
       return "admin-status-pill admin-status-pill--success";

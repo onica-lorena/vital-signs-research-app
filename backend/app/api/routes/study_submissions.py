@@ -78,7 +78,7 @@ def _to_study_submission_detail(
 def read_study_submissions(
     study_id: int,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     search: str | None = Query(None),
@@ -109,6 +109,54 @@ def read_study_submissions(
 
 
 @router.get(
+    "/summary/data",
+    response_model=StudyDataSummaryResponse,
+    summary="Rezumat date colectate pentru studiu",
+)
+def read_study_data_summary(
+    study_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
+):
+    try:
+        summary = get_study_data_summary(
+            db=db,
+            study_id=study_id,
+            current_user=current_user,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    return StudyDataSummaryResponse(**summary)
+
+
+@router.get(
+    "/timeline/data",
+    response_model=list[StudyDataTimelinePointResponse],
+    summary="Timeline date colectate pentru studiu",
+)
+def read_study_data_timeline(
+    study_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
+    group_by: str = Query("week", pattern="^(day|week|month)$"),
+):
+    try:
+        items = get_study_data_timeline(
+            db=db,
+            study_id=study_id,
+            current_user=current_user,
+            group_by=group_by,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    return [StudyDataTimelinePointResponse(**item) for item in items]
+
+
+@router.get(
     "/{submission_id}",
     response_model=StudySubmissionDetailResponse,
     summary="Detalii trimitere dintr-un studiu",
@@ -117,7 +165,7 @@ def read_study_submission_detail(
     study_id: int,
     submission_id: int,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
 ):
     try:
         submission = get_study_submission_for_current_user(
@@ -148,7 +196,7 @@ def update_study_submission(
     submission_id: int,
     payload: ParticipantSubmissionUpdate,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
 ):
     try:
         submission = update_study_submission_for_current_user(
@@ -169,50 +217,3 @@ def update_study_submission(
 
     return _to_study_submission_detail(submission)
 
-
-@router.get(
-    "/summary/data",
-    response_model=StudyDataSummaryResponse,
-    summary="Rezumat date colectate pentru studiu",
-)
-def read_study_data_summary(
-    study_id: int,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
-):
-    try:
-        summary = get_study_data_summary(
-            db=db,
-            study_id=study_id,
-            current_user=current_user,
-        )
-    except LookupError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-
-    return StudyDataSummaryResponse(**summary)
-
-
-@router.get(
-    "/timeline/data",
-    response_model=list[StudyDataTimelinePointResponse],
-    summary="Timeline date colectate pentru studiu",
-)
-def read_study_data_timeline(
-    study_id: int,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
-    group_by: str = Query("week", pattern="^(day|week|month)$"),
-):
-    try:
-        items = get_study_data_timeline(
-            db=db,
-            study_id=study_id,
-            current_user=current_user,
-            group_by=group_by,
-        )
-    except LookupError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-
-    return [StudyDataTimelinePointResponse(**item) for item in items]

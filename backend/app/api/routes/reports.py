@@ -21,7 +21,7 @@ def generate_study_report(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[
         User,
-        Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN)),
+        Depends(require_role(UserRole.RESEARCHER)),
     ],
 ):
     try:
@@ -43,7 +43,7 @@ def read_latest_study_report(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[
         User,
-        Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN)),
+        Depends(require_role(UserRole.RESEARCHER)),
     ],
 ):
     try:
@@ -65,7 +65,7 @@ def export_study_report_pdf(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[
         User,
-        Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN)),
+        Depends(require_role(UserRole.RESEARCHER)),
     ],
 ):
     try:

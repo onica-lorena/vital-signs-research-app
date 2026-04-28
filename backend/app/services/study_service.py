@@ -88,17 +88,31 @@ def get_study_by_id_for_current_user(
     study_id: int,
     current_user: User,
 ) -> Study | None:
+    if current_user.role != UserRole.RESEARCHER:
+        return None
+
     stmt = (
         select(Study)
         .options(*_study_detail_options())
-        .where(Study.id == study_id)
+        .where(
+            Study.id == study_id,
+            Study.researcher_id == current_user.id,
+        )
     )
-
-    if current_user.role == UserRole.RESEARCHER:
-        stmt = stmt.where(Study.researcher_id == current_user.id)
 
     return db.execute(stmt).scalar_one_or_none()
 
+def get_study_admin_overview_by_id(
+    db: Session,
+    study_id: int,
+) -> Study | None:
+    stmt = (
+        select(Study)
+        .options(selectinload(Study.researcher))
+        .where(Study.id == study_id)
+    )
+
+    return db.execute(stmt).scalar_one_or_none()
 
 def update_study_for_current_user(
     db: Session,
@@ -258,10 +272,10 @@ def list_studies_for_current_user(
     sort_by: StudySortBy = StudySortBy.CREATED_AT,
     sort_order: SortOrder = SortOrder.DESC,
 ):
-    filters = []
+    if current_user.role != UserRole.RESEARCHER:
+        return [], 0, 1
 
-    if current_user.role == UserRole.RESEARCHER:
-        filters.append(Study.researcher_id == current_user.id)
+    filters = [Study.researcher_id == current_user.id]
 
     if search:
         search_term = f"%{search.strip()}%"
@@ -291,6 +305,59 @@ def list_studies_for_current_user(
 
     stmt = (
         select(Study)
+        .where(*filters)
+        .order_by(order_clause)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+
+    items = list(db.execute(stmt).scalars().all())
+    total_pages = ceil(total / page_size) if total > 0 else 1
+
+    return items, total, total_pages
+
+
+def list_studies_for_admin_overview(
+    db: Session,
+    page: int,
+    page_size: int,
+    search: str | None = None,
+    status: StudyStatus | None = None,
+    study_type: StudyType | None = None,
+    sort_by: StudySortBy = StudySortBy.CREATED_AT,
+    sort_order: SortOrder = SortOrder.DESC,
+):
+    filters = []
+
+    if search:
+        search_term = f"%{search.strip()}%"
+        filters.append(
+            or_(
+                Study.title.ilike(search_term),
+                Study.code.ilike(search_term),
+            )
+        )
+
+    if status:
+        filters.append(Study.status == status)
+
+    if study_type:
+        filters.append(Study.study_type == study_type)
+
+    count_stmt = select(func.count()).select_from(Study).where(*filters)
+    total = db.execute(count_stmt).scalar_one()
+
+    sort_columns = {
+        StudySortBy.CREATED_AT: Study.created_at,
+        StudySortBy.TITLE: Study.title,
+    }
+
+    sort_column = sort_columns[sort_by]
+    order_clause = sort_column.asc() if sort_order == SortOrder.ASC else sort_column.desc()
+
+    stmt = (
+        select(Study)
+        .options(selectinload(Study.researcher))
         .where(*filters)
         .order_by(order_clause)
         .offset((page - 1) * page_size)

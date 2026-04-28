@@ -1,6 +1,6 @@
 """add analysis period fields
 
-Revision ID: xxxx_add_analysis_period_fields
+Revision ID: 7a9c2e4b8f10
 Revises: 1f3ce12ac5c8
 Create Date: 2026-04-25
 
@@ -11,7 +11,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision: str = "xxxx_add_analysis_period_fields"
+revision: str = "7a9c2e4b8f10"
 down_revision: Union[str, Sequence[str], None] = "1f3ce12ac5c8"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

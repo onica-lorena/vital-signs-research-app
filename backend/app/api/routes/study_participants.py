@@ -38,7 +38,7 @@ router = APIRouter(
 def read_study_participants(
     study_id: int,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     search: str | None = Query(None),
@@ -70,7 +70,7 @@ def read_study_participants(
 def read_study_participants_summary(
     study_id: int,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
 ):
     try:
         summary = get_participants_summary_for_study(
@@ -94,7 +94,7 @@ def create_participant(
     study_id: int,
     payload: ParticipantCreate,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
 ):
     try:
         participant, temporary_pin = create_study_participant(
@@ -117,7 +117,7 @@ def read_study_participant(
     study_id: int,
     participant_id: int,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
 ):
     try:
         participant = get_study_participant_for_current_user(
@@ -144,7 +144,7 @@ def update_participant(
     participant_id: int,
     payload: ParticipantUpdate,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
 ):
     try:
         participant = update_study_participant_for_current_user(
@@ -177,7 +177,7 @@ def reset_participant_pin(
     study_id: int,
     participant_id: int,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
 ):
     try:
         participant, temporary_pin = reset_study_participant_pin(
@@ -205,7 +205,7 @@ def read_participant_submissions(
     study_id: int,
     participant_id: int,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER, UserRole.ADMIN))],
+    current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
 ):
     try:
         submissions = list_participant_submissions_for_researcher(

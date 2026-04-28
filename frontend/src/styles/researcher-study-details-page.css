@@ -416,9 +416,6 @@
   padding: 10px 2px;
   border: 1px solid rgba(218, 229, 218, 0.9);
   border-radius: 17px;
-  background:
-    radial-gradient(circle at 0% 50%, rgba(118, 182, 92, 0.12), transparent 34%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 247, 0.94));
   display: flex;
   align-items: center;
   justify-content: space-between;

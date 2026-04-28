@@ -48,6 +48,8 @@ def get_study_for_current_user(
 
     if current_user.role == UserRole.RESEARCHER:
         stmt = stmt.where(Study.researcher_id == current_user.id)
+    else:
+        return None
 
     return db.execute(stmt).scalar_one_or_none()
 
@@ -675,7 +677,7 @@ def create_bulk_participant_submissions(
         session.interval_start = min(all_measured_moments)
         session.interval_end = max(all_measured_moments)
 
-    participant.submissions_count = (participant.submissions_count or 0) + len(payload.submissions)
+    participant.submissions_count = (participant.submissions_count or 0) + 1
     participant.last_submission_at = now
 
     db.add(session)
@@ -919,8 +921,8 @@ def get_study_data_summary(
 
     total_submissions = db.execute(
         select(func.count())
-        .select_from(ParticipantSubmission)
-        .where(ParticipantSubmission.study_id == study_id)
+        .select_from(ParticipantSubmissionSession)
+        .where(ParticipantSubmissionSession.study_id == study_id)
     ).scalar_one()
 
     total_values = db.execute(
@@ -1209,19 +1211,22 @@ def get_study_data_timeline(
     if study is None:
         raise LookupError("Studiul nu a fost găsit.")
 
-    submissions = list(
+    sessions = list(
         db.execute(
-            select(ParticipantSubmission)
-            .options(selectinload(ParticipantSubmission.values))
-            .where(ParticipantSubmission.study_id == study_id)
-            .order_by(ParticipantSubmission.submitted_at.asc())
+            select(ParticipantSubmissionSession)
+            .options(
+                selectinload(ParticipantSubmissionSession.submissions)
+                .selectinload(ParticipantSubmission.values)
+            )
+            .where(ParticipantSubmissionSession.study_id == study_id)
+            .order_by(ParticipantSubmissionSession.created_at.asc())
         ).scalars().all()
     )
 
     timeline: dict[str, dict[str, int]] = {}
 
-    for submission in submissions:
-        label = _timeline_label(submission.submitted_at, group_by)
+    for session in sessions:
+        label = _timeline_label(session.created_at, group_by)
 
         if label not in timeline:
             timeline[label] = {
@@ -1230,7 +1235,9 @@ def get_study_data_timeline(
             }
 
         timeline[label]["submissions_count"] += 1
-        timeline[label]["values_count"] += len(submission.values)
+        timeline[label]["values_count"] += sum(
+            len(submission.values) for submission in session.submissions
+        )
 
     return [
         {

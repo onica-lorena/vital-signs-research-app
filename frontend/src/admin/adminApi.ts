@@ -83,6 +83,7 @@ export type StudyResearcherResponse = {
   id: number;
   full_name: string;
   email: string;
+  institution: string | null;
 };
 
 export type StudyParameterResponse = {
@@ -125,6 +126,33 @@ export type StudyDetailResponse = {
   can_delete: boolean;
   delete_restriction_reason: string | null;
   parameters: StudyParameterResponse[];
+};
+
+export type StudyAdminOverviewResponse = {
+  id: number;
+  title: string;
+  code: string;
+  description: string | null;
+  study_type: StudyType;
+  data_entry_mode: DataEntryMode;
+  status: StudyStatus;
+  start_date: string | null;
+  end_date: string | null;
+  institution: string | null;
+  target_participants: number | null;
+  participants_count: number;
+  researcher_id: number;
+  researcher: StudyResearcherResponse;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StudyAdminListResponse = {
+  items: StudyAdminOverviewResponse[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
 };
 
 export type StudyListResponse = {
@@ -475,9 +503,9 @@ export async function resetUserPasswordRequest(
 
 export async function listStudiesAdminRequest(
   params: ListStudiesParams = {}
-): Promise<StudyListResponse> {
+): Promise<StudyAdminListResponse> {
   const response = await authFetch(
-    `/studies${buildQuery({
+    `/studies/admin-overview${buildQuery({
       page: params.page,
       page_size: params.page_size,
       search: params.search?.trim(),
@@ -493,17 +521,21 @@ export async function listStudiesAdminRequest(
     throw new Error(await parseError(response, "Nu s-au putut prelua studiile."));
   }
 
-  return (await response.json()) as StudyListResponse;
+  return (await response.json()) as StudyAdminListResponse;
 }
 
-export async function getStudyByIdAdminRequest(studyId: number): Promise<StudyDetailResponse> {
-  const response = await authFetch(`/studies/${studyId}`, { method: "GET" });
+export async function getStudyByIdAdminRequest(
+  studyId: number
+): Promise<StudyAdminOverviewResponse> {
+  const response = await authFetch(`/studies/admin-overview/${studyId}`, {
+    method: "GET",
+  });
 
   if (!response.ok) {
     throw new Error(await parseError(response, "Nu s-au putut prelua detaliile studiului."));
   }
 
-  return (await response.json()) as StudyDetailResponse;
+  return (await response.json()) as StudyAdminOverviewResponse;
 }
 
 export async function updateStudyAdminRequest(
@@ -546,59 +578,6 @@ export async function deleteStudyAdminRequest(studyId: number): Promise<void> {
   if (!response.ok) {
     throw new Error(await parseError(response, "Nu s-a putut șterge studiul."));
   }
-}
-
-export async function exportStudyAdminRequest(
-  studyId: number,
-  format: "json" | "csv" = "csv"
-): Promise<{ blob: Blob; filename: string }> {
-  const response = await authFetch(`/studies/${studyId}/export?format=${format}`, {
-    method: "GET",
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Nu s-a putut exporta studiul."));
-  }
-
-  return {
-    blob: await response.blob(),
-    filename: extractFilename(response, `study-${studyId}-export.${format}`),
-  };
-}
-
-export async function listStudyParticipantsRequest(
-  studyId: number,
-  params: ListParticipantsParams = {}
-): Promise<ParticipantListResponse> {
-  const response = await authFetch(
-    `/studies/${studyId}/participants${buildQuery({
-      page: params.page,
-      page_size: params.page_size,
-      search: params.search?.trim(),
-      status: params.status,
-    })}`,
-    { method: "GET" }
-  );
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Nu s-au putut prelua participanții."));
-  }
-
-  return (await response.json()) as ParticipantListResponse;
-}
-
-export async function getStudyParticipantsSummaryRequest(
-  studyId: number
-): Promise<ParticipantSummaryResponse> {
-  const response = await authFetch(`/studies/${studyId}/participants/summary`, {
-    method: "GET",
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Nu s-a putut prelua rezumatul participanților."));
-  }
-
-  return (await response.json()) as ParticipantSummaryResponse;
 }
 
 export async function createStudyParticipantRequest(
@@ -674,92 +653,4 @@ export async function resetStudyParticipantPinRequest(
   }
 
   return (await response.json()) as ParticipantPinResetResponse;
-}
-
-export async function listStudySubmissionsRequest(
-  studyId: number,
-  params: ListStudySubmissionsParams = {}
-): Promise<StudySubmissionListResponse> {
-  const response = await authFetch(
-    `/studies/${studyId}/submissions${buildQuery({
-      page: params.page,
-      page_size: params.page_size,
-      search: params.search?.trim(),
-      status: params.status,
-      participant_id: params.participant_id ?? undefined,
-    })}`,
-    { method: "GET" }
-  );
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Nu s-au putut prelua trimiterile."));
-  }
-
-  return (await response.json()) as StudySubmissionListResponse;
-}
-
-export async function getStudySubmissionByIdRequest(
-  studyId: number,
-  submissionId: number
-): Promise<StudySubmissionDetailResponse> {
-  const response = await authFetch(`/studies/${studyId}/submissions/${submissionId}`, {
-    method: "GET",
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Nu s-au putut prelua detaliile trimiterii."));
-  }
-
-  return (await response.json()) as StudySubmissionDetailResponse;
-}
-
-export async function updateStudySubmissionRequest(
-  studyId: number,
-  submissionId: number,
-  payload: {
-    status: ParticipantSubmissionStatus;
-    review_notes: string | null;
-  }
-): Promise<StudySubmissionDetailResponse> {
-  const response = await authFetch(`/studies/${studyId}/submissions/${submissionId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Nu s-a putut actualiza trimiterea."));
-  }
-
-  return (await response.json()) as StudySubmissionDetailResponse;
-}
-
-export async function getStudyDataSummaryRequest(
-  studyId: number
-): Promise<StudyDataSummaryResponse> {
-  const response = await authFetch(`/studies/${studyId}/submissions/summary/data`, {
-    method: "GET",
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Nu s-a putut prelua rezumatul datelor."));
-  }
-
-  return (await response.json()) as StudyDataSummaryResponse;
-}
-
-export async function getStudyDataTimelineRequest(
-  studyId: number,
-  groupBy: "day" | "week" | "month"
-): Promise<StudyDataTimelinePointResponse[]> {
-  const response = await authFetch(
-    `/studies/${studyId}/submissions/timeline/data${buildQuery({ group_by: groupBy })}`,
-    { method: "GET" }
-  );
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Nu s-a putut prelua timeline-ul datelor."));
-  }
-
-  return (await response.json()) as StudyDataTimelinePointResponse[];
 }
