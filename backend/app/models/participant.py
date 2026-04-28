@@ -1,7 +1,7 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from enum import Enum
 
-from sqlalchemy import DateTime, Enum as SqlEnum, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Date, DateTime, Enum as SqlEnum, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -25,6 +25,42 @@ class ParticipantDataEntryMethod(str, Enum):
     MANUAL = "manual"
     CSV = "csv"
 
+class ParticipantSex(str, Enum):
+    FEMALE = "female"
+    MALE = "male"
+    OTHER = "other"
+    PREFER_NOT_TO_SAY = "prefer_not_to_say"
+
+
+class ActivityLevel(str, Enum):
+    SEDENTARY = "sedentary"
+    LIGHT = "light"
+    MODERATE = "moderate"
+    ACTIVE = "active"
+    ATHLETE = "athlete"
+    UNKNOWN = "unknown"
+
+
+class MeasurementContext(str, Enum):
+    REST = "rest"
+    DURING_EFFORT = "during_effort"
+    AFTER_EFFORT = "after_effort"
+    AFTER_MEAL = "after_meal"
+    STRESS = "stress"
+    SLEEP = "sleep"
+    UNKNOWN = "unknown"
+
+
+class ParticipantConditionType(str, Enum):
+    CARDIOVASCULAR = "cardiovascular"
+    RESPIRATORY = "respiratory"
+    METABOLIC = "metabolic"
+    NEUROLOGICAL = "neurological"
+    ENDOCRINE = "endocrine"
+    OTHER = "other"
+    NONE_DECLARED = "none_declared"
+    PREFER_NOT_TO_SAY = "prefer_not_to_say"
+
 class StudyParticipant(Base):
     __tablename__ = "study_participants"
     __table_args__ = (
@@ -43,6 +79,26 @@ class StudyParticipant(Base):
     participant_code: Mapped[str] = mapped_column(String(50), nullable=False)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     participant_identifier: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    birth_date: Mapped[date | None] = mapped_column(Date(), nullable=True)
+
+    sex: Mapped[ParticipantSex | None] = mapped_column(
+        SqlEnum(ParticipantSex, name="participant_sex"),
+        nullable=True,
+    )
+
+    participant_group: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
+    conditions: Mapped[list["ParticipantCondition"]] = relationship(
+        "ParticipantCondition",
+        back_populates="participant",
+        cascade="all, delete-orphan",
+    )    
+
+    activity_level: Mapped[ActivityLevel | None] = mapped_column(
+        SqlEnum(ActivityLevel, name="activity_level"),
+        nullable=True,
+    )
 
     status: Mapped[ParticipantStatus] = mapped_column(
         SqlEnum(ParticipantStatus, name="participant_status"),
@@ -110,6 +166,11 @@ class ParticipantSubmissionSession(Base):
         SqlEnum(ParticipantDataEntryMethod, name="participant_data_entry_method"),
         nullable=False,
     )
+
+    measurement_context: Mapped[MeasurementContext | None] = mapped_column(
+        SqlEnum(MeasurementContext, name="measurement_context"),
+        nullable=True,
+    )    
 
     source_file_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
@@ -230,3 +291,34 @@ class ParticipantSubmissionValue(Base):
         "ParticipantSubmission",
         back_populates="values",
     )
+
+class ParticipantCondition(Base):
+    __tablename__ = "participant_conditions"
+    __table_args__ = (
+        UniqueConstraint(
+            "participant_id",
+            "condition_type",
+            name="uq_participant_condition_type",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+
+    participant_id: Mapped[int] = mapped_column(
+        ForeignKey("study_participants.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    condition_type: Mapped[ParticipantConditionType] = mapped_column(
+        SqlEnum(ParticipantConditionType, name="participant_condition_type"),
+        nullable=False,
+    )
+
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    participant: Mapped["StudyParticipant"] = relationship(
+        "StudyParticipant",
+        back_populates="conditions",
+    )
+

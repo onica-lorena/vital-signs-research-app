@@ -1,10 +1,14 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.participant import (
+    ActivityLevel,
+    MeasurementContext,
+    ParticipantConditionType,
     ParticipantDataEntryMethod,
+    ParticipantSex,
     ParticipantStatus,
     ParticipantSubmissionStatus,
 )
@@ -27,11 +31,37 @@ class ParticipantHistoryStatus(str, Enum):
     PARTIAL = "partial"
 
 
+class ParticipantConditionCreate(BaseModel):
+    condition_type: ParticipantConditionType
+    notes: str | None = None
+
+    @field_validator("notes", mode="before")
+    @classmethod
+    def normalize_notes(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class ParticipantConditionResponse(BaseModel):
+    id: int
+    condition_type: ParticipantConditionType
+    notes: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ParticipantCreate(BaseModel):
     full_name: str = Field(min_length=2, max_length=255)
     participant_identifier: str = Field(min_length=2, max_length=100)
     notes: str | None = None
     pin: str | None = Field(default=None, min_length=4, max_length=12)
+    birth_date: date | None = None
+    sex: ParticipantSex | None = None
+    participant_group: str | None = Field(default=None, max_length=100)
+    activity_level: ActivityLevel | None = None
+    conditions: list[ParticipantConditionCreate] = Field(default_factory=list)
 
     @field_validator("full_name", mode="before")
     @classmethod
@@ -61,6 +91,21 @@ class ParticipantCreate(BaseModel):
         if isinstance(value, str):
             return value.strip()
         return value
+    
+    @field_validator("participant_group", mode="before")
+    @classmethod
+    def normalize_participant_group(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+    
+    @model_validator(mode="after")
+    def ensure_unique_conditions(self):
+        condition_types = [item.condition_type for item in self.conditions]
+        if len(condition_types) != len(set(condition_types)):
+            raise ValueError("Aceeași afecțiune nu poate fi adăugată de mai multe ori.")
+        return self
 
 
 class ParticipantUpdate(BaseModel):
@@ -68,6 +113,11 @@ class ParticipantUpdate(BaseModel):
     participant_identifier: str | None = Field(default=None, min_length=2, max_length=100)
     status: ParticipantStatus | None = None
     notes: str | None = None
+    birth_date: date | None = None
+    sex: ParticipantSex | None = None
+    participant_group: str | None = Field(default=None, max_length=100)
+    activity_level: ActivityLevel | None = None
+    conditions: list[ParticipantConditionCreate] | None = None
 
     @field_validator("full_name", mode="before")
     @classmethod
@@ -90,6 +140,24 @@ class ParticipantUpdate(BaseModel):
             value = value.strip()
             return value or None
         return value
+    
+    @field_validator("participant_group", mode="before")
+    @classmethod
+    def normalize_participant_group(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+    
+    @model_validator(mode="after")
+    def ensure_unique_conditions(self):
+        if self.conditions is None:
+            return self
+
+        condition_types = [item.condition_type for item in self.conditions]
+        if len(condition_types) != len(set(condition_types)):
+            raise ValueError("Aceeași afecțiune nu poate fi adăugată de mai multe ori.")
+        return self
 
 
 class ParticipantListItemResponse(BaseModel):
@@ -102,6 +170,10 @@ class ParticipantListItemResponse(BaseModel):
     last_login_at: datetime | None = None
     last_submission_at: datetime | None = None
     created_at: datetime
+    birth_date: date | None = None
+    sex: ParticipantSex | None = None
+    participant_group: str | None = None
+    activity_level: ActivityLevel | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -119,6 +191,11 @@ class ParticipantDetailResponse(BaseModel):
     notes: str | None = None
     created_at: datetime
     updated_at: datetime
+    birth_date: date | None = None
+    sex: ParticipantSex | None = None
+    participant_group: str | None = None
+    activity_level: ActivityLevel | None = None
+    conditions: list[ParticipantConditionResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -214,7 +291,10 @@ class ParticipantPortalParticipantInfo(BaseModel):
     last_login_at: datetime | None = None
     last_submission_at: datetime | None = None
     selected_data_entry_method: ParticipantDataEntryMethod | None = None
-
+    birth_date: date | None = None
+    sex: ParticipantSex | None = None
+    participant_group: str | None = None
+    activity_level: ActivityLevel | None = None
 
 class ParticipantPortalContextResponse(BaseModel):
     participant: ParticipantPortalParticipantInfo
@@ -249,6 +329,7 @@ class ParticipantSubmissionValueCreate(BaseModel):
 class ParticipantSubmissionCreate(BaseModel):
     participant_notes: str | None = None
     values: list[ParticipantSubmissionValueCreate] = Field(min_length=1)
+    measurement_context: MeasurementContext | None = None
 
     @field_validator("participant_notes", mode="before")
     @classmethod
@@ -281,6 +362,7 @@ class ParticipantBulkSubmissionCreate(BaseModel):
     source_file_name: str | None = Field(default=None, max_length=255)
     participant_notes: str | None = None
     submissions: list[ParticipantBulkSubmissionItem] = Field(min_length=1)
+    measurement_context: MeasurementContext | None = None
 
     @field_validator("source_file_name", "participant_notes", mode="before")
     @classmethod
@@ -421,6 +503,7 @@ class ParticipantSubmissionSessionListItemResponse(BaseModel):
     pending_count: int
     rejected_count: int
     source_file_name: str | None = None
+    measurement_context: MeasurementContext | None = None
 
 
 class ParticipantSubmissionSessionListResponse(BaseModel):
@@ -447,3 +530,4 @@ class ParticipantSubmissionSessionDetailResponse(BaseModel):
     review_notes: str | None = None
     reviewed_at: datetime | None = None
     records: list[ParticipantSubmissionSessionRecordResponse]
+    measurement_context: MeasurementContext | None = None

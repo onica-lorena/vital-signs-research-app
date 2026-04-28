@@ -182,35 +182,6 @@ def filter_task_prediction_rows(df: pd.DataFrame, task: str) -> pd.DataFrame:
 
     return df.reset_index(drop=True)
 
-def detect_current_abnormal_risk(features_df: pd.DataFrame, task: str) -> float | None:
-    if features_df.empty:
-        return None
-
-    latest = features_df.sort_values("hour_ts").iloc[-1]
-
-    if task == "hr":
-        value = latest["heart_rate"]
-        if value < 50 or value > 130:
-            return 0.95
-
-    elif task == "rr":
-        value = latest["resp_rate"]
-        if value < 8 or value > 30:
-            return 0.95
-
-    elif task == "spo2":
-        value = latest["spo2"]
-        if value < 90:
-            return 0.95
-
-    elif task == "temp":
-        value = latest["temperature"]
-        if value < 36.1 or value > 37.5:
-            return 0.95
-
-    return None
-
-
 def build_prediction_features_from_submissions(
     submissions,
     task: str,

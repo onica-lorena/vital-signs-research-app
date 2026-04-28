@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from math import ceil
 
 from sqlalchemy import func, or_, select, text
@@ -12,12 +12,17 @@ from app.core.security import (
     verify_password,
 )
 from app.models.participant import (
+    ActivityLevel,
+    MeasurementContext,
+    ParticipantCondition,
+    ParticipantConditionType,
     ParticipantDataEntryMethod,
     ParticipantSubmission,
     ParticipantSubmissionSession,
     ParticipantSubmissionStatus,
     ParticipantSubmissionValue,
     ParticipantStatus,
+    ParticipantSex,
     StudyParticipant,
 )
 from app.models.study import DataEntryMode, Study, StudyStatus
@@ -59,6 +64,7 @@ def get_participant_by_id(db: Session, participant_id: int) -> StudyParticipant 
         select(StudyParticipant)
         .options(
             selectinload(StudyParticipant.study).selectinload(Study.parameters),
+            selectinload(StudyParticipant.conditions),
         )
         .where(StudyParticipant.id == participant_id)
     )
@@ -122,6 +128,21 @@ def generate_next_participant_code_for_study(db: Session, study_id: int) -> str:
     return f"P-{next_number:03d}"
 
 
+def _replace_participant_conditions(
+    participant: StudyParticipant,
+    conditions,
+) -> None:
+    participant.conditions.clear()
+
+    for condition in conditions or []:
+        participant.conditions.append(
+            ParticipantCondition(
+                condition_type=condition.condition_type,
+                notes=condition.notes,
+            )
+        )
+
+
 def create_study_participant(
     db: Session,
     study_id: int,
@@ -154,12 +175,18 @@ def create_study_participant(
         participant_code=generate_next_participant_code_for_study(db, study_id),
         full_name=payload.full_name,
         participant_identifier=payload.participant_identifier,
+        birth_date=payload.birth_date,
+        sex=payload.sex,
+        participant_group=payload.participant_group,
+        activity_level=payload.activity_level,
         status=ParticipantStatus.INVITED,
         pin_hash=get_password_hash(temporary_pin),
         access_version=1,
         submissions_count=0,
         notes=payload.notes,
     )
+
+    _replace_participant_conditions(participant, payload.conditions)
 
     study.participants_count = (study.participants_count or 0) + 1
 
@@ -283,6 +310,7 @@ def get_study_participant_for_current_user(
         select(StudyParticipant)
         .options(
             selectinload(StudyParticipant.study).selectinload(Study.parameters),
+            selectinload(StudyParticipant.conditions),
         )
         .where(
             StudyParticipant.id == participant_id,
@@ -331,11 +359,26 @@ def update_study_participant_for_current_user(
     if "participant_identifier" in data and data["participant_identifier"] is not None:
         participant.participant_identifier = data["participant_identifier"]
 
+    if "birth_date" in data:
+        participant.birth_date = data["birth_date"]
+
+    if "sex" in data:
+        participant.sex = data["sex"]
+
+    if "participant_group" in data:
+        participant.participant_group = data["participant_group"]
+
+    if "activity_level" in data:
+        participant.activity_level = data["activity_level"]
+
     if "status" in data and data["status"] is not None:
         participant.status = data["status"]
 
     if "notes" in data:
         participant.notes = data["notes"]
+
+    if "conditions" in data:
+        _replace_participant_conditions(participant, payload.conditions)
 
     if participant.status != previous_status and participant.status in {
         ParticipantStatus.SUSPENDED,
@@ -463,6 +506,10 @@ def build_participant_context(participant: StudyParticipant) -> dict:
             "last_login_at": participant.last_login_at,
             "last_submission_at": participant.last_submission_at,
             "selected_data_entry_method": participant.selected_data_entry_method,
+            "birth_date": participant.birth_date,
+            "sex": participant.sex,
+            "participant_group": participant.participant_group,
+            "activity_level": participant.activity_level,
         },
         "study": {
             "id": study.id,
@@ -580,6 +627,7 @@ def create_participant_submission(
         records_count=1,
         interval_start=min(measured_moments),
         interval_end=max(measured_moments),
+        measurement_context=payload.measurement_context,
     )
 
     submission = ParticipantSubmission(
@@ -643,6 +691,7 @@ def create_bulk_participant_submissions(
         entry_method=ParticipantDataEntryMethod.CSV,
         source_file_name=payload.source_file_name,
         records_count=len(payload.submissions),
+        measurement_context=payload.measurement_context,
     )
 
     for item in payload.submissions:
@@ -989,7 +1038,7 @@ def _get_session_status_summary(session: ParticipantSubmissionSession) -> Partic
     if statuses == {ParticipantSubmissionStatus.REJECTED}:
         return ParticipantHistoryStatus.REJECTED
 
-    if ParticipantSubmissionStatus.SUBMITTED in statuses:
+    if statuses == {ParticipantSubmissionStatus.SUBMITTED}:
         return ParticipantHistoryStatus.SUBMITTED
 
     return ParticipantHistoryStatus.PARTIAL
@@ -1136,6 +1185,7 @@ def list_participant_submission_sessions(
                 "pending_count": counts["pending_count"],
                 "rejected_count": counts["rejected_count"],
                 "source_file_name": session.source_file_name,
+                "measurement_context": session.measurement_context,
             }
         )
 
@@ -1194,6 +1244,7 @@ def get_participant_submission_session_detail(
         "review_notes": _get_common_review_notes(session),
         "reviewed_at": _get_latest_reviewed_at(session),
         "records": records,
+        "measurement_context": session.measurement_context,
     }
 
 

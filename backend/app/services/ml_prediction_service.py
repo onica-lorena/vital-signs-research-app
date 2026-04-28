@@ -1,7 +1,7 @@
 import os
 import json
 from pathlib import Path
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
@@ -16,7 +16,13 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.config import settings
 from app.models.analysis import AnalysisModelType, AnalysisResult
 from app.models.participant import (
+    ActivityLevel,
+    MeasurementContext,
+    ParticipantCondition,
+    ParticipantConditionType,
+    ParticipantSex,
     ParticipantSubmission,
+    ParticipantSubmissionSession,
     ParticipantSubmissionStatus,
     ParticipantSubmissionValue,
     StudyParticipant,
@@ -154,29 +160,37 @@ def _load_participant_submissions(
     participant_id: int,
     analysis_start_date: datetime,
     analysis_end_date: datetime,
+    measurement_context: MeasurementContext | None = None,
 ) -> list[ParticipantSubmission]:
+    filters = [
+        ParticipantSubmission.study_id == study_id,
+        ParticipantSubmission.participant_id == participant_id,
+        ParticipantSubmission.status.in_(
+            [
+                ParticipantSubmissionStatus.SUBMITTED,
+                ParticipantSubmissionStatus.VALIDATED,
+            ]
+        ),
+        ParticipantSubmissionValue.measured_at >= analysis_start_date,
+        ParticipantSubmissionValue.measured_at <= analysis_end_date,
+    ]
+
+    if measurement_context is not None:
+        filters.append(
+            ParticipantSubmissionSession.measurement_context == measurement_context
+        )
+
     stmt = (
         select(ParticipantSubmission)
         .options(selectinload(ParticipantSubmission.values))
         .join(ParticipantSubmission.values)
-        .where(
-            ParticipantSubmission.study_id == study_id,
-            ParticipantSubmission.participant_id == participant_id,
-            ParticipantSubmission.status.in_(
-                [
-                    ParticipantSubmissionStatus.SUBMITTED,
-                    ParticipantSubmissionStatus.VALIDATED,
-                ]
-            ),
-            ParticipantSubmissionValue.measured_at >= analysis_start_date,
-            ParticipantSubmissionValue.measured_at <= analysis_end_date,
-        )
+        .join(ParticipantSubmission.session)
+        .where(*filters)
         .order_by(ParticipantSubmission.submitted_at.asc())
         .distinct()
     )
 
     return list(db.execute(stmt).scalars().all())
-
 
 def _predict_classical(task: str, model_name: str, features_df) -> float:
     model, preprocess = _load_classical_model(task, model_name)
@@ -233,6 +247,15 @@ def _predict_lstm(task: str, features_df) -> tuple[float, int]:
 
     return float(probability), window_size
 
+def _calculate_age(birth_date, reference_date: date) -> int | None:
+    if birth_date is None:
+        return None
+
+    return (
+        reference_date.year
+        - birth_date.year
+        - ((reference_date.month, reference_date.day) < (birth_date.month, birth_date.day))
+    )
 
 def run_analysis_for_study(
     db: Session,
@@ -242,6 +265,13 @@ def run_analysis_for_study(
     scope: AnalysisScope = AnalysisScope.LAST_48H,
     start_date: datetime | None = None,
     end_date: datetime | None = None,
+    age_min: int | None = None,
+    age_max: int | None = None,
+    sex: ParticipantSex | None = None,
+    participant_group: str | None = None,
+    activity_level: ActivityLevel | None = None,
+    condition_type: ParticipantConditionType | None = None,
+    measurement_context: MeasurementContext | None = None,
 ) -> list[AnalysisResult]:
     study = get_study_for_current_user(
         db=db,
@@ -264,11 +294,47 @@ def run_analysis_for_study(
     if participant_id is not None:
         participant_filters.append(StudyParticipant.id == participant_id)
 
-    participants = list(
-        db.execute(
-            select(StudyParticipant).where(*participant_filters)
-        ).scalars().all()
+    if sex is not None:
+        participant_filters.append(StudyParticipant.sex == sex)
+
+    if participant_group:
+        participant_filters.append(StudyParticipant.participant_group == participant_group)
+
+    if activity_level is not None:
+        participant_filters.append(StudyParticipant.activity_level == activity_level)
+
+    stmt = (
+        select(StudyParticipant)
+        .options(selectinload(StudyParticipant.conditions))
+        .where(*participant_filters)
     )
+
+    if condition_type is not None:
+        stmt = stmt.join(ParticipantCondition).where(
+            ParticipantCondition.condition_type == condition_type
+        )
+
+    participants = list(db.execute(stmt).scalars().unique().all())
+
+    if age_min is not None or age_max is not None:
+        reference_date = analysis_end_date.date()
+        filtered_participants = []
+
+        for participant in participants:
+            age = _calculate_age(participant.birth_date, reference_date)
+
+            if age is None:
+                continue
+
+            if age_min is not None and age < age_min:
+                continue
+
+            if age_max is not None and age > age_max:
+                continue
+
+            filtered_participants.append(participant)
+
+        participants = filtered_participants
 
     if not participants:
         raise ValueError("Nu există participanți disponibili pentru analiză.")
@@ -283,6 +349,7 @@ def run_analysis_for_study(
             participant_id=participant.id,
             analysis_start_date=analysis_start_date,
             analysis_end_date=analysis_end_date,
+            measurement_context=measurement_context,
         )
 
         if not submissions:

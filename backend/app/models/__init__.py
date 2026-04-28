@@ -5,6 +5,7 @@ from app.models.participant import (
     ParticipantSubmissionSession,
     ParticipantSubmission,
     ParticipantSubmissionValue,
+    ParticipantCondition,
 )
 from app.models.access_request import AccessRequest
 from app.models.analysis import AnalysisResult
@@ -19,4 +20,5 @@ __all__ = [
     "ParticipantSubmissionSession",
     "AccessRequest",
     "AnalysisResult",
+    "ParticipantCondition",
 ]

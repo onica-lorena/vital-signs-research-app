@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from app.models.analysis import AnalysisModelType
 from app.models.study import StudyParameterKey
+from app.models.participant import ActivityLevel, MeasurementContext, ParticipantConditionType, ParticipantSex
 
 
 class AnalysisScope(str, Enum):
@@ -30,10 +31,26 @@ class AnalysisRunRequest(BaseModel):
     start_date: datetime | None = None
     end_date: datetime | None = None
 
+    age_min: int | None = None
+    age_max: int | None = None
+    sex: ParticipantSex | None = None
+    participant_group: str | None = None
+    activity_level: ActivityLevel | None = None
+    condition_type: ParticipantConditionType | None = None
+    measurement_context: MeasurementContext | None = None
+
     @field_validator("start_date", "end_date")
     @classmethod
     def validate_dates(cls, value: datetime | None) -> datetime | None:
         return normalize_to_utc(value)
+
+    @field_validator("participant_group", mode="before")
+    @classmethod
+    def normalize_participant_group(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
 
     @model_validator(mode="after")
     def validate_custom_interval(self):
@@ -46,9 +63,22 @@ class AnalysisRunRequest(BaseModel):
         if self.start_date and self.end_date and self.end_date <= self.start_date:
             raise ValueError("Data de final trebuie să fie după data de început.")
 
+        if self.age_min is not None and self.age_min < 0:
+            raise ValueError("Vârsta minimă nu poate fi negativă.")
+
+        if self.age_max is not None and self.age_max < 0:
+            raise ValueError("Vârsta maximă nu poate fi negativă.")
+
+        if (
+            self.age_min is not None
+            and self.age_max is not None
+            and self.age_max < self.age_min
+        ):
+            raise ValueError("Vârsta maximă trebuie să fie mai mare sau egală cu vârsta minimă.")
+
         return self
-
-
+    
+    
 class AnalysisResultResponse(BaseModel):
     id: int
     study_id: int
