@@ -5,6 +5,11 @@ import type {
   StudyStatus,
 } from "../studies/studiesApi";
 
+import type {
+  ActivityLevel,
+  ParticipantSex,
+} from "../studies/studyDetailsApi";
+
 const PARTICIPANT_ACCESS_TOKEN_KEY = "vitalstudy_participant_access_token";
 const PARTICIPANT_CONTEXT_KEY = "vitalstudy_participant_context";
 
@@ -32,6 +37,11 @@ export type ParticipantPortalContext = {
     last_login_at: string | null;
     last_submission_at: string | null;
     selected_data_entry_method: ParticipantDataEntryMethod | null;
+
+    birth_date?: string | null;
+    sex?: ParticipantSex | null;
+    participant_group?: string | null;
+    activity_level?: ActivityLevel | null;
   };
   study: {
     id: number;

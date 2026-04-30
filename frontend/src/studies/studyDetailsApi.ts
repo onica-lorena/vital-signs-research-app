@@ -7,6 +7,93 @@ import type {
   StudyType,
 } from "./studiesApi";
 
+export type ParticipantSex =
+  | "female"
+  | "male"
+  | "other"
+  | "prefer_not_to_say";
+
+export type ActivityLevel =
+  | "sedentary"
+  | "light"
+  | "moderate"
+  | "active"
+  | "athlete"
+  | "unknown";
+
+export type ParticipantConditionType =
+  | "cardiovascular"
+  | "respiratory"
+  | "metabolic"
+  | "neurological"
+  | "endocrine"
+  | "other"
+  | "none_declared"
+  | "prefer_not_to_say";
+
+export type MeasurementContext =
+  | "rest"
+  | "during_effort"
+  | "after_effort"
+  | "after_meal"
+  | "stress"
+  | "sleep"
+  | "unknown";
+
+export type ParticipantConditionCreate = {
+  condition_type: ParticipantConditionType;
+  notes?: string | null;
+};
+
+export type ParticipantConditionResponse = {
+  id: number;
+  condition_type: ParticipantConditionType;
+  notes: string | null;
+};
+
+export type AnalysisScope =
+  | "last_24h"
+  | "last_48h"
+  | "last_7_days"
+  | "custom";
+
+export type AnalysisRunPayload = {
+  participant_id?: number | null;
+  scope: AnalysisScope;
+  start_date?: string | null;
+  end_date?: string | null;
+
+  age_min?: number | null;
+  age_max?: number | null;
+  sex?: ParticipantSex | null;
+  participant_group?: string | null;
+  activity_level?: ActivityLevel | null;
+  condition_type?: ParticipantConditionType | null;
+  measurement_context?: MeasurementContext | null;
+};
+
+export type AnalysisResultResponse = {
+  id: number;
+  study_id: number;
+  participant_id: number;
+  parameter_key: StudyParameterKey;
+  model_type: "random_forest" | "xgboost" | "lstm";
+  model_name: string;
+  risk_probability: number;
+  risk_label: string;
+  records_used: number;
+  window_size: number | null;
+  analysis_start_date: string | null;
+  analysis_end_date: string | null;
+  analysis_scope: string;
+  created_at: string;
+};
+
+export type AnalysisRunResponse = {
+  message: string;
+  results: AnalysisResultResponse[];
+};
+
 export type StudyResearcherResponse = {
   id: number;
   full_name: string;
@@ -168,4 +255,29 @@ export async function updateResearcherStudyRequest(
   });
 
   return parseJsonResponse<ResearcherStudyDetailResponse>(response);
+}
+
+export async function runStudyAnalysisRequest(
+  studyId: number,
+  payload: AnalysisRunPayload
+): Promise<AnalysisRunResponse> {
+  const response = await authFetch(`/studies/${studyId}/analysis/run`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<AnalysisRunResponse>(response);
+}
+
+export async function getStudyAnalysisResultsRequest(
+  studyId: number,
+  participantId?: number | null
+): Promise<AnalysisResultResponse[]> {
+  const query = participantId ? `?participant_id=${participantId}` : "";
+  const response = await authFetch(`/studies/${studyId}/analysis/results${query}`);
+
+  return parseJsonResponse<AnalysisResultResponse[]>(response);
 }

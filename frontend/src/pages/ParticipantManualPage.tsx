@@ -17,6 +17,7 @@ import type {
   MeasurementFrequency,
   StudyParameterKey,
 } from "../studies/studiesApi";
+import type { MeasurementContext } from "../studies/studyDetailsApi";
 
 const PARAMETER_LABELS: Record<StudyParameterKey, string> = {
   heartRate: "Ritm cardiac",
@@ -60,6 +61,63 @@ const VALID_RANGES: Record<StudyParameterKey, { min: number; max: number }> = {
   respiratoryRate: { min: 5, max: 80 },
   spo2: { min: 50, max: 100 },
   temperature: { min: 30, max: 43 },
+};
+
+const MEASUREMENT_CONTEXT_OPTIONS: {
+  value: MeasurementContext | "";
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "",
+    label: "Nespecificat",
+    description: "Nu asociez această trimitere cu un context anume.",
+  },
+  {
+    value: "rest",
+    label: "În repaus",
+    description: "Date măsurate în stare de odihnă.",
+  },
+  {
+    value: "during_effort",
+    label: "În timpul efortului",
+    description: "Date măsurate în timpul unei activități fizice.",
+  },
+  {
+    value: "after_effort",
+    label: "După efort",
+    description: "Date măsurate după activitate fizică.",
+  },
+  {
+    value: "after_meal",
+    label: "După masă",
+    description: "Date măsurate după consumul unei mese.",
+  },
+  {
+    value: "stress",
+    label: "Stres / emoții",
+    description: "Date măsurate într-un moment de stres sau emoții.",
+  },
+  {
+    value: "sleep",
+    label: "Somn / odihnă",
+    description: "Date asociate somnului sau perioadei de odihnă.",
+  },
+  {
+    value: "unknown",
+    label: "Necunoscut",
+    description: "Contextul măsurării nu este cunoscut.",
+  },
+];
+
+const MEASUREMENT_CONTEXT_LABELS: Record<MeasurementContext, string> = {
+  rest: "În repaus",
+  during_effort: "În timpul efortului",
+  after_effort: "După efort",
+  after_meal: "După masă",
+  stress: "Stres / emoții",
+  sleep: "Somn / odihnă",
+  unknown: "Necunoscut",
 };
 
 function HeartPanelIcon() {
@@ -255,6 +313,7 @@ export default function ParticipantManualPage() {
   );
   const [values, setValues] = useState<Record<string, string>>({});
   const [participantNotes, setParticipantNotes] = useState("");
+  const [measurementContext, setMeasurementContext] = useState<MeasurementContext | "">("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -370,19 +429,20 @@ export default function ParticipantManualPage() {
     try {
       await createParticipantSubmissionRequest({
         participant_notes: participantNotes.trim() || null,
+        measurement_context: measurementContext || null,
         values: parameters.map((parameter) => ({
           parameter_key: parameter.parameter_key,
           value: Number(values[parameter.parameter_key]),
           measured_at: measuredAt,
         })),
       });
-
       const freshContext = await fetchCurrentParticipantContextRequest();
       replaceParticipantContext(freshContext);
       setContext(freshContext);
 
       setValues({});
       setParticipantNotes("");
+      setMeasurementContext("");
       setSuccessMessage("Datele au fost salvate cu succes.");
     } catch (error) {
       if (
@@ -489,17 +549,37 @@ export default function ParticipantManualPage() {
               </article>
             ))}
           </div>
+          <div className="participant-manual-context-section">
+            <h3>Contextul măsurării</h3>
 
-          <label className="participant-manual-notes">
-            <span>Observații opționale</span>
-            <textarea
-              rows={3}
-              placeholder="Ex: am măsurat după repaus, am repetat măsurarea etc."
-              value={participantNotes}
-              onChange={(event) => setParticipantNotes(event.target.value)}
-              disabled={isSaving || isLoading}
-            />
-          </label>
+            <div className="participant-manual-context-card">
+              <div className="participant-manual-context-card__text">
+                <p>
+                  Selectează situația în care au fost măsurate valorile.
+                </p>
+
+                <small>
+                  Poți lăsa câmpul nespecificat dacă nu știi exact contextul măsurării.
+                </small>
+              </div>
+
+              <label>
+                <select
+                  value={measurementContext}
+                  onChange={(event) =>
+                    setMeasurementContext(event.target.value as MeasurementContext | "")
+                  }
+                  disabled={isSaving || isLoading}
+                >
+                  {MEASUREMENT_CONTEXT_OPTIONS.map((option) => (
+                    <option key={option.value || "empty"} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
 
           <button
             type="submit"

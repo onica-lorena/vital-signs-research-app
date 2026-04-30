@@ -5,6 +5,7 @@ import type {
 } from "./participantStorage";
 
 import type { StudyParameterKey } from "../studies/studiesApi";
+import type { MeasurementContext } from "../studies/studyDetailsApi";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -25,13 +26,14 @@ type ParticipantDataEntryMethodSelectResponse = {
 };
 
 type ParticipantSubmissionValuePayload = {
-  parameter_key: string;
+  parameter_key: StudyParameterKey;
   value: number;
   measured_at: string | null;
 };
 
 type ParticipantSubmissionCreatePayload = {
   participant_notes: string | null;
+  measurement_context: MeasurementContext | null;
   values: ParticipantSubmissionValuePayload[];
 };
 
@@ -126,6 +128,7 @@ export async function createParticipantSubmissionRequest(
 export type ParticipantBulkSubmissionCreate = {
   source_file_name: string | null;
   participant_notes: string | null;
+  measurement_context: MeasurementContext | null;
   submissions: {
     values: {
       parameter_key: StudyParameterKey;
@@ -150,6 +153,7 @@ export type ParticipantSubmissionSessionDetailResponse = {
   participant_notes: string | null;
   review_notes: string | null;
   reviewed_at: string | null;
+  measurement_context: MeasurementContext | null;
   records: {
     submission_id: number;
     status: "submitted" | "validated" | "rejected";

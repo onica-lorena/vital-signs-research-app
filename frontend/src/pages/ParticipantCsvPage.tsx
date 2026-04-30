@@ -14,6 +14,7 @@ import {
 import { getParticipantNextPath } from "../participant/participantRouting";
 import { PARTICIPANT_SESSION_EXPIRED_ERROR } from "../participant/participantAuthFetch";
 import type { StudyParameterKey } from "../studies/studiesApi";
+import type { MeasurementContext } from "../studies/studyDetailsApi";
 
 const PARAMETER_LABELS: Record<StudyParameterKey, string> = {
   heartRate: "Ritm cardiac",
@@ -46,6 +47,63 @@ const VALID_RANGES: Record<StudyParameterKey, { min: number; max: number }> = {
   respiratoryRate: { min: 5, max: 80 },
   spo2: { min: 50, max: 100 },
   temperature: { min: 30, max: 43 },
+};
+
+const MEASUREMENT_CONTEXT_OPTIONS: {
+  value: MeasurementContext | "";
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "",
+    label: "Nespecificat",
+    description: "Nu asociez această încărcare cu un context anume.",
+  },
+  {
+    value: "rest",
+    label: "În repaus",
+    description: "Date măsurate în stare de odihnă.",
+  },
+  {
+    value: "during_effort",
+    label: "În timpul efortului",
+    description: "Date măsurate în timpul unei activități fizice.",
+  },
+  {
+    value: "after_effort",
+    label: "După efort",
+    description: "Date măsurate după activitate fizică.",
+  },
+  {
+    value: "after_meal",
+    label: "După masă",
+    description: "Date măsurate după consumul unei mese.",
+  },
+  {
+    value: "stress",
+    label: "Stres / emoții",
+    description: "Date măsurate într-un moment de stres sau emoții.",
+  },
+  {
+    value: "sleep",
+    label: "Somn / odihnă",
+    description: "Date asociate somnului sau perioadei de odihnă.",
+  },
+  {
+    value: "unknown",
+    label: "Necunoscut",
+    description: "Contextul măsurării nu este cunoscut.",
+  },
+];
+
+const MEASUREMENT_CONTEXT_LABELS: Record<MeasurementContext, string> = {
+  rest: "În repaus",
+  during_effort: "În timpul efortului",
+  after_effort: "După efort",
+  after_meal: "După masă",
+  stress: "Stres / emoții",
+  sleep: "Somn / odihnă",
+  unknown: "Necunoscut",
 };
 
 type ParsedCsvRow = {
@@ -263,6 +321,7 @@ export default function ParticipantCsvPage() {
     getParticipantContext()
   );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [measurementContext, setMeasurementContext] = useState<MeasurementContext | "">("");
   const [parsedRows, setParsedRows] = useState<ParsedCsvRow[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -362,6 +421,8 @@ export default function ParticipantCsvPage() {
   function resetFileState() {
     setSelectedFile(null);
     setParsedRows([]);
+    setMeasurementContext("");
+  
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -479,6 +540,7 @@ export default function ParticipantCsvPage() {
       await createBulkParticipantSubmissionsRequest({
         source_file_name: selectedFile.name,
         participant_notes: null,
+        measurement_context: measurementContext || null,
         submissions: parsedRows,
       });
 
@@ -630,13 +692,43 @@ export default function ParticipantCsvPage() {
             </small>
           </label>
 
-          <div className="participant-csv-security">
+          <div className="participant-manual-context-section">
+            <h3>Contextul măsurării</h3>
+
+            <div className="participant-manual-context-card">
+              <div className="participant-manual-context-card__text">
+                <p>
+                  Selectează situația în care au fost măsurate valorile.
+                </p>
+                  <small>
+                    Poți lăsa câmpul nespecificat dacă nu știi exact contextul măsurării.
+                  </small>
+              </div>
+
+              <label>
+                <select
+                  value={measurementContext}
+                  onChange={(event) =>
+                    setMeasurementContext(event.target.value as MeasurementContext | "")
+                  }
+                  disabled={isSaving || isLoading}
+                >
+                  {MEASUREMENT_CONTEXT_OPTIONS.map((option) => (
+                    <option key={option.value || "empty"} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
+          {/*<div className="participant-csv-security">
             <ShieldIcon />
             <span>
               Datele tale sunt în siguranță. Informațiile din fișier sunt
               folosite doar în scopuri de cercetare.
             </span>
-          </div>
+          </div>*/}
         </section>
 
         <section className="participant-csv-info-grid">

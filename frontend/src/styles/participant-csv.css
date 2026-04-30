@@ -411,6 +411,161 @@
   height: 15px;
 }
 
+.participant-csv-context-card {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--pp-border);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(118, 182, 92, 0.1), rgba(255, 255, 255, 0.92)),
+    var(--pp-surface);
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.7fr);
+  gap: 14px;
+  align-items: end;
+}
+
+.participant-csv-context-card h3 {
+  margin: 0;
+  color: var(--pp-text-main);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.participant-csv-context-card p {
+  margin: 6px 0 0;
+  color: var(--pp-text-soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.participant-csv-context-card label {
+  display: grid;
+  gap: 7px;
+}
+
+.participant-csv-context-card label span {
+  color: var(--pp-text-main);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.participant-csv-context-card select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--pp-border);
+  border-radius: 13px;
+  background: #ffffff;
+  color: var(--pp-text-main);
+  padding: 0 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.participant-csv-context-card select:focus {
+  border-color: var(--pp-green);
+  box-shadow: 0 0 0 4px rgba(118, 182, 92, 0.14);
+}
+
+.participant-csv-context-card small {
+  grid-column: 1 / -1;
+  color: var(--pp-text-soft);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.participant-manual-context-section {
+  width: 100%;
+  max-width: none;
+  margin: 16px 0 0;
+}
+
+.participant-manual-context-section h3 {
+  color: var(--pp-text-main);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.participant-manual-context-card {
+  padding: 16px 24px;
+  border: 1px solid var(--pp-border);
+  border-radius: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+  gap: 18px;
+  align-items: center;
+  width: 100%;
+}
+
+.participant-manual-context-card__text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.participant-manual-context-card p {
+  margin: 0;
+  color: var(--pp-text-soft);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.participant-manual-context-card label {
+  display: grid;
+  align-items: center;
+  gap: 7px;
+}
+
+.participant-manual-context-card label span {
+  color: var(--pp-text-main);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.participant-manual-context-card select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--pp-border);
+  border-radius: 13px;
+  background: #ffffff;
+  color: var(--pp-text-main);
+  padding: 0 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.participant-manual-context-card select option {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.participant-manual-context-card select:focus {
+  border-color: var(--pp-green);
+  box-shadow: 0 0 0 4px rgba(118, 182, 92, 0.14);
+}
+
+.participant-manual-context-card small {
+  grid-column: 1 / -1;
+  color: var(--pp-text-soft);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+
+@media (max-width: 760px) {
+  .participant-csv-context-card {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 860px) {
   .participant-csv-card__header {
     flex-direction: column;
