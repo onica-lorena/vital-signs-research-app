@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
 from app.core.database import get_db
-from app.models.participant import ParticipantStatus
+from app.models.participant import ActivityLevel, ParticipantSex, ParticipantStatus
 from app.models.user import User, UserRole
 from app.schemas.participant import (
     ParticipantCreate,
@@ -14,9 +14,11 @@ from app.schemas.participant import (
     ParticipantListItemResponse,
     ParticipantListResponse,
     ParticipantPinResetResponse,
+    ParticipantSortBy,
     ParticipantSubmissionDetailResponse,
     ParticipantSummaryResponse,
     ParticipantUpdate,
+    SortOrder,
 )
 from app.services.participant_service import (
     create_study_participant,
@@ -43,6 +45,12 @@ def read_study_participants(
     page_size: int = Query(10, ge=1, le=100),
     search: str | None = Query(None),
     status: ParticipantStatus | None = Query(None),
+    sex: ParticipantSex | None = Query(None),
+    activity_level: ActivityLevel | None = Query(None),
+    participant_group: str | None = Query(None),
+    only_with_submissions: bool = Query(False),
+    sort_by: ParticipantSortBy = Query(ParticipantSortBy.CREATED_AT),
+    sort_order: SortOrder = Query(SortOrder.DESC),
 ):
     try:
         items, total, total_pages = list_study_participants(
@@ -53,6 +61,12 @@ def read_study_participants(
             page_size=page_size,
             search=search,
             status=status,
+            sex=sex,
+            activity_level=activity_level,
+            participant_group=participant_group,
+            only_with_submissions=only_with_submissions,
+            sort_by=sort_by,
+            sort_order=sort_order,
         )
     except LookupError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

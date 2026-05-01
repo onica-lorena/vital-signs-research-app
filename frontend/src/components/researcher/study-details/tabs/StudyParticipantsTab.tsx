@@ -130,6 +130,16 @@ type StudyParticipantsProps = {
   studyId: number;
 };
 
+type ParticipantSortBy =
+  | "created_at"
+  | "full_name"
+  | "participant_code"
+  | "submissions_count"
+  | "last_login_at"
+  | "last_submission_at";
+
+type SortOrder = "asc" | "desc";
+
 const STATUS_LABELS: Record<ParticipantStatus, string> = {
   invited: "Invitat",
   active: "Activ",
@@ -481,12 +491,32 @@ async function apiRequest<T>(url: string, options?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+type ParticipantSortValue =
+  | "created_desc"
+  | "created_asc"
+  | "name_asc"
+  | "name_desc"
+  | "code_asc"
+  | "code_desc"
+  | "submissions_desc"
+  | "submissions_asc"
+  | "last_submission_desc"
+  | "last_submission_asc"
+  | "last_login_desc"
+  | "last_login_asc";
+
 async function listParticipantsRequest(params: {
   studyId: number;
   page: number;
   pageSize: number;
   search: string;
   status: ParticipantStatus | "";
+  sex: ParticipantSex | "";
+  activityLevel: ActivityLevel | "";
+  participantGroup: string;
+  onlyWithSubmissions: boolean;
+  sortBy: ParticipantSortBy;
+  sortOrder: SortOrder;
 }): Promise<ParticipantListResponse> {
   const query = new URLSearchParams();
 
@@ -500,6 +530,25 @@ async function listParticipantsRequest(params: {
   if (params.status) {
     query.set("status", params.status);
   }
+
+  if (params.sex) {
+    query.set("sex", params.sex);
+  }
+
+  if (params.activityLevel) {
+    query.set("activity_level", params.activityLevel);
+  }
+
+  if (params.participantGroup.trim()) {
+    query.set("participant_group", params.participantGroup.trim());
+  }
+
+  if (params.onlyWithSubmissions) {
+    query.set("only_with_submissions", "true");
+  }
+
+  query.set("sort_by", params.sortBy);
+  query.set("sort_order", params.sortOrder);
 
   return apiRequest<ParticipantListResponse>(
     `/studies/${params.studyId}/participants/?${query.toString()}`
@@ -593,7 +642,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
   const [activityFilter, setActivityFilter] = useState<ActivityLevel | "">("");
   const [groupFilter, setGroupFilter] = useState("");
   const [onlyWithSubmissions, setOnlyWithSubmissions] = useState(false);
-
+  const [sortValue, setSortValue] = useState<ParticipantSortValue>("created_desc");
   const [selectedParticipant, setSelectedParticipant] =
     useState<ParticipantDetailResponse | null>(null);
   const [selectedLoadingId, setSelectedLoadingId] = useState<number | null>(null);
@@ -648,14 +697,21 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
     async function loadParticipants() {
       setIsListLoading(true);
       setPageError("");
+      const resolvedSort = resolveParticipantSort(sortValue);
 
       try {
         const response = await listParticipantsRequest({
-          studyId,
-          page,
-          pageSize: PAGE_SIZE,
-          search: debouncedSearch,
-          status: statusFilter,
+        studyId,
+        page,
+        pageSize: PAGE_SIZE,
+        search: debouncedSearch,
+        status: statusFilter,
+        sex: sexFilter,
+        activityLevel: activityFilter,
+        participantGroup: groupFilter,
+        onlyWithSubmissions,
+        sortBy: resolvedSort.sortBy,
+        sortOrder: resolvedSort.sortOrder,
         });
 
         if (cancelled) {
@@ -694,7 +750,18 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
     return () => {
       cancelled = true;
     };
-  }, [studyId, page, debouncedSearch, statusFilter, refreshToken]);
+  }, [
+    studyId,
+    page,
+    debouncedSearch,
+    statusFilter,
+    sexFilter,
+    activityFilter,
+    groupFilter,
+    onlyWithSubmissions,
+    sortValue,
+    refreshToken,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -744,33 +811,6 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
     };
   }, [studyId, refreshToken]);
 
-  const visibleParticipants = useMemo(() => {
-    return participants.filter((participant) => {
-      if (sexFilter && participant.sex !== sexFilter) {
-        return false;
-      }
-
-      if (activityFilter && participant.activity_level !== activityFilter) {
-        return false;
-      }
-
-      if (
-        groupFilter.trim() &&
-        !(participant.participant_group ?? "")
-          .toLowerCase()
-          .includes(groupFilter.trim().toLowerCase())
-      ) {
-        return false;
-      }
-
-      if (onlyWithSubmissions && participant.submissions_count <= 0) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [participants, sexFilter, activityFilter, groupFilter, onlyWithSubmissions]);
-
   const activationRate = useMemo(() => {
     const total = summary?.total_participants ?? 0;
 
@@ -796,8 +836,69 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
     [page, totalPages]
   );
 
+  function resolveParticipantSort(value: ParticipantSortValue): {
+    sortBy: ParticipantSortBy;
+    sortOrder: SortOrder;
+  } {
+    if (value === "created_asc") {
+      return { sortBy: "created_at", sortOrder: "asc" };
+    }
+  
+    if (value === "name_asc") {
+      return { sortBy: "full_name", sortOrder: "asc" };
+    }
+  
+    if (value === "name_desc") {
+      return { sortBy: "full_name", sortOrder: "desc" };
+    }
+  
+    if (value === "code_asc") {
+      return { sortBy: "participant_code", sortOrder: "asc" };
+    }
+  
+    if (value === "code_desc") {
+      return { sortBy: "participant_code", sortOrder: "desc" };
+    }
+  
+    if (value === "submissions_desc") {
+      return { sortBy: "submissions_count", sortOrder: "desc" };
+    }
+  
+    if (value === "submissions_asc") {
+      return { sortBy: "submissions_count", sortOrder: "asc" };
+    }
+  
+    if (value === "last_submission_desc") {
+      return { sortBy: "last_submission_at", sortOrder: "desc" };
+    }
+  
+    if (value === "last_submission_asc") {
+      return { sortBy: "last_submission_at", sortOrder: "asc" };
+    }
+  
+    if (value === "last_login_desc") {
+      return { sortBy: "last_login_at", sortOrder: "desc" };
+    }
+  
+    if (value === "last_login_asc") {
+      return { sortBy: "last_login_at", sortOrder: "asc" };
+    }
+  
+    return { sortBy: "created_at", sortOrder: "desc" };
+  }
+  
   const rowStart = totalParticipants === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const rowEnd = Math.min(page * PAGE_SIZE, totalParticipants);
+
+  const hasActiveTableFilters =
+    searchInput.trim() !== "" ||
+    debouncedSearch.trim() !== "" ||
+    statusFilter !== "" ||
+    sexFilter !== "" ||
+    activityFilter !== "" ||
+    groupFilter.trim() !== "" ||
+    onlyWithSubmissions ||
+    sortValue !== "created_desc";
 
   function resetCreateForm() {
     setCreateForm({
@@ -989,6 +1090,19 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
     setActivityFilter("");
     setGroupFilter("");
     setOnlyWithSubmissions(false);
+    setPage(1);
+  }
+
+  function handleResetTableFilters() {
+    setSearchInput("");
+    setDebouncedSearch("");
+    setStatusFilter("");
+    setSexFilter("");
+    setActivityFilter("");
+    setGroupFilter("");
+    setOnlyWithSubmissions(false);
+    setSortValue("created_desc");
+    setPage(1);
   }
 
   return (
@@ -1101,13 +1215,114 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
       </article>
     </div>
    
+    <div className="study-participants-card">
+      <div className="study-participants-card__top">
+        <div>
+      <h2>Participanți în studiu</h2>
+      <p>Gestionează participanții înscriși în acest studiu.</p>
+        </div>
+
+        <button
+          type="button"
+          className="study-participants-add-btn"
+          onClick={openCreateModal}
+        >
+          <PlusIcon />
+          Adaugă participant
+        </button>
+      </div>
+
+      <div className="study-participants-toolbar">
+        <label className="study-participants-search">
+          <span>
+            <SearchIcon />
+          </span>
+
+          <input
+            type="text"
+            placeholder="Caută după nume, cod sau identificator..."
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+          />
+        </label>
+
+        <label className="study-participants-filter">
+          <span>Status</span>
+          <select
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(event.target.value as ParticipantStatus | "");
+              setPage(1);
+            }}
+          >
+            <option value="">Toate</option>
+            <option value="invited">Invitat</option>
+            <option value="active">Activ</option>
+            <option value="suspended">Suspendat</option>
+            <option value="completed">Finalizat</option>
+            <option value="withdrawn">Retras</option>
+          </select>
+        </label>
+
+        <label className="study-participants-filter">
+        <span>Sortare</span>
+        <select
+            value={sortValue}
+            onChange={(event) => {
+            setSortValue(event.target.value as ParticipantSortValue);
+            setPage(1);
+            }}
+        >
+            <option value="created_desc">Cei mai noi</option>
+            <option value="created_asc">Cei mai vechi</option>
+            <option value="name_asc">Nume A-Z</option>
+            <option value="name_desc">Nume Z-A</option>
+            <option value="code_asc">Cod crescător</option>
+            <option value="code_desc">Cod descrescător</option>
+            <option value="submissions_desc">Cele mai multe trimiteri</option>
+            <option value="submissions_asc">Cele mai puține trimiteri</option>
+            <option value="last_submission_desc">Ultima trimitere recentă</option>
+            <option value="last_submission_asc">Ultima trimitere veche</option>
+            <option value="last_login_desc">Ultima autentificare recentă</option>
+            <option value="last_login_asc">Ultima autentificare veche</option>
+        </select>
+        </label>
+
+        <div className="study-participants-toolbar__actions">
+          <button
+            type="button"
+            className={`study-participants-toolbar-btn ${
+              advancedFiltersOpen ? "is-active" : ""
+            }`}
+            onClick={() => setAdvancedFiltersOpen((prev) => !prev)}
+          >
+            <FilterIcon />
+            Filtrează
+          </button>
+
+          <button
+            type="button"
+            className="study-participants-toolbar-icon-btn"
+            onClick={handleResetTableFilters}
+            disabled={isListLoading || isSummaryLoading || !hasActiveTableFilters}
+            aria-label="Resetează filtrele"
+            title="Resetează filtrele"
+          >
+            <RefreshIcon />
+          </button>
+        </div>
+      </div>
+
       {advancedFiltersOpen ? (
         <div className="study-participants-advanced-filters">
           <label>
             <span>Sex</span>
             <select
               value={sexFilter}
-              onChange={(event) => setSexFilter(event.target.value as ParticipantSex | "")}
+              onChange={(event) => {
+                setSexFilter(event.target.value as ParticipantSex | "");
+                setPage(1);
+              }}
             >
               <option value="">Toate</option>
               <option value="female">Feminin</option>
@@ -1121,7 +1336,10 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
             <span>Nivel activitate</span>
             <select
               value={activityFilter}
-              onChange={(event) => setActivityFilter(event.target.value as ActivityLevel | "")}
+              onChange={(event) => {
+                setActivityFilter(event.target.value as ActivityLevel | "");
+                setPage(1);
+              }}
             >
               <option value="">Toate</option>
               <option value="sedentary">Sedentar</option>
@@ -1139,7 +1357,10 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
               type="text"
               placeholder="Ex. Lot A, control..."
               value={groupFilter}
-              onChange={(event) => setGroupFilter(event.target.value)}
+              onChange={(event) => {
+                setGroupFilter(event.target.value);
+                setPage(1);
+              }}
             />
           </label>
 
@@ -1147,7 +1368,10 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
             <input
               type="checkbox"
               checked={onlyWithSubmissions}
-              onChange={(event) => setOnlyWithSubmissions(event.target.checked)}
+              onChange={(event) => {
+                setOnlyWithSubmissions(event.target.checked);
+                setPage(1);
+              }}
             />
             <span>Doar participanți cu trimiteri</span>
           </label>
@@ -1162,13 +1386,12 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
         </div>
       ) : null}
 
-      <div className="study-participants-card">
         <div className="study-participants-table-wrap">
           {isListLoading ? (
             <div className="study-participants-loading">
               Se încarcă participanții...
             </div>
-          ) : visibleParticipants.length === 0 ? (
+          ) : participants.length === 0 ? (
             <div className="study-participants-empty">
               <div className="study-participants-empty__icon">
                 <UserIcon />
@@ -1184,7 +1407,6 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
                 <tr>
                   <th>Cod participant</th>
                   <th>Nume</th>
-                  <th>Identificator</th>
                   <th>Status</th>
                   <th>Grup</th>
                   <th>Nr. trimiteri</th>
@@ -1194,7 +1416,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
               </thead>
 
               <tbody>
-                {visibleParticipants.map((participant) => (
+                {participants.map((participant) => (
                   <tr
                     key={participant.id}
                     className={
@@ -1211,8 +1433,6 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
                         <strong>{participant.full_name}</strong>
                       </div>
                     </td>
-
-                    <td>{participant.participant_identifier}</td>
 
                     <td>
                       <span
@@ -1350,21 +1570,6 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
                         setEditForm((prev) => ({
                           ...prev,
                           full_name: event.target.value,
-                        }))
-                      }
-                      required
-                    />
-                  </label>
-
-                  <label>
-                    <span>Identificator</span>
-                    <input
-                      type="text"
-                      value={editForm.participant_identifier}
-                      onChange={(event) =>
-                        setEditForm((prev) => ({
-                          ...prev,
-                          participant_identifier: event.target.value,
                         }))
                       }
                       required
@@ -1671,22 +1876,6 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
                           full_name: event.target.value,
                         }))
                       }
-                      required
-                    />
-                  </label>
-
-                  <label>
-                    <span>Identificator</span>
-                    <input
-                      type="text"
-                      value={createForm.participant_identifier}
-                      onChange={(event) =>
-                        setCreateForm((prev) => ({
-                          ...prev,
-                          participant_identifier: event.target.value,
-                        }))
-                      }
-                      placeholder="Ex. IP-001"
                       required
                     />
                   </label>

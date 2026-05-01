@@ -161,8 +161,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 14px;
-  padding-bottom: 14px;
+  gap: 16px;
+  padding-bottom: 18px;
 }
 
 .study-participants-card__top h2 {
@@ -170,21 +170,52 @@
   color: var(--rd-text-main);
   font-size: 17px;
   line-height: 1.15;
-  font-weight: 850;
+  font-weight: 900;
   letter-spacing: -0.025em;
 }
 
 .study-participants-card__top p {
-  margin: 6px 0 0;
+  margin: 7px 0 0;
   color: var(--rd-text-soft);
-  font-size: 11px;
+  font-size: 11.5px;
   line-height: 1.45;
   font-weight: 500;
 }
 
+.study-participants-add-btn {
+  min-height: 35px;
+  padding: 0 10px;
+  border: 1px solid var(--rd-green, #76b65c);
+  border-radius: 13px;
+  background: var(--rd-green, #76b65c);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 12px 22px rgba(118, 182, 92, 0.18);
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.study-participants-add-btn:hover {
+  background: var(--rd-green-hover, #6baa52);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(118, 182, 92, 0.22);
+}
+
+.study-participants-add-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
 .study-participants-toolbar {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) 240px auto;
+  grid-template-columns: minmax(300px, 1fr) 180px 220px auto;
   gap: 12px;
   align-items: end;
   padding-bottom: 14px;
@@ -297,19 +328,19 @@
 .study-participants-toolbar-btn,
 .study-participants-toolbar-icon-btn {
   min-height: 40px;
-  border: 1px solid var(--rd-border);
+  border: 1px solid #d8e2dc;
   border-radius: 13px;
-  background: rgba(255, 255, 255, 0.92);
+  background: #ffffff;
   color: var(--rd-text-main);
   font-family: inherit;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 850;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  box-shadow: var(--rd-shadow-card);
+  box-shadow: 0 8px 18px rgba(22, 37, 39, 0.04);
   transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
 }
 
@@ -336,9 +367,22 @@
   padding: 0;
 }
 
+.study-participants-toolbar-icon-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+.study-participants-toolbar-icon-btn:hover:disabled {
+  background: #ffffff;
+  border-color: #d8e2dc;
+  transform: none;
+}
+
 .study-participants-advanced-filters {
   margin-bottom: 14px;
-  padding: 11px;
+  padding: 12px;
   border: 1px solid var(--rd-border-soft);
   border-radius: 14px;
   background: #fafcf9;
@@ -412,7 +456,7 @@
 
 .study-participants-table {
   width: 100%;
-  min-width: 920px;
+  min-width: 820px;
   border-collapse: collapse;
 }
 
@@ -1014,7 +1058,17 @@
   }
 
   .study-participants-toolbar {
-    grid-template-columns: minmax(240px, 1fr) 190px auto;
+    grid-template-columns: minmax(240px, 1fr) 170px 200px;
+  }
+  
+  .study-participants-toolbar__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+  
+  .study-participants-toolbar__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
   }
 
   .study-participants-advanced-filters {
@@ -1037,10 +1091,13 @@
     flex-direction: column;
     align-items: stretch;
   }
-
-  .study-participants-card__top .researcher-create-btn {
+  
+  .study-participants-add-btn {
     width: 100%;
-    justify-content: center;
+  }
+
+  .study-participants-add-btn {
+    width: 100%;
   }
 
   .study-participants-toolbar {

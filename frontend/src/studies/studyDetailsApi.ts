@@ -168,10 +168,13 @@ export type ParticipantSummaryResponse = {
 
 export type StudyDataSummaryResponse = {
   total_submissions: number;
+  total_sessions: number;
+  total_records: number;
   total_values: number;
   submitted_count: number;
   validated_count: number;
   rejected_count: number;
+  partial_count: number;
   participants_with_submissions: number;
   last_submission_at: string | null;
 };
@@ -179,6 +182,8 @@ export type StudyDataSummaryResponse = {
 export type StudyDataTimelinePointResponse = {
   label: string;
   submissions_count: number;
+  sessions_count: number;
+  records_count: number;
   values_count: number;
 };
 
@@ -220,12 +225,28 @@ export async function getResearcherStudyDataSummaryRequest(
   return parseJsonResponse<StudyDataSummaryResponse>(response);
 }
 
+export type TimelineGroupBy = "day" | "five_days" | "month";
+
 export async function getResearcherStudyDataTimelineRequest(
   studyId: number,
-  groupBy: "day" | "week" | "month" = "week"
+  groupBy: TimelineGroupBy = "day",
+  startDate?: string,
+  endDate?: string
 ): Promise<StudyDataTimelinePointResponse[]> {
+  const query = new URLSearchParams();
+
+  query.set("group_by", groupBy);
+
+  if (startDate) {
+    query.set("start_date", startDate);
+  }
+
+  if (endDate) {
+    query.set("end_date", endDate);
+  }
+
   const response = await authFetch(
-    `/studies/${studyId}/submissions/timeline/data?group_by=${groupBy}`
+    `/studies/${studyId}/submissions/timeline/data?${query.toString()}`
   );
 
   return parseJsonResponse<StudyDataTimelinePointResponse[]>(response);

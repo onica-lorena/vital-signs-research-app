@@ -31,6 +31,20 @@ class ParticipantHistoryStatus(str, Enum):
     PARTIAL = "partial"
 
 
+class ParticipantSortBy(str, Enum):
+    CREATED_AT = "created_at"
+    FULL_NAME = "full_name"
+    PARTICIPANT_CODE = "participant_code"
+    SUBMISSIONS_COUNT = "submissions_count"
+    LAST_LOGIN_AT = "last_login_at"
+    LAST_SUBMISSION_AT = "last_submission_at"
+
+
+class SortOrder(str, Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+
 class ParticipantConditionCreate(BaseModel):
     condition_type: ParticipantConditionType
     notes: str | None = None
@@ -459,10 +473,15 @@ class StudySubmissionDetailResponse(BaseModel):
 
 class StudyDataSummaryResponse(BaseModel):
     total_submissions: int
+    total_sessions: int
+    total_records: int
     total_values: int
+
     submitted_count: int
     validated_count: int
     rejected_count: int
+    partial_count: int
+
     participants_with_submissions: int
     last_submission_at: datetime | None = None
 
@@ -470,6 +489,8 @@ class StudyDataSummaryResponse(BaseModel):
 class StudyDataTimelinePointResponse(BaseModel):
     label: str
     submissions_count: int
+    sessions_count: int
+    records_count: int
     values_count: int
 
 
@@ -531,3 +552,76 @@ class ParticipantSubmissionSessionDetailResponse(BaseModel):
     reviewed_at: datetime | None = None
     records: list[ParticipantSubmissionSessionRecordResponse]
     measurement_context: MeasurementContext | None = None
+
+
+class StudySubmissionSessionRecordResponse(BaseModel):
+    submission_id: int
+    status: ParticipantSubmissionStatus
+    submitted_at: datetime
+    reviewed_at: datetime | None = None
+    review_notes: str | None = None
+    values: list[ParticipantSubmissionValueResponse]
+
+
+class StudySubmissionSessionListItemResponse(BaseModel):
+    id: int
+    participant_id: int
+    participant_code: str
+    participant_full_name: str
+
+    entry_method: ParticipantDataEntryMethod
+    status_summary: ParticipantHistoryStatus
+
+    submitted_at: datetime
+    interval_start: datetime | None = None
+    interval_end: datetime | None = None
+
+    records_count: int
+    values_count: int
+
+    validated_count: int
+    pending_count: int
+    rejected_count: int
+
+    source_file_name: str | None = None
+    participant_notes: str | None = None
+    review_notes: str | None = None
+    reviewed_at: datetime | None = None
+    measurement_context: MeasurementContext | None = None
+
+
+class StudySubmissionSessionListResponse(BaseModel):
+    items: list[StudySubmissionSessionListItemResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class StudySubmissionSessionDetailResponse(BaseModel):
+    id: int
+    participant_id: int
+    participant_code: str
+    participant_full_name: str
+
+    entry_method: ParticipantDataEntryMethod
+    status_summary: ParticipantHistoryStatus
+
+    submitted_at: datetime
+    interval_start: datetime | None = None
+    interval_end: datetime | None = None
+
+    records_count: int
+    values_count: int
+
+    validated_count: int
+    pending_count: int
+    rejected_count: int
+
+    source_file_name: str | None = None
+    participant_notes: str | None = None
+    review_notes: str | None = None
+    reviewed_at: datetime | None = None
+    measurement_context: MeasurementContext | None = None
+
+    records: list[StudySubmissionSessionRecordResponse]

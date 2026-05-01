@@ -120,10 +120,12 @@ def build_report_conclusions(
     conclusions = []
 
     total_participants = participants_summary.get("total_participants", 0)
-    total_submissions = data_summary.get("total_submissions", 0)
+    total_sessions = data_summary.get("total_sessions", data_summary.get("total_submissions", 0))
+    total_records = data_summary.get("total_records", 0)
+    total_values = data_summary.get("total_values", 0)
 
     conclusions.append(
-        f"Studiul include {total_participants} participanți și {total_submissions} trimiteri de date fiziologice."
+        f"Studiul include {total_participants} participanți, {total_sessions} sesiuni de trimitere, {total_records} înregistrări și {total_values} valori fiziologice colectate."
     )
 
     high_risk_results = [
@@ -205,13 +207,15 @@ def build_report_pdf(report: StudyReportResponse) -> bytes:
     story.append(Paragraph("Rezumat date colectate", styles["Heading2"]))
 
     data_table = Table([
-        ["Total trimiteri", "Total valori", "Trimise", "Validate", "Respinse"],
+        ["Sesiuni", "Înregistrări", "Valori", "În așteptare", "Validate", "Respinse", "Parțiale"],
         [
-            report.data_summary.total_submissions,
+            report.data_summary.total_sessions,
+            report.data_summary.total_records,
             report.data_summary.total_values,
             report.data_summary.submitted_count,
             report.data_summary.validated_count,
             report.data_summary.rejected_count,
+            report.data_summary.partial_count,
         ],
     ])
 

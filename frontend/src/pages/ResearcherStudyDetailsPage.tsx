@@ -17,8 +17,6 @@ import {
   updateResearcherStudyRequest,
   type UpdateResearcherStudyPayload,
   type ParticipantSummaryResponse,
-  type StudyDataSummaryResponse,
-  type StudyDataTimelinePointResponse,
 } from "../studies/studyDetailsApi";
 import type { ResearcherStudyDetailResponse } from "../studies/studyDetailsApi";
 import "../styles/researcher-study-details-page.css";
@@ -224,8 +222,6 @@ export default function ResearcherStudyDetailsPage() {
   const [study, setStudy] = useState<ResearcherStudyDetailResponse | null>(null);
   const [participantsSummary, setParticipantsSummary] =
     useState<ParticipantSummaryResponse | null>(null);
-  const [dataSummary, setDataSummary] = useState<StudyDataSummaryResponse | null>(null);
-  const [timeline, setTimeline] = useState<StudyDataTimelinePointResponse[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState("");
@@ -248,12 +244,10 @@ export default function ResearcherStudyDetailsPage() {
       setPageError("");
 
       try {
-        const [studyResponse, participantsResponse, dataResponse, timelineResponse] =
+        const [studyResponse, participantsResponse] =
           await Promise.all([
             getResearcherStudyDetailsRequest(numericStudyId),
             getResearcherStudyParticipantsSummaryRequest(numericStudyId),
-            getResearcherStudyDataSummaryRequest(numericStudyId),
-            getResearcherStudyDataTimelineRequest(numericStudyId, "week"),
           ]);
 
         if (cancelled) {
@@ -262,8 +256,6 @@ export default function ResearcherStudyDetailsPage() {
 
         setStudy(studyResponse);
         setParticipantsSummary(participantsResponse);
-        setDataSummary(dataResponse);
-        setTimeline(timelineResponse);
       } catch (error) {
         if (cancelled) {
           return;

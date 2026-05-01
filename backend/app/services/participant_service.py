@@ -31,6 +31,8 @@ from app.schemas.participant import (
     ParticipantBulkSubmissionCreate,
     ParticipantCreate,
     ParticipantHistoryStatus,
+    ParticipantSortBy,
+    SortOrder,
     ParticipantSubmissionCreate,
     ParticipantSubmissionUpdate,
     ParticipantUpdate,
@@ -213,6 +215,12 @@ def list_study_participants(
     page_size: int,
     search: str | None = None,
     status: ParticipantStatus | None = None,
+    sex: ParticipantSex | None = None,
+    activity_level: ActivityLevel | None = None,
+    participant_group: str | None = None,
+    only_with_submissions: bool = False,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
 ) -> tuple[list[StudyParticipant], int, int]:
     study = get_study_for_current_user(
         db=db,
@@ -237,14 +245,42 @@ def list_study_participants(
     if status is not None:
         filters.append(StudyParticipant.status == status)
 
+    if sex is not None:
+        filters.append(StudyParticipant.sex == sex)
+
+    if activity_level is not None:
+        filters.append(StudyParticipant.activity_level == activity_level)
+
+    if participant_group:
+        filters.append(StudyParticipant.participant_group.ilike(f"%{participant_group.strip()}%"))
+
+    if only_with_submissions:
+        filters.append(StudyParticipant.submissions_count > 0)
+
     total = db.execute(
         select(func.count()).select_from(StudyParticipant).where(*filters)
     ).scalar_one()
 
+    sort_columns = {
+        ParticipantSortBy.CREATED_AT: StudyParticipant.created_at,
+        ParticipantSortBy.FULL_NAME: StudyParticipant.full_name,
+        ParticipantSortBy.PARTICIPANT_CODE: StudyParticipant.participant_code,
+        ParticipantSortBy.SUBMISSIONS_COUNT: StudyParticipant.submissions_count,
+        ParticipantSortBy.LAST_LOGIN_AT: StudyParticipant.last_login_at,
+        ParticipantSortBy.LAST_SUBMISSION_AT: StudyParticipant.last_submission_at,
+    }
+
+    sort_column = sort_columns[sort_by]
+
+    if sort_order == SortOrder.ASC:
+        order_clause = sort_column.asc().nulls_last()
+    else:
+        order_clause = sort_column.desc().nulls_last()
+
     stmt = (
         select(StudyParticipant)
         .where(*filters)
-        .order_by(StudyParticipant.created_at.desc())
+        .order_by(order_clause, StudyParticipant.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
@@ -968,11 +1004,16 @@ def get_study_data_summary(
     if study is None:
         raise LookupError("Studiul nu a fost găsit.")
 
-    total_submissions = db.execute(
-        select(func.count())
-        .select_from(ParticipantSubmissionSession)
-        .where(ParticipantSubmissionSession.study_id == study_id)
-    ).scalar_one()
+    sessions = list(
+        db.execute(
+            select(ParticipantSubmissionSession)
+            .options(selectinload(ParticipantSubmissionSession.submissions))
+            .where(ParticipantSubmissionSession.study_id == study_id)
+        ).scalars().all()
+    )
+
+    total_sessions = len(sessions)
+    total_records = sum(session.records_count or 0 for session in sessions)
 
     total_values = db.execute(
         select(func.count())
@@ -984,49 +1025,72 @@ def get_study_data_summary(
         .where(ParticipantSubmission.study_id == study_id)
     ).scalar_one()
 
-    grouped_rows = db.execute(
-        select(ParticipantSubmission.status, func.count())
-        .where(ParticipantSubmission.study_id == study_id)
-        .group_by(ParticipantSubmission.status)
-    ).all()
+    submitted_count = 0
+    validated_count = 0
+    rejected_count = 0
+    partial_count = 0
 
-    grouped = {row[0]: row[1] for row in grouped_rows}
+    for session in sessions:
+        status_summary = _get_session_status_summary(session)
+
+        if status_summary == ParticipantHistoryStatus.SUBMITTED:
+            submitted_count += 1
+        elif status_summary == ParticipantHistoryStatus.VALIDATED:
+            validated_count += 1
+        elif status_summary == ParticipantHistoryStatus.REJECTED:
+            rejected_count += 1
+        elif status_summary == ParticipantHistoryStatus.PARTIAL:
+            partial_count += 1
 
     participants_with_submissions = db.execute(
-        select(func.count(func.distinct(ParticipantSubmission.participant_id)))
-        .where(ParticipantSubmission.study_id == study_id)
+        select(func.count(func.distinct(ParticipantSubmissionSession.participant_id)))
+        .where(ParticipantSubmissionSession.study_id == study_id)
     ).scalar_one()
 
     last_submission_at = db.execute(
-        select(func.max(ParticipantSubmission.submitted_at))
-        .where(ParticipantSubmission.study_id == study_id)
+        select(func.max(ParticipantSubmissionSession.created_at))
+        .where(ParticipantSubmissionSession.study_id == study_id)
     ).scalar_one()
 
     return {
-        "total_submissions": total_submissions,
+        "total_submissions": total_sessions,
+        "total_sessions": total_sessions,
+        "total_records": total_records,
         "total_values": total_values,
-        "submitted_count": grouped.get(ParticipantSubmissionStatus.SUBMITTED, 0),
-        "validated_count": grouped.get(ParticipantSubmissionStatus.VALIDATED, 0),
-        "rejected_count": grouped.get(ParticipantSubmissionStatus.REJECTED, 0),
+        "submitted_count": submitted_count,
+        "validated_count": validated_count,
+        "rejected_count": rejected_count,
+        "partial_count": partial_count,
         "participants_with_submissions": participants_with_submissions,
         "last_submission_at": last_submission_at,
     }
 
 
-def _timeline_label(submitted_at: datetime, group_by: str) -> str:
-    submitted_at = submitted_at.astimezone(timezone.utc)
+def _timeline_label(measured_at: datetime, group_by: str) -> str:
+    measured_at = measured_at.astimezone(timezone.utc)
+    current_date = measured_at.date()
+    
 
     if group_by == "day":
-        return submitted_at.strftime("%Y-%m-%d")
+        return current_date.isoformat()
 
-    if group_by == "week":
-        week_start = (submitted_at - timedelta(days=submitted_at.weekday())).date()
-        return week_start.isoformat()
+    if group_by == "five_days":
+        bucket_start_day = ((current_date.day - 1) // 5) * 5 + 1
+        bucket_start = current_date.replace(day=bucket_start_day)
+        bucket_end = bucket_start + timedelta(days=4)
+
+        if bucket_end.month != bucket_start.month:
+            next_month = (
+                bucket_start.replace(day=28) + timedelta(days=4)
+            ).replace(day=1)
+            bucket_end = next_month - timedelta(days=1)
+
+        return f"{bucket_start.isoformat()}|{bucket_end.isoformat()}"
 
     if group_by == "month":
-        return submitted_at.strftime("%Y-%m")
+        return current_date.strftime("%Y-%m")
 
-    raise ValueError("group_by trebuie să fie day, week sau month.")
+    raise ValueError("group_by trebuie să fie day, five_days sau month.")
 
 
 def _get_session_status_summary(session: ParticipantSubmissionSession) -> ParticipantHistoryStatus:
@@ -1248,11 +1312,72 @@ def get_participant_submission_session_detail(
     }
 
 
+def update_study_submission_session_status_for_current_user(
+    db: Session,
+    study_id: int,
+    session_id: int,
+    current_user: User,
+    payload: ParticipantSubmissionUpdate,
+) -> dict | None:
+    study = get_study_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+    if study is None:
+        raise LookupError("Studiul nu a fost găsit.")
+
+    stmt = (
+        select(ParticipantSubmissionSession)
+        .options(
+            selectinload(ParticipantSubmissionSession.participant),
+            selectinload(ParticipantSubmissionSession.submissions)
+            .selectinload(ParticipantSubmission.values),
+        )
+        .where(
+            ParticipantSubmissionSession.id == session_id,
+            ParticipantSubmissionSession.study_id == study_id,
+        )
+    )
+
+    session = db.execute(stmt).scalar_one_or_none()
+
+    if session is None:
+        return None
+
+    now = datetime.now(timezone.utc)
+
+    for submission in session.submissions:
+        submission.status = payload.status
+        submission.review_notes = payload.review_notes
+
+        if payload.status in {
+            ParticipantSubmissionStatus.VALIDATED,
+            ParticipantSubmissionStatus.REJECTED,
+        }:
+            submission.reviewed_at = now
+        else:
+            submission.reviewed_at = None
+
+        db.add(submission)
+
+    db.commit()
+
+    return get_study_submission_session_for_current_user(
+        db=db,
+        study_id=study_id,
+        session_id=session_id,
+        current_user=current_user,
+    )
+
+
 def get_study_data_timeline(
     db: Session,
     study_id: int,
     current_user: User,
-    group_by: str = "week",
+    group_by: str = "day",
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
 ) -> list[dict]:
     study = get_study_for_current_user(
         db=db,
@@ -1262,39 +1387,269 @@ def get_study_data_timeline(
     if study is None:
         raise LookupError("Studiul nu a fost găsit.")
 
-    sessions = list(
+    if group_by == "week":
+        group_by = "day"
+
+    if group_by not in {"day", "five_days", "month"}:
+        raise ValueError("group_by trebuie să fie day, five_days sau month.")
+
+    filters = [ParticipantSubmission.study_id == study_id]
+
+    if start_date is not None:
+        filters.append(ParticipantSubmissionValue.measured_at >= start_date)
+
+    if end_date is not None:
+        filters.append(ParticipantSubmissionValue.measured_at <= end_date)
+
+    rows = list(
         db.execute(
-            select(ParticipantSubmissionSession)
-            .options(
-                selectinload(ParticipantSubmissionSession.submissions)
-                .selectinload(ParticipantSubmission.values)
+            select(
+                ParticipantSubmissionValue.measured_at,
+                ParticipantSubmission.id.label("submission_id"),
+                ParticipantSubmission.session_id,
             )
-            .where(ParticipantSubmissionSession.study_id == study_id)
-            .order_by(ParticipantSubmissionSession.created_at.asc())
-        ).scalars().all()
+            .join(
+                ParticipantSubmission,
+                ParticipantSubmission.id == ParticipantSubmissionValue.submission_id,
+            )
+            .where(*filters)
+            .order_by(ParticipantSubmissionValue.measured_at.asc())
+        ).all()
     )
 
-    timeline: dict[str, dict[str, int]] = {}
+    timeline: dict[str, dict[str, object]] = {}
 
-    for session in sessions:
-        label = _timeline_label(session.created_at, group_by)
+    for measured_at, submission_id, session_id in rows:
+        label = _timeline_label(measured_at, group_by)
 
         if label not in timeline:
             timeline[label] = {
-                "submissions_count": 0,
+                "session_ids": set(),
+                "submission_ids": set(),
                 "values_count": 0,
             }
 
-        timeline[label]["submissions_count"] += 1
-        timeline[label]["values_count"] += sum(
-            len(submission.values) for submission in session.submissions
-        )
+        timeline[label]["session_ids"].add(session_id)
+        timeline[label]["submission_ids"].add(submission_id)
+        timeline[label]["values_count"] += 1
 
     return [
         {
             "label": label,
-            "submissions_count": values["submissions_count"],
+            "submissions_count": len(values["submission_ids"]),
+            "sessions_count": len(values["session_ids"]),
+            "records_count": len(values["submission_ids"]),
             "values_count": values["values_count"],
         }
-        for label, values in timeline.items()
+        for label, values in sorted(timeline.items(), key=lambda item: item[0])
     ]
+
+def _get_session_values_count(session: ParticipantSubmissionSession) -> int:
+    return sum(len(submission.values) for submission in session.submissions)
+
+
+def list_study_submission_sessions(
+    db: Session,
+    study_id: int,
+    current_user: User,
+    page: int,
+    page_size: int,
+    search: str | None = None,
+    entry_method: ParticipantDataEntryMethod | None = None,
+    status_summary: ParticipantHistoryStatus | None = None,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
+    sort_by: str = "submitted_at",
+    sort_order: str = "desc",
+) -> tuple[list[dict], int, int]:
+    study = get_study_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+    if study is None:
+        raise LookupError("Studiul nu a fost găsit.")
+
+    filters = [ParticipantSubmissionSession.study_id == study_id]
+
+    if entry_method is not None:
+        filters.append(ParticipantSubmissionSession.entry_method == entry_method)
+
+    if start_date is not None:
+        filters.append(ParticipantSubmissionSession.created_at >= start_date)
+
+    if end_date is not None:
+        filters.append(ParticipantSubmissionSession.created_at <= end_date)
+
+    if search:
+        search_term = f"%{search.strip()}%"
+        filters.append(
+            or_(
+                StudyParticipant.full_name.ilike(search_term),
+                StudyParticipant.participant_code.ilike(search_term),
+                StudyParticipant.participant_identifier.ilike(search_term),
+                ParticipantSubmissionSession.source_file_name.ilike(search_term),
+            )
+        )
+
+    stmt = (
+        select(ParticipantSubmissionSession)
+        .join(StudyParticipant, StudyParticipant.id == ParticipantSubmissionSession.participant_id)
+        .options(
+            selectinload(ParticipantSubmissionSession.participant),
+            selectinload(ParticipantSubmissionSession.submissions)
+            .selectinload(ParticipantSubmission.values),
+        )
+        .where(*filters)
+    )
+
+    sessions = list(db.execute(stmt).scalars().unique().all())
+
+    filtered_sessions: list[ParticipantSubmissionSession] = []
+
+    for session in sessions:
+        session_status = _get_session_status_summary(session)
+
+        if status_summary is not None and session_status != status_summary:
+            continue
+
+        filtered_sessions.append(session)
+
+    reverse = sort_order != "asc"
+
+    def sort_key(session: ParticipantSubmissionSession):
+        if sort_by == "participant":
+            return session.participant.full_name.lower()
+
+        if sort_by == "records_count":
+            return session.records_count or 0
+
+        if sort_by == "values_count":
+            return _get_session_values_count(session)
+
+        if sort_by == "status":
+            return _get_session_status_summary(session).value
+
+        return session.created_at
+
+    filtered_sessions.sort(key=sort_key, reverse=reverse)
+
+    total = len(filtered_sessions)
+    total_pages = ceil(total / page_size) if total > 0 else 1
+
+    page_items = filtered_sessions[(page - 1) * page_size : page * page_size]
+
+    items: list[dict] = []
+
+    for session in page_items:
+        participant = session.participant
+        counts = _get_session_status_counts(session)
+
+        items.append(
+            {
+                "id": session.id,
+                "participant_id": participant.id,
+                "participant_code": participant.participant_code,
+                "participant_full_name": participant.full_name,
+                "entry_method": session.entry_method,
+                "status_summary": _get_session_status_summary(session),
+                "submitted_at": session.created_at,
+                "interval_start": session.interval_start,
+                "interval_end": session.interval_end,
+                "records_count": session.records_count,
+                "values_count": _get_session_values_count(session),
+                "validated_count": counts["validated_count"],
+                "pending_count": counts["pending_count"],
+                "rejected_count": counts["rejected_count"],
+                "source_file_name": session.source_file_name,
+                "participant_notes": _get_common_participant_notes(session),
+                "review_notes": _get_common_review_notes(session),
+                "reviewed_at": _get_latest_reviewed_at(session),
+                "measurement_context": session.measurement_context,
+            }
+        )
+
+    return items, total, total_pages
+
+
+def get_study_submission_session_for_current_user(
+    db: Session,
+    study_id: int,
+    session_id: int,
+    current_user: User,
+) -> dict | None:
+    study = get_study_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+    if study is None:
+        raise LookupError("Studiul nu a fost găsit.")
+
+    stmt = (
+        select(ParticipantSubmissionSession)
+        .options(
+            selectinload(ParticipantSubmissionSession.participant),
+            selectinload(ParticipantSubmissionSession.submissions)
+            .selectinload(ParticipantSubmission.values),
+        )
+        .where(
+            ParticipantSubmissionSession.id == session_id,
+            ParticipantSubmissionSession.study_id == study_id,
+        )
+    )
+
+    session = db.execute(stmt).scalar_one_or_none()
+
+    if session is None:
+        return None
+
+    participant = session.participant
+    counts = _get_session_status_counts(session)
+
+    records = [
+        {
+            "submission_id": submission.id,
+            "status": submission.status,
+            "submitted_at": submission.submitted_at,
+            "reviewed_at": submission.reviewed_at,
+            "review_notes": submission.review_notes,
+            "values": [
+                {
+                    "id": value.id,
+                    "parameter_key": value.parameter_key,
+                    "value": value.value,
+                    "measured_at": value.measured_at,
+                }
+                for value in submission.values
+            ],
+        }
+        for submission in sorted(
+            session.submissions,
+            key=lambda item: item.submitted_at,
+            reverse=True,
+        )
+    ]
+
+    return {
+        "id": session.id,
+        "participant_id": participant.id,
+        "participant_code": participant.participant_code,
+        "participant_full_name": participant.full_name,
+        "entry_method": session.entry_method,
+        "status_summary": _get_session_status_summary(session),
+        "submitted_at": session.created_at,
+        "interval_start": session.interval_start,
+        "interval_end": session.interval_end,
+        "records_count": session.records_count,
+        "values_count": _get_session_values_count(session),
+        "validated_count": counts["validated_count"],
+        "pending_count": counts["pending_count"],
+        "rejected_count": counts["rejected_count"],
+        "source_file_name": session.source_file_name,
+        "participant_notes": _get_common_participant_notes(session),
+        "review_notes": _get_common_review_notes(session),
+        "reviewed_at": _get_latest_reviewed_at(session),
+        "measurement_context": session.measurement_context,
+        "records": records,
+    }
