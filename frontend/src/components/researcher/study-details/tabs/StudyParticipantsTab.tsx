@@ -105,7 +105,7 @@ type ParticipantPinResetResponse = {
 
 type ParticipantCreatePayload = {
   full_name: string;
-  participant_identifier: string;
+  participant_identifier: string | null;
   pin?: string | null;
   birth_date?: string | null;
   sex?: ParticipantSex | null;
@@ -970,15 +970,15 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
     setPageError("");
 
     const payload: ParticipantCreatePayload = {
-      full_name: createForm.full_name,
-      participant_identifier: createForm.participant_identifier,
-      pin: createForm.pin.trim() || null,
-      birth_date: createForm.birth_date || null,
-      sex: createForm.sex || null,
-      participant_group: createForm.participant_group.trim() || null,
-      activity_level: createForm.activity_level || null,
-      notes: createForm.notes.trim() || null,
-      conditions: [],
+    full_name: createForm.full_name.trim(),
+    participant_identifier: createForm.participant_identifier.trim() || null,
+    pin: createForm.pin.trim() || null,
+    birth_date: createForm.birth_date || null,
+    sex: createForm.sex || null,
+    participant_group: createForm.participant_group.trim() || null,
+    activity_level: createForm.activity_level || null,
+    notes: createForm.notes.trim() || null,
+    conditions: [],
     };
 
     try {
@@ -1546,7 +1546,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
 
             {newTemporaryPin ? (
               <div className="study-participants-pin-card">
-                <span>PIN temporar generat</span>
+                <span>PIN generat</span>
                 <strong>{newTemporaryPin}</strong>
                 <p>
                   Copiază PIN-ul acum. Din motive de securitate, acesta nu va mai
@@ -1847,7 +1847,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
                   Cod participant: <strong>{createdPin.participant_code}</strong>
                 </p>
                 <p>
-                  PIN temporar: <strong>{createdPin.temporary_pin}</strong>
+                  PIN: <strong>{createdPin.temporary_pin}</strong>
                 </p>
                 <small>
                   Copiază PIN-ul înainte de a închide fereastra. Acesta nu va mai

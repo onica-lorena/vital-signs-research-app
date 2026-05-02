@@ -160,10 +160,13 @@ def create_study_participant(
     if study is None:
         raise LookupError("Studiul nu a fost găsit.")
 
+    participant_code = generate_next_participant_code_for_study(db, study_id)
+    participant_identifier = payload.participant_identifier or participant_code
+
     existing_identifier = db.execute(
         select(StudyParticipant.id).where(
             StudyParticipant.study_id == study_id,
-            StudyParticipant.participant_identifier == payload.participant_identifier,
+            StudyParticipant.participant_identifier == participant_identifier,
         )
     ).scalar_one_or_none()
 
@@ -174,9 +177,9 @@ def create_study_participant(
 
     participant = StudyParticipant(
         study_id=study_id,
-        participant_code=generate_next_participant_code_for_study(db, study_id),
+        participant_code=participant_code,
         full_name=payload.full_name,
-        participant_identifier=payload.participant_identifier,
+        participant_identifier=participant_identifier,
         birth_date=payload.birth_date,
         sex=payload.sex,
         participant_group=payload.participant_group,

@@ -68,7 +68,7 @@ class ParticipantConditionResponse(BaseModel):
 
 class ParticipantCreate(BaseModel):
     full_name: str = Field(min_length=2, max_length=255)
-    participant_identifier: str = Field(min_length=2, max_length=100)
+    participant_identifier: str | None = Field(default=None, min_length=2, max_length=100)
     notes: str | None = None
     pin: str | None = Field(default=None, min_length=4, max_length=12)
     birth_date: date | None = None
@@ -88,7 +88,8 @@ class ParticipantCreate(BaseModel):
     @classmethod
     def normalize_identifier(cls, value):
         if isinstance(value, str):
-            return value.strip().upper()
+            value = value.strip().upper()
+            return value or None
         return value
 
     @field_validator("notes", mode="before")
