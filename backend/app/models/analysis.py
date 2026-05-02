@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 from datetime import datetime, timezone
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum as SqlEnum, Float, ForeignKey, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.study import StudyParameterKey
+
+if TYPE_CHECKING:
+    from app.models.participant import StudyParticipant
 
 
 class AnalysisModelType(str, Enum):
@@ -63,3 +69,5 @@ class AnalysisResult(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
+
+    participant: Mapped["StudyParticipant"] = relationship("StudyParticipant")

@@ -5,7 +5,12 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from app.models.analysis import AnalysisModelType
 from app.models.study import StudyParameterKey
-from app.models.participant import ActivityLevel, MeasurementContext, ParticipantConditionType, ParticipantSex
+from app.models.participant import (
+    ActivityLevel,
+    MeasurementContext,
+    ParticipantConditionType,
+    ParticipantSex,
+)
 
 
 class AnalysisScope(str, Enum):
@@ -13,6 +18,17 @@ class AnalysisScope(str, Enum):
     LAST_48H = "last_48h"
     LAST_7_DAYS = "last_7_days"
     CUSTOM = "custom"
+
+
+class AnalysisResultSortBy(str, Enum):
+    CREATED_AT = "created_at"
+    RISK_PROBABILITY = "risk_probability"
+    RECORDS_USED = "records_used"
+
+
+class SortOrder(str, Enum):
+    ASC = "asc"
+    DESC = "desc"
 
 
 def normalize_to_utc(value: datetime | None) -> datetime | None:
@@ -77,12 +93,22 @@ class AnalysisRunRequest(BaseModel):
             raise ValueError("Vârsta maximă trebuie să fie mai mare sau egală cu vârsta minimă.")
 
         return self
-    
-    
+
+
+class AnalysisParticipantResponse(BaseModel):
+    id: int
+    participant_code: str
+    full_name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class AnalysisResultResponse(BaseModel):
     id: int
     study_id: int
     participant_id: int
+    participant: AnalysisParticipantResponse | None = None
+
     parameter_key: StudyParameterKey
     model_type: AnalysisModelType
     model_name: str
@@ -100,6 +126,44 @@ class AnalysisResultResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class AnalysisResultListResponse(BaseModel):
+    items: list[AnalysisResultResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
 class AnalysisRunResponse(BaseModel):
     message: str
     results: list[AnalysisResultResponse]
+
+
+class AnalysisAverageRiskByParameterItem(BaseModel):
+    parameter_key: StudyParameterKey
+    average_risk_probability: float
+    results_count: int
+
+
+class AnalysisRiskDistributionItem(BaseModel):
+    risk_label: str
+    count: int
+    percentage: float
+
+
+class AnalysisTimelinePointResponse(BaseModel):
+    label: str
+    high_risk_count: int
+    low_risk_count: int
+    total_results: int
+
+
+class AnalysisSummaryResponse(BaseModel):
+    total_results: int
+    participants_analyzed: int
+    high_risk_results: int
+    low_risk_results: int
+    records_used: int
+    average_risk_by_parameter: list[AnalysisAverageRiskByParameterItem]
+    risk_distribution: list[AnalysisRiskDistributionItem]
+    timeline: list[AnalysisTimelinePointResponse]
