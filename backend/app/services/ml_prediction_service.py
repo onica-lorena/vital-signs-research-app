@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
-from app.models.analysis import AnalysisModelType, AnalysisResult
+from app.models.analysis import AnalysisModelType, AnalysisRun, AnalysisResult
 from app.models.participant import (
     ActivityLevel,
     MeasurementContext,
@@ -32,7 +32,6 @@ from app.models.user import User
 from app.services.ml_feature_service import (
     REQUIRED_FEATURE_COLUMNS,
     build_prediction_features_from_submissions,
-    detect_current_abnormal_risk,
     filter_task_prediction_rows,
 )
 from app.services.participant_service import get_study_for_current_user
@@ -272,7 +271,7 @@ def run_analysis_for_study(
     activity_level: ActivityLevel | None = None,
     condition_type: ParticipantConditionType | None = None,
     measurement_context: MeasurementContext | None = None,
-) -> list[AnalysisResult]:
+) -> tuple[AnalysisRun, list[AnalysisResult]]:
     study = get_study_for_current_user(
         db=db,
         study_id=study_id,
@@ -339,6 +338,31 @@ def run_analysis_for_study(
     if not participants:
         raise ValueError("Nu există participanți disponibili pentru analiză.")
 
+    analysis_run = AnalysisRun(
+        study_id=study_id,
+        requested_participant_id=participant_id,
+        analysis_scope=scope.value,
+        analysis_start_date=analysis_start_date,
+        analysis_end_date=analysis_end_date,
+        filter_age_min=age_min,
+        filter_age_max=age_max,
+        filter_sex=sex.value if sex else None,
+        filter_participant_group=participant_group,
+        filter_activity_level=activity_level.value if activity_level else None,
+        filter_condition_type=condition_type.value if condition_type else None,
+        filter_measurement_context=measurement_context.value if measurement_context else None,
+        participants_analyzed=0,
+        total_results=0,
+        high_risk_results=0,
+        low_risk_results=0,
+        records_used=0,
+        max_risk_probability=None,
+        max_risk_parameter_key=None,
+    )
+
+    db.add(analysis_run)
+    db.flush()
+
     study_parameters = {parameter.parameter_key for parameter in study.parameters}
     results: list[AnalysisResult] = []
 
@@ -372,26 +396,20 @@ def run_analysis_for_study(
                 continue
 
             try:
-                current_abnormal_probability = detect_current_abnormal_risk(features_df, task)
+                prediction_df = filter_task_prediction_rows(features_df, task)
 
-                if current_abnormal_probability is not None:
-                    probability = current_abnormal_probability
-                    window_size = None
+                if prediction_df.empty:
+                    continue
+
+                if cfg["model_type"] == AnalysisModelType.LSTM:
+                    probability, window_size = _predict_lstm(task, prediction_df)
                 else:
-                    prediction_df = filter_task_prediction_rows(features_df, task)
-
-                    if prediction_df.empty:
-                        continue
-
-                    if cfg["model_type"] == AnalysisModelType.LSTM:
-                        probability, window_size = _predict_lstm(task, prediction_df)
-                    else:
-                        probability = _predict_classical(
-                            task=task,
-                            model_name=cfg["model_name"],
-                            features_df=prediction_df,
-                        )
-                        window_size = None
+                    probability = _predict_classical(
+                        task=task,
+                        model_name=cfg["model_name"],
+                        features_df=prediction_df,
+                    )
+                    window_size = None
 
                 threshold = TASK_RISK_THRESHOLDS.get(task, settings.analysis_risk_threshold)
 
@@ -414,6 +432,14 @@ def run_analysis_for_study(
                     analysis_start_date=analysis_start_date,
                     analysis_end_date=analysis_end_date,
                     analysis_scope=scope.value,
+
+                    filter_age_min=age_min,
+                    filter_age_max=age_max,
+                    filter_sex=sex.value if sex else None,
+                    filter_participant_group=participant_group,
+                    filter_activity_level=activity_level.value if activity_level else None,
+                    filter_condition_type=condition_type.value if condition_type else None,
+                    filter_measurement_context=measurement_context.value if measurement_context else None,
                 )
 
                 db.add(result)
@@ -424,11 +450,29 @@ def run_analysis_for_study(
                 continue
 
     if not results:
+        db.rollback()
         raise ValueError("Nu au existat suficiente date compatibile pentru rularea analizei.")
 
+    participants_analyzed = len({result.participant_id for result in results})
+    high_risk_results = sum(1 for result in results if result.risk_label == "high_risk")
+    low_risk_results = sum(1 for result in results if result.risk_label == "low_risk")
+    records_used = sum(result.records_used or 0 for result in results)
+    max_risk_result = max(results, key=lambda result: result.risk_probability)
+
+    analysis_run.participants_analyzed = participants_analyzed
+    analysis_run.total_results = len(results)
+    analysis_run.high_risk_results = high_risk_results
+    analysis_run.low_risk_results = low_risk_results
+    analysis_run.records_used = records_used
+    analysis_run.max_risk_probability = max_risk_result.risk_probability
+    analysis_run.max_risk_parameter_key = max_risk_result.parameter_key
+
+    db.add(analysis_run)
     db.commit()
+
+    db.refresh(analysis_run)
 
     for result in results:
         db.refresh(result)
 
-    return results
+    return analysis_run, results

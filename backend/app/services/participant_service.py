@@ -210,6 +210,117 @@ def create_study_participant(
     return created_participant, temporary_pin
 
 
+def create_study_participants_bulk(
+    db: Session,
+    study_id: int,
+    current_user: User,
+    payloads: list[ParticipantCreate],
+) -> list[tuple[StudyParticipant, str]]:
+    study = get_study_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+        load_parameters=False,
+    )
+
+    if study is None:
+        raise LookupError("Studiul nu a fost găsit.")
+
+    if not payloads:
+        raise ValueError("Lista de participanți nu poate fi goală.")
+
+    created_items: list[tuple[StudyParticipant, str]] = []
+
+    existing_identifiers = set(
+        db.execute(
+            select(StudyParticipant.participant_identifier).where(
+                StudyParticipant.study_id == study_id
+            )
+        ).scalars().all()
+    )
+
+    identifiers_from_payload: set[str] = set()
+
+    max_code_number = db.execute(
+        text(
+            """
+            SELECT MAX(CAST(SUBSTRING(participant_code FROM '([0-9]+)$') AS INTEGER))
+            FROM study_participants
+            WHERE study_id = :study_id
+            """
+        ),
+        {"study_id": study_id},
+    ).scalar()
+
+    next_number = 1 if max_code_number is None else max_code_number + 1
+
+    try:
+        for payload in payloads:
+            participant_code = f"P-{next_number:03d}"
+            next_number += 1
+
+            participant_identifier = payload.participant_identifier or participant_code
+
+            if participant_identifier in existing_identifiers:
+                raise ValueError(
+                    f"Există deja un participant cu identificatorul {participant_identifier}."
+                )
+
+            if participant_identifier in identifiers_from_payload:
+                raise ValueError(
+                    f"Identificatorul {participant_identifier} apare de mai multe ori în fișier."
+                )
+
+            identifiers_from_payload.add(participant_identifier)
+
+            temporary_pin = payload.pin or generate_numeric_pin(6)
+
+            participant = StudyParticipant(
+                study_id=study_id,
+                participant_code=participant_code,
+                full_name=payload.full_name,
+                participant_identifier=participant_identifier,
+                birth_date=payload.birth_date,
+                sex=payload.sex,
+                participant_group=payload.participant_group,
+                activity_level=payload.activity_level,
+                status=ParticipantStatus.INVITED,
+                pin_hash=get_password_hash(temporary_pin),
+                access_version=1,
+                submissions_count=0,
+                notes=payload.notes,
+            )
+
+            _replace_participant_conditions(participant, payload.conditions)
+
+            db.add(participant)
+            created_items.append((participant, temporary_pin))
+
+        study.participants_count = (study.participants_count or 0) + len(created_items)
+        db.add(study)
+        db.commit()
+
+    except IntegrityError:
+        db.rollback()
+        raise ValueError("Nu s-au putut crea participanții. Verifică datele introduse.")
+
+    except Exception:
+        db.rollback()
+        raise
+
+    refreshed_items: list[tuple[StudyParticipant, str]] = []
+
+    for participant, temporary_pin in created_items:
+        refreshed = get_participant_by_id(db, participant.id)
+
+        if refreshed is None:
+            raise LookupError("Un participant creat nu a mai putut fi încărcat.")
+
+        refreshed_items.append((refreshed, temporary_pin))
+
+    return refreshed_items
+
+
 def list_study_participants(
     db: Session,
     study_id: int,

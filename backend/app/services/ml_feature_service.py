@@ -38,27 +38,6 @@ REQUIRED_FEATURE_COLUMNS = [
     "temp_std_5h",
 ]
 
-NORMAL_RANGES = {
-    "hr": ("heart_rate", 50, 130),
-    "rr": ("resp_rate", 8, 30),
-    "spo2": ("spo2", 90, 100),
-    "temp": ("temperature", 36.1, 37.5),
-}
-
-
-def detect_current_abnormal_risk(features_df: pd.DataFrame, task: str) -> float | None:
-    if features_df.empty or task not in NORMAL_RANGES:
-        return None
-
-    column, low, high = NORMAL_RANGES[task]
-    latest = features_df.sort_values("hour_ts").iloc[-1]
-    value = latest[column]
-
-    if value < low or value > high:
-        return 0.95
-
-    return None
-
 
 def build_hourly_vitals_dataframe(
     submissions,

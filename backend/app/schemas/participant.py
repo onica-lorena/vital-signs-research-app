@@ -210,13 +210,32 @@ class ParticipantDetailResponse(BaseModel):
     sex: ParticipantSex | None = None
     participant_group: str | None = None
     activity_level: ActivityLevel | None = None
-    conditions: list[ParticipantConditionResponse] = []
+    conditions: list[ParticipantConditionResponse] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class ParticipantCreateResponse(ParticipantDetailResponse):
     temporary_pin: str
+
+
+class ParticipantBulkCreateResponse(BaseModel):
+    items: list[ParticipantCreateResponse]
+    total: int
+
+    
+class ParticipantBulkCreate(BaseModel):
+    participants: list[ParticipantCreate] = Field(min_length=1, max_length=200)
+
+
+class ParticipantBulkCreateItemResponse(BaseModel):
+    participant: ParticipantDetailResponse
+    temporary_pin: str
+
+
+class ParticipantBulkCreateResponse(BaseModel):
+    created_count: int
+    items: list[ParticipantBulkCreateItemResponse]
 
 
 class ParticipantPinResetResponse(BaseModel):

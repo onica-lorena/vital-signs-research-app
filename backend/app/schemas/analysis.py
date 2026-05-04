@@ -105,6 +105,7 @@ class AnalysisParticipantResponse(BaseModel):
 
 class AnalysisResultResponse(BaseModel):
     id: int
+    analysis_run_id: int | None = None
     study_id: int
     participant_id: int
     participant: AnalysisParticipantResponse | None = None
@@ -125,6 +126,14 @@ class AnalysisResultResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    filter_age_min: int | None = None
+    filter_age_max: int | None = None
+    filter_sex: str | None = None
+    filter_participant_group: str | None = None
+    filter_activity_level: str | None = None
+    filter_condition_type: str | None = None
+    filter_measurement_context: str | None = None
+
 
 class AnalysisResultListResponse(BaseModel):
     items: list[AnalysisResultResponse]
@@ -134,8 +143,52 @@ class AnalysisResultListResponse(BaseModel):
     total_pages: int
 
 
+class AnalysisRunListItemResponse(BaseModel):
+    id: int
+    study_id: int
+    requested_participant_id: int | None = None
+
+    analysis_scope: str
+    analysis_start_date: datetime | None = None
+    analysis_end_date: datetime | None = None
+
+    filter_age_min: int | None = None
+    filter_age_max: int | None = None
+    filter_sex: str | None = None
+    filter_participant_group: str | None = None
+    filter_activity_level: str | None = None
+    filter_condition_type: str | None = None
+    filter_measurement_context: str | None = None
+
+    participants_analyzed: int
+    total_results: int
+    high_risk_results: int
+    low_risk_results: int
+    records_used: int
+
+    max_risk_probability: float | None = None
+    max_risk_parameter_key: StudyParameterKey | None = None
+
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AnalysisRunDetailResponse(AnalysisRunListItemResponse):
+    results: list[AnalysisResultResponse]
+
+
+class AnalysisRunListResponse(BaseModel):
+    items: list[AnalysisRunListItemResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
 class AnalysisRunResponse(BaseModel):
     message: str
+    analysis_run: AnalysisRunDetailResponse
     results: list[AnalysisResultResponse]
 
 

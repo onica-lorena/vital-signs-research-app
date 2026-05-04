@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import require_role
 from app.core.database import get_db
-from app.models.analysis import AnalysisModelType, AnalysisResult
+from app.models.analysis import AnalysisModelType, AnalysisRun, AnalysisResult
 from app.models.study import StudyParameterKey
 from app.models.user import User, UserRole
 from app.schemas.analysis import (
@@ -22,6 +22,9 @@ from app.schemas.analysis import (
     AnalysisSummaryResponse,
     AnalysisTimelinePointResponse,
     SortOrder,
+    AnalysisRunDetailResponse,
+    AnalysisRunListItemResponse,
+    AnalysisRunListResponse,
 )
 from app.services.ml_prediction_service import run_analysis_for_study
 from app.services.participant_service import get_study_for_current_user
@@ -102,7 +105,7 @@ def run_study_analysis(
     ],
 ):
     try:
-        results = run_analysis_for_study(
+        analysis_run, results = run_analysis_for_study(
             db=db,
             study_id=study_id,
             current_user=current_user,
@@ -142,10 +145,110 @@ def run_study_analysis(
         .all()
     )
 
+    refreshed_run = db.execute(
+        select(AnalysisRun)
+        .options(
+            selectinload(AnalysisRun.results).selectinload(AnalysisResult.participant)
+        )
+        .where(AnalysisRun.id == analysis_run.id)
+    ).scalar_one()
+
     return AnalysisRunResponse(
         message="Analiza a fost finalizată cu succes.",
+        analysis_run=AnalysisRunDetailResponse.model_validate(refreshed_run),
         results=[AnalysisResultResponse.model_validate(item) for item in refreshed_results],
     )
+
+
+@router.get("/runs", response_model=AnalysisRunListResponse)
+def read_analysis_runs(
+    study_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_role(UserRole.RESEARCHER)),
+    ],
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+):
+    study = get_study_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+
+    if study is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Studiul nu a fost găsit.",
+        )
+
+    filters = [AnalysisRun.study_id == study_id]
+
+    total = db.execute(
+        select(func.count()).select_from(AnalysisRun).where(*filters)
+    ).scalar_one()
+
+    stmt = (
+        select(AnalysisRun)
+        .where(*filters)
+        .order_by(AnalysisRun.created_at.desc(), AnalysisRun.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+
+    items = list(db.execute(stmt).scalars().all())
+    total_pages = ceil(total / page_size) if total > 0 else 1
+
+    return AnalysisRunListResponse(
+        items=[AnalysisRunListItemResponse.model_validate(item) for item in items],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+    )
+
+
+@router.get("/runs/{analysis_run_id}", response_model=AnalysisRunDetailResponse)
+def read_analysis_run_detail(
+    study_id: int,
+    analysis_run_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_role(UserRole.RESEARCHER)),
+    ],
+):
+    study = get_study_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+
+    if study is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Studiul nu a fost găsit.",
+        )
+
+    analysis_run = db.execute(
+        select(AnalysisRun)
+        .options(
+            selectinload(AnalysisRun.results).selectinload(AnalysisResult.participant)
+        )
+        .where(
+            AnalysisRun.id == analysis_run_id,
+            AnalysisRun.study_id == study_id,
+        )
+    ).scalar_one_or_none()
+
+    if analysis_run is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analiza rulată nu a fost găsită.",
+        )
+
+    return AnalysisRunDetailResponse.model_validate(analysis_run)
 
 
 @router.get("/results", response_model=AnalysisResultListResponse)

@@ -12,10 +12,16 @@ type ParameterId = "heartRate" | "respiratoryRate" | "spo2" | "temperature";
 type StudyFormData = {
   title: string;
   startDate: string;
+  endDate: string;
   studyType: string;
   dataEntryMode: string;
   status: string;
   description: string;
+  institution: string;
+  targetParticipants: string;
+  collectionRules: string;
+  inclusionCriteria: string;
+  administrativeNotes: string;
 };
 
 type ParameterSetting = {
@@ -427,10 +433,16 @@ export default function CreateStudyPage() {
   const [formData, setFormData] = useState<StudyFormData>(() => ({
     title: "",
     startDate: "",
+    endDate: "",
     studyType: "",
     dataEntryMode: "",
     status: "",
     description: "",
+    institution: "",
+    targetParticipants: "",
+    collectionRules: "",
+    inclusionCriteria: "",
+    administrativeNotes: "",
   }));
 
   const [parameterSettings, setParameterSettings] =
@@ -479,6 +491,17 @@ export default function CreateStudyPage() {
       !formData.status
     ) {
       return "Completează titlul, data de început, tipul studiului, modul de furnizare a datelor și statusul studiului.";
+    }
+  
+    if (formData.endDate && formData.endDate < formData.startDate) {
+      return "Data de finalizare trebuie să fie după data de început.";
+    }
+  
+    if (
+      formData.targetParticipants &&
+      Number(formData.targetParticipants) < 0
+    ) {
+      return "Ținta de participanți nu poate fi negativă.";
     }
   
     return "";
@@ -534,10 +557,18 @@ export default function CreateStudyPage() {
       const payload = {
         title: formData.title.trim(),
         start_date: formData.startDate ? `${formData.startDate}T00:00:00` : null,
+        end_date: formData.endDate ? `${formData.endDate}T23:59:59` : null,
         study_type: formData.studyType,
         data_entry_mode: formData.dataEntryMode,
         status: formData.status,
         description: formData.description.trim() || null,
+        institution: formData.institution.trim() || null,
+        target_participants: formData.targetParticipants
+          ? Number(formData.targetParticipants)
+          : null,
+        collection_rules: formData.collectionRules.trim() || null,
+        inclusion_criteria: formData.inclusionCriteria.trim() || null,
+        administrative_notes: formData.administrativeNotes.trim() || null,
         parameters: selectedParameters.map((parameter) => ({
           parameter_key: parameter.id,
           measurement_frequency: parameterSettings[parameter.id].frequency,
@@ -698,6 +729,24 @@ export default function CreateStudyPage() {
                 onChange={(event) => updateField("title", event.target.value)}
               />
             </label>
+            
+            <label className="create-study-field">
+              <span className="create-study-field__label">Data de început *</span>
+              <input
+                type="date"
+                value={formData.startDate}
+                onChange={(event) => updateField("startDate", event.target.value)}
+              />
+            </label>
+
+            <label className="create-study-field">
+              <span className="create-study-field__label">Data de finalizare</span>
+              <input
+                type="date"
+                value={formData.endDate}
+                onChange={(event) => updateField("endDate", event.target.value)}
+              />
+            </label>
 
             <label className="create-study-field">
               <span className="create-study-field__label">Tip studiu *</span>
@@ -712,15 +761,6 @@ export default function CreateStudyPage() {
                   </option>
                 ))}
               </select>
-            </label>
-            
-            <label className="create-study-field">
-              <span className="create-study-field__label">Data de început *</span>
-              <input
-                type="date"
-                value={formData.startDate}
-                onChange={(event) => updateField("startDate", event.target.value)}
-              />
             </label>
             
             <label className="create-study-field">
@@ -752,6 +792,27 @@ export default function CreateStudyPage() {
                 ))}
               </select>
             </label>
+
+            <label className="create-study-field">
+              <span className="create-study-field__label">Țintă participanți</span>
+              <input
+                type="number"
+                min={0}
+                placeholder="Ex: 40"
+                value={formData.targetParticipants}
+                onChange={(event) => updateField("targetParticipants", event.target.value)}
+              />
+            </label>
+
+            <label className="create-study-field create-study-field--full">
+              <span className="create-study-field__label">Instituție</span>
+              <input
+                type="text"
+                placeholder="Ex: Universitatea de Medicină și Farmacie Victor Babeș Timișoara"
+                value={formData.institution}
+                onChange={(event) => updateField("institution", event.target.value)}
+              />
+            </label>
             
             <label className="create-study-field create-study-field--full">
               <span className="create-study-field__label">Descriere</span>
@@ -763,6 +824,45 @@ export default function CreateStudyPage() {
               />
               <span className="create-study-field__helper">
                 {formData.description.length}/400
+              </span>
+            </label>
+
+            <label className="create-study-field create-study-field--full">
+              <span className="create-study-field__label">Reguli de colectare</span>
+              <textarea
+                maxLength={700}
+                placeholder="Ex: Participanții transmit valorile fiziologice după o activitate fizică ușoară. Fiecare înregistrare trebuie să includă ritmul cardiac, frecvența respiratorie, SpO₂ și temperatura corporală."
+                value={formData.collectionRules}
+                onChange={(event) => updateField("collectionRules", event.target.value)}
+              />
+              <span className="create-study-field__helper">
+                {formData.collectionRules.length}/700
+              </span>
+            </label>
+
+            <label className="create-study-field create-study-field--full">
+              <span className="create-study-field__label">Criterii de includere</span>
+              <textarea
+                maxLength={700}
+                placeholder="Ex: Adulți cu vârsta între 18 și 65 de ani, fără contraindicații cunoscute pentru efort fizic ușor."
+                value={formData.inclusionCriteria}
+                onChange={(event) => updateField("inclusionCriteria", event.target.value)}
+              />
+              <span className="create-study-field__helper">
+                {formData.inclusionCriteria.length}/700
+              </span>
+            </label>
+
+            <label className="create-study-field create-study-field--full">
+              <span className="create-study-field__label">Note administrative</span>
+              <textarea
+                maxLength={700}
+                placeholder="Ex: Date simulate pentru testarea funcționalităților de analiză pe cohorte."
+                value={formData.administrativeNotes}
+                onChange={(event) => updateField("administrativeNotes", event.target.value)}
+              />
+              <span className="create-study-field__helper">
+                {formData.administrativeNotes.length}/700
               </span>
             </label>
           </div>
@@ -885,6 +985,11 @@ export default function CreateStudyPage() {
               </div>
 
               <div>
+                <dt>Data de finalizare</dt>
+                <dd>{formatDate(formData.endDate)}</dd>
+              </div>
+
+              <div>
                 <dt>Tip studiu</dt>
                 <dd>{studyTypeLabel}</dd>
               </div>
@@ -903,17 +1008,56 @@ export default function CreateStudyPage() {
                 <dt>Responsabil</dt>
                 <dd>{currentUser?.full_name ?? "Cercetător"}</dd>
               </div>
+
+              <div>
+                <dt>Instituție</dt>
+                <dd>{formData.institution.trim() || "—"}</dd>
+              </div>
+
+              <div>
+                <dt>Țintă participanți</dt>
+                <dd>{formData.targetParticipants || "—"}</dd>
+              </div>
             </dl>
           </article>
 
-          <article className="create-study-review-card">
-            <h3>Descriere</h3>
-            <p className="create-study-review-description">
-              {formData.description.trim()
-                ? formData.description
-                : "Nu a fost introdusă o descriere pentru acest studiu."}
-            </p>
-          </article>
+          <div className="create-study-review-details-column">
+            <article className="create-study-review-card create-study-review-detail-card">
+              <h3>Descriere</h3>
+              <p className="create-study-review-description">
+                {formData.description.trim()
+                  ? formData.description
+                  : "Nu a fost introdusă o descriere pentru acest studiu."}
+              </p>
+            </article>
+
+            <article className="create-study-review-card create-study-review-detail-card">
+              <h3>Reguli de colectare</h3>
+              <p className="create-study-review-description">
+                {formData.collectionRules.trim()
+                  ? formData.collectionRules
+                  : "Nu au fost introduse reguli de colectare."}
+              </p>
+            </article>
+
+            <article className="create-study-review-card create-study-review-detail-card">
+              <h3>Criterii de includere</h3>
+              <p className="create-study-review-description">
+                {formData.inclusionCriteria.trim()
+                  ? formData.inclusionCriteria
+                  : "Nu au fost introduse criterii de includere."}
+              </p>
+            </article>
+
+            <article className="create-study-review-card create-study-review-detail-card">
+              <h3>Note administrative</h3>
+              <p className="create-study-review-description">
+                {formData.administrativeNotes.trim()
+                  ? formData.administrativeNotes
+                  : "Nu au fost introduse note administrative."}
+              </p>
+            </article>
+          </div>
         </div>
 
         <article className="create-study-review-card create-study-review-card--full">

@@ -103,6 +103,11 @@ type ParticipantPinResetResponse = {
   temporary_pin: string;
 };
 
+type ParticipantConditionCreatePayload = {
+  condition_type: ParticipantConditionType;
+  notes?: string | null;
+};
+
 type ParticipantCreatePayload = {
   full_name: string;
   participant_identifier: string | null;
@@ -112,7 +117,12 @@ type ParticipantCreatePayload = {
   participant_group?: string | null;
   activity_level?: ActivityLevel | null;
   notes?: string | null;
-  conditions?: [];
+  conditions?: ParticipantConditionCreatePayload[];
+};
+
+type ParticipantBulkCreateResponse = {
+  items: ParticipantCreateResponse[];
+  total: number;
 };
 
 type ParticipantUpdatePayload = {
@@ -180,6 +190,32 @@ function PlusIcon() {
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 5V19" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
       <path d="M5 12H19" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 16V5.5"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+      <path
+        d="M8.4 9.1L12 5.5L15.6 9.1"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5.5 15.5V18.2C5.5 19.1 6.2 19.8 7.1 19.8H16.9C17.8 19.8 18.5 19.1 18.5 18.2V15.5"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -593,6 +629,28 @@ async function createParticipantRequest(
   );
 }
 
+async function uploadParticipantsCsvRequest(
+  studyId: number,
+  file: File
+): Promise<ParticipantBulkCreateResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await authFetch(
+    `/studies/${studyId}/participants/bulk-upload`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+
+  return response.json() as Promise<ParticipantBulkCreateResponse>;
+}
+
 async function updateParticipantRequest(
   studyId: number,
   participantId: number,
@@ -651,6 +709,11 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
   const [createLoading, setCreateLoading] = useState(false);
   const [createdPin, setCreatedPin] = useState<ParticipantCreateResponse | null>(null);
 
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const [bulkCreatedItems, setBulkCreatedItems] = useState<ParticipantCreateResponse[]>([]);
+  
   const [editMode, setEditMode] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [resetPinLoading, setResetPinLoading] = useState(false);
@@ -811,16 +874,6 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
     };
   }, [studyId, refreshToken]);
 
-  const activationRate = useMemo(() => {
-    const total = summary?.total_participants ?? 0;
-
-    if (total === 0) {
-      return 0;
-    }
-
-    return Math.round(((summary?.active_participants ?? 0) / total) * 100);
-  }, [summary]);
-
   const getParticipantStatusPercentage = (count?: number): number => {
     const total = summary?.total_participants ?? 0;
   
@@ -928,6 +981,22 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
     resetCreateForm();
   }
 
+  function openBulkModal() {
+    setBulkFile(null);
+    setBulkCreatedItems([]);
+    setIsBulkModalOpen(true);
+  }
+  
+  function closeBulkModal() {
+    if (bulkLoading) {
+      return;
+    }
+  
+    setIsBulkModalOpen(false);
+    setBulkFile(null);
+    setBulkCreatedItems([]);
+  }
+
   async function handleOpenParticipant(participantId: number) {
     setSelectedLoadingId(participantId);
     setPageError("");
@@ -998,6 +1067,39 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
     } finally {
       setCreateLoading(false);
     }
+  }
+
+  async function handleUploadParticipantsCsv(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+
+  if (!bulkFile) {
+    setPageError("Alege un fișier CSV înainte de import.");
+    return;
+  }
+
+  setBulkLoading(true);
+  setPageError("");
+  setBulkCreatedItems([]);
+
+  try {
+    const response = await uploadParticipantsCsvRequest(studyId, bulkFile);
+
+    setBulkCreatedItems(response.items);
+    setRefreshToken((prev) => prev + 1);
+    setPage(1);
+  } catch (error) {
+    if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) {
+      return;
+    }
+
+    setPageError(
+      error instanceof Error
+        ? error.message
+        : "Nu s-au putut importa participanții din CSV."
+    );
+  } finally {
+    setBulkLoading(false);
+  }
   }
 
   async function handleUpdateParticipant(event: React.FormEvent<HTMLFormElement>) {
@@ -1222,14 +1324,25 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
       <p>Gestionează participanții înscriși în acest studiu.</p>
         </div>
 
+        <div className="study-participants-card__actions">
         <button
-          type="button"
-          className="study-participants-add-btn"
-          onClick={openCreateModal}
+            type="button"
+            className="study-participants-import-btn"
+            onClick={openBulkModal}
         >
-          <PlusIcon />
-          Adaugă participant
+            <UploadIcon />
+            Importă participanți
         </button>
+
+        <button
+            type="button"
+            className="study-participants-add-btn"
+            onClick={openCreateModal}
+        >
+            <PlusIcon />
+            Adaugă participant
+        </button>
+        </div>
       </div>
 
       <div className="study-participants-toolbar">
@@ -1817,6 +1930,120 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
         </div>
       ) : null}
 
+      {isBulkModalOpen ? (
+  <div className="study-participants-modal-overlay" onClick={closeBulkModal}>
+    <div
+      className="study-participants-modal study-participants-modal--bulk"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div className="study-participants-modal__header">
+        <div>
+          <h3>Importă mai mulți participanți</h3>
+          <p>
+            Încarcă un fișier CSV cu participanții care trebuie adăugați în studiu.
+            PIN-ul poate fi lăsat gol, iar backendul îl va genera automat.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={closeBulkModal}
+          aria-label="Închide"
+        >
+          <CloseIcon />
+        </button>
+      </div>
+
+      {bulkCreatedItems.length > 0 ? (
+        <div className="study-participants-created">
+          <h4>{bulkCreatedItems.length} participanți creați cu succes</h4>
+
+          <div className="study-participants-bulk-created-list">
+            {bulkCreatedItems.map((participant) => (
+              <article key={participant.id}>
+                <strong>
+                  {participant.participant_code} · {participant.full_name}
+                </strong>
+                <span>
+                  PIN: <b>{participant.temporary_pin}</b>
+                </span>
+              </article>
+            ))}
+          </div>
+
+          <small>
+            Copiază codurile și PIN-urile acum. Din motive de securitate,
+            PIN-urile nu vor mai fi afișate ulterior.
+          </small>
+
+          <button
+            type="button"
+            className="study-participants-primary-btn"
+            onClick={closeBulkModal}
+          >
+            Am copiat datele
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={(event) => void handleUploadParticipantsCsv(event)}>
+          <label className="study-participants-csv-upload">
+            <span>Fișier CSV</span>
+
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              onChange={(event) => {
+                const selectedFile = event.target.files?.[0] ?? null;
+                setBulkFile(selectedFile);
+              }}
+            />
+
+            <small>
+              Fișierul trebuie să conțină cel puțin coloana{" "}
+              <strong>full_name</strong>. Coloanele recomandate sunt:
+              participant_identifier, pin, birth_date, sex, participant_group,
+              activity_level, notes, condition_type și condition_notes.
+            </small>
+          </label>
+
+          {bulkFile ? (
+            <div className="study-participants-selected-file">
+              <strong>{bulkFile.name}</strong>
+              <span>{Math.round(bulkFile.size / 1024)} KB</span>
+            </div>
+          ) : null}
+
+          <div className="study-participants-bulk-help">
+            Exemplu antet CSV:
+            <code>
+              full_name,participant_identifier,pin,birth_date,sex,participant_group,activity_level,notes,condition_type,condition_notes
+            </code>
+          </div>
+
+          <div className="study-participants-modal__actions">
+            <button
+              type="button"
+              className="study-participants-secondary-btn"
+              onClick={closeBulkModal}
+              disabled={bulkLoading}
+            >
+              Anulează
+            </button>
+
+            <button
+              type="submit"
+              className="study-participants-primary-btn"
+              disabled={bulkLoading || !bulkFile}
+            >
+              {bulkLoading ? "Se importă..." : "Importă participanții"}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  </div>
+      ) : null}
+
       {isCreateModalOpen ? (
         <div className="study-participants-modal-overlay" onClick={closeCreateModal}>
           <div
@@ -1949,7 +2176,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
                     </select>
                   </label>
 
-                  <label className="study-participants-form-grid__full">
+                  <label>
                     <span>Grup participant</span>
                     <input
                       type="text"
