@@ -108,8 +108,17 @@ type StudySubmissionSessionDetailResponse = {
   records: StudySubmissionSessionRecordResponse[];
 };
 
+type CollectedDataFocusRequest = {
+  participantId: number;
+  participantCode: string;
+  startDate: string | null;
+  endDate: string | null;
+};
+
 type StudyCollectedDataTabProps = {
   studyId: number;
+  focusRequest?: CollectedDataFocusRequest | null;
+  onFocusRequestConsumed?: () => void;
 };
 
 const STATUS_LABELS: Record<StudySessionStatus, string> = {
@@ -325,6 +334,83 @@ function formatDate(value?: string | null): string {
   }).format(new Date(value));
 }
 
+function toStartOfDayIso(dateValue: string): string {
+  if (!dateValue) {
+    return "";
+  }
+
+  return new Date(`${dateValue}T00:00:00`).toISOString();
+}
+
+function toEndOfDayIso(dateValue: string): string {
+  if (!dateValue) {
+    return "";
+  }
+
+  return new Date(`${dateValue}T23:59:59`).toISOString();
+}
+
+function getTimestamp(value?: string | null): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const timestamp = new Date(value).getTime();
+
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function doIntervalsOverlap(params: {
+  sessionStart: string | null;
+  sessionEnd: string | null;
+  focusStart: string | null;
+  focusEnd: string | null;
+}): boolean {
+  const sessionStart = getTimestamp(params.sessionStart);
+  const sessionEnd = getTimestamp(params.sessionEnd);
+  const focusStart = getTimestamp(params.focusStart);
+  const focusEnd = getTimestamp(params.focusEnd);
+
+  if (sessionStart === null || sessionEnd === null) {
+    return false;
+  }
+
+  if (focusStart === null || focusEnd === null) {
+    return true;
+  }
+
+  return sessionStart <= focusEnd && sessionEnd >= focusStart;
+}
+
+function getRecordValue(
+  record: StudySubmissionSessionRecordResponse,
+  parameterKey: ParticipantSubmissionValueResponse["parameter_key"]
+): ParticipantSubmissionValueResponse | undefined {
+  return record.values.find((value) => value.parameter_key === parameterKey);
+}
+
+function formatParameterValue(
+  value: ParticipantSubmissionValueResponse | undefined
+): string {
+  if (!value) {
+    return "—";
+  }
+
+  return `${new Intl.NumberFormat("ro-RO", {
+    maximumFractionDigits: 1,
+  }).format(value.value)} ${PARAMETER_UNITS[value.parameter_key]}`;
+}
+
+function getRecordMeasuredAt(record: StudySubmissionSessionRecordResponse): string {
+  const firstValue = record.values[0];
+
+  if (!firstValue) {
+    return record.submitted_at;
+  }
+
+  return firstValue.measured_at;
+}
+
 function toDateInputValue(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -534,11 +620,11 @@ async function listStudySubmissionSessionsRequest(params: {
   }
 
   if (params.startDate) {
-    query.set("start_date", params.startDate);
+    query.set("start_date", toStartOfDayIso(params.startDate));
   }
 
   if (params.endDate) {
-    query.set("end_date", params.endDate);
+    query.set("end_date", toEndOfDayIso(params.endDate));
   }
 
   return apiRequest<StudySubmissionSessionListResponse>(
@@ -605,6 +691,8 @@ function CustomChartTooltip({
 
 export default function StudyCollectedDataTab({
   studyId,
+  focusRequest,
+  onFocusRequestConsumed,
 }: StudyCollectedDataTabProps) {
   const [summary, setSummary] = useState<StudyDataSummaryResponse | null>(null);
   const [timeline, setTimeline] = useState<StudyDataTimelinePointResponse[]>([]);
@@ -637,6 +725,28 @@ export default function StudyCollectedDataTab({
   
   const [tableStartDateFilter, setTableStartDateFilter] = useState("");
   const [tableEndDateFilter, setTableEndDateFilter] = useState("");
+  const [pendingFocusRequest, setPendingFocusRequest] =
+    useState<CollectedDataFocusRequest | null>(null);
+
+  useEffect(() => {
+    if (!focusRequest) {
+      return;
+    }
+
+    setSearchInput(focusRequest.participantCode);
+    setDebouncedSearch(focusRequest.participantCode);
+
+    setTableStartDateFilter("");
+    setTableEndDateFilter("");
+
+    setStatusFilter("");
+    setMethodFilter("");
+    setPage(1);
+    setSelectedSession(null);
+    setPendingFocusRequest(focusRequest);
+
+    onFocusRequestConsumed?.();
+  }, [focusRequest, onFocusRequestConsumed]);
 
   useEffect(() => {
     if (timelinePreset === "custom") {
@@ -835,6 +945,37 @@ export default function StudyCollectedDataTab({
         tableEndDateFilter,
         refreshToken,
       ]);
+
+  useEffect(() => {
+    if (!pendingFocusRequest || isListLoading || selectedSession) {
+      return;
+    }
+
+    const matchingSession = sessions.find((session) => {
+      if (session.participant_id !== pendingFocusRequest.participantId) {
+        return false;
+      }
+
+      return doIntervalsOverlap({
+        sessionStart: session.interval_start,
+        sessionEnd: session.interval_end,
+        focusStart: pendingFocusRequest.startDate,
+        focusEnd: pendingFocusRequest.endDate,
+      });
+    });
+
+    if (!matchingSession) {
+      return;
+    }
+
+    setPendingFocusRequest(null);
+    void handleOpenSession(matchingSession.id);
+  }, [
+    pendingFocusRequest,
+    isListLoading,
+    selectedSession,
+    sessions,
+  ]);
 
   const chartData = useMemo(() => {
     return timeline.map((item) => ({
@@ -1508,7 +1649,7 @@ export default function StudyCollectedDataTab({
                   Trimitere #{selectedSession.id}
                 </span>
 
-                <h3>{selectedSession.participant_full_name}</h3>
+                <h3>Date trimise de {selectedSession.participant_full_name}</h3>
 
                 <div className="study-collected-drawer__badges">
                   <span
@@ -1607,27 +1748,55 @@ export default function StudyCollectedDataTab({
               </dl>
             </section>
 
-            <section className="study-collected-drawer-section">
-              <h4>Valori fiziologice</h4>
+            <section className="study-collected-drawer-section study-collected-values-section">
+              <div className="study-collected-values-section__header">
+                <div>
+                  <h4>Valori fiziologice</h4>
+                  <p>
+                    Datele trimise de participant, grupate pe momentul măsurării.
+                  </p>
+                </div>
 
-              <div className="study-collected-values-list">
-                {selectedSession.records.map((record) => (
-                  <article key={record.submission_id}>
-                    <span>
-                      Înregistrare #{record.submission_id} · {STATUS_LABELS[record.status]}
-                    </span>
+                <span>
+                  {formatNumber(selectedSession.records_count)} înregistrări
+                </span>
+              </div>
 
-                    {record.values.map((value) => (
-                      <div key={value.id} className="study-collected-record-value">
-                        <strong>
-                          {PARAMETER_LABELS[value.parameter_key]}: {value.value}{" "}
-                          {PARAMETER_UNITS[value.parameter_key]}
-                        </strong>
-                        <small>{formatDateTime(value.measured_at)}</small>
-                      </div>
-                    ))}
-                  </article>
-                ))}
+              <div className="study-collected-values-table-wrap">
+                <table className="study-collected-values-table">
+                  <thead>
+                    <tr>
+                      <th>Moment</th>
+                      <th>Ritm cardiac</th>
+                      <th>Frecvență respiratorie</th>
+                      <th>SpO₂</th>
+                      <th>Temperatură</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {selectedSession.records.map((record) => {
+                      const heartRate = getRecordValue(record, "heartRate");
+                      const respiratoryRate = getRecordValue(record, "respiratoryRate");
+                      const spo2 = getRecordValue(record, "spo2");
+                      const temperature = getRecordValue(record, "temperature");
+
+                      return (
+                        <tr key={record.submission_id}>
+                          <td>
+                            <strong>{formatDateTime(getRecordMeasuredAt(record))}</strong>
+                            <small>#{record.submission_id}</small>
+                          </td>
+
+                          <td>{formatParameterValue(heartRate)}</td>
+                          <td>{formatParameterValue(respiratoryRate)}</td>
+                          <td>{formatParameterValue(spo2)}</td>
+                          <td>{formatParameterValue(temperature)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </section>
 

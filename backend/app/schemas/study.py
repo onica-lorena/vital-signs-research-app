@@ -85,9 +85,14 @@ class StudyCreate(BaseModel):
         return normalize_to_utc(value)
 
     @model_validator(mode="after")
-    def validate_date_interval(self):
+    def validate_study_payload(self):
         if self.start_date and self.end_date and self.end_date < self.start_date:
             raise ValueError("Data de finalizare trebuie să fie după data de început.")
+
+        parameter_keys = [parameter.parameter_key for parameter in self.parameters]
+        if len(parameter_keys) != len(set(parameter_keys)):
+            raise ValueError("Același parametru nu poate fi adăugat de mai multe ori în același studiu.")
+
         return self
 
 
@@ -114,9 +119,15 @@ class StudyUpdate(BaseModel):
         return normalize_to_utc(value)
 
     @model_validator(mode="after")
-    def validate_partial_date_interval(self):
+    def validate_partial_study_payload(self):
         if self.start_date is not None and self.end_date is not None and self.end_date < self.start_date:
             raise ValueError("Data de finalizare trebuie să fie după data de început.")
+
+        if self.parameters is not None:
+            parameter_keys = [parameter.parameter_key for parameter in self.parameters]
+            if len(parameter_keys) != len(set(parameter_keys)):
+                raise ValueError("Același parametru nu poate fi adăugat de mai multe ori în același studiu.")
+
         return self
 
 

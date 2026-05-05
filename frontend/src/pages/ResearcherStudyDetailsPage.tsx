@@ -25,6 +25,13 @@ const VALID_TABS = ["rezumat", "participanti", "date", "analize", "rapoarte"] as
 
 type StudyDetailsTab = (typeof VALID_TABS)[number];
 
+type CollectedDataFocusRequest = {
+  participantId: number;
+  participantCode: string;
+  startDate: string | null;
+  endDate: string | null;
+};
+
 function isValidTab(value: string | undefined): value is StudyDetailsTab {
   return VALID_TABS.includes(value as StudyDetailsTab);
 }
@@ -230,6 +237,9 @@ export default function ResearcherStudyDetailsPage() {
   const [editError, setEditError] = useState("");
   const [isSavingStudy, setIsSavingStudy] = useState(false);
 
+  const [collectedDataFocusRequest, setCollectedDataFocusRequest] =
+    useState<CollectedDataFocusRequest | null>(null);
+
   const numericStudyId = Number(studyId);
 
   useEffect(() => {
@@ -345,11 +355,21 @@ export default function ResearcherStudyDetailsPage() {
               ) : null}
 
               {tab === "date" ? (
-                <StudyCollectedDataTab studyId={numericStudyId} />
+                <StudyCollectedDataTab
+                  studyId={numericStudyId}
+                  focusRequest={collectedDataFocusRequest}
+                  onFocusRequestConsumed={() => setCollectedDataFocusRequest(null)}
+                />
               ) : null}
 
               {tab === "analize" ? (
-                <StudyAnalysisTab studyId={numericStudyId} />
+                <StudyAnalysisTab
+                  studyId={numericStudyId}
+                  onOpenCollectedData={(request) => {
+                    setCollectedDataFocusRequest(request);
+                    navigate(`/cercetator/studii/${numericStudyId}/date`);
+                  }}
+                />
               ) : null}
 
               {tab === "rapoarte" ? (

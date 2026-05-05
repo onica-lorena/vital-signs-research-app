@@ -25,7 +25,6 @@ type StudyFormData = {
 };
 
 type ParameterSetting = {
-  selected: boolean;
   frequency: string;
 };
 
@@ -96,20 +95,16 @@ const parameterDefinitions: Array<{
 function getInitialParameterSettings(): Record<ParameterId, ParameterSetting> {
   return {
     heartRate: {
-      selected: false,
-      frequency: "La 1 minut",
+      frequency: "La 1 oră",
     },
     respiratoryRate: {
-      selected: false,
-      frequency: "La 5 minute",
+      frequency: "La 1 oră",
     },
     spo2: {
-      selected: false,
-      frequency: "La 1 minut",
+      frequency: "La 1 oră",
     },
     temperature: {
-      selected: false,
-      frequency: "La 15 minute",
+      frequency: "La 1 oră",
     },
   };
 }
@@ -448,9 +443,7 @@ export default function CreateStudyPage() {
   const [parameterSettings, setParameterSettings] =
     useState<Record<ParameterId, ParameterSetting>>(getInitialParameterSettings);
 
-  const selectedParameters = parameterDefinitions.filter(
-    (parameter) => parameterSettings[parameter.id].selected
-  );
+  const selectedParameters = parameterDefinitions;
 
   function updateField<K extends keyof StudyFormData>(
     field: K,
@@ -459,16 +452,6 @@ export default function CreateStudyPage() {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
-    }));
-  }
-
-  function toggleParameter(id: ParameterId) {
-    setParameterSettings((prev) => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        selected: !prev[id].selected,
-      },
     }));
   }
 
@@ -508,10 +491,6 @@ export default function CreateStudyPage() {
   }
 
   function validateStepTwo() {
-    if (selectedParameters.length === 0) {
-      return "Selectează cel puțin un parametru pentru studiu.";
-    }
-
     return "";
   }
 
@@ -569,7 +548,7 @@ export default function CreateStudyPage() {
         collection_rules: formData.collectionRules.trim() || null,
         inclusion_criteria: formData.inclusionCriteria.trim() || null,
         administrative_notes: formData.administrativeNotes.trim() || null,
-        parameters: selectedParameters.map((parameter) => ({
+        parameters: parameterDefinitions.map((parameter) => ({
           parameter_key: parameter.id,
           measurement_frequency: parameterSettings[parameter.id].frequency,
         })),
@@ -649,25 +628,22 @@ export default function CreateStudyPage() {
           infoTitle: "Despre parametri",
           infoIcon: <InfoCircleIcon />,
           infoText:
-            "Alege parametrii care se potrivesc obiectivelor studiului tău. Poți adăuga sau elimina oricând.",
+            "Parametrii fiziologici sunt standardizați pentru compatibilitatea cu analiza predictivă. Poți configura frecvența de măsurare pentru fiecare semn vital.",
           tips: [
-            "Nu selecta prea mulți parametri dacă nu sunt esențiali pentru obiective.",
-            "Măsurătorile continue oferă date mai detaliate.",
-            "Poți modifica setările oricând după creare.",
+            "Cele patru semne vitale sunt necesare pentru rularea modelelor ML.",
+            "Frecvența de măsurare poate fi ajustată în funcție de obiectivul studiului.",
+            "Pentru testarea analizei, asigură-te că datele încărcate conțin toate valorile necesare.",
           ],
           nextVariant: "ordered",
           next: [
             {
-              text: "Configurează parametrii studiului",
+              text: "Verifică regulile de colectare",
             },
             {
-              text: "Adaugă criteriile de includere",
+              text: "Revizuiește setările studiului",
             },
             {
-              text: "Stabilește durata și perioada studiului",
-            },
-            {
-              text: "Revizuiește și publică studiul",
+              text: "Creează studiul",
             },
           ],
         }
@@ -875,83 +851,59 @@ export default function CreateStudyPage() {
         <>
           <div className="create-study-section__header">
             <h2>Parametrii studiului</h2>
-            <p>Selectează parametrii fiziologici care vor fi urmăriți.</p>
+            <p>
+              VitalStudy utilizează un set standardizat de patru semne vitale,
+              necesare pentru colectarea datelor și rularea analizei predictive.
+              Configurează frecvența de măsurare pentru fiecare parametru.
+            </p>
           </div>
 
-          <div className="create-study-parameter-grid">
-            {parameterDefinitions.map((parameter) => {
-              const settings = parameterSettings[parameter.id];
-
-              return (
-                <button
-                  key={parameter.id}
-                  type="button"
-                  className={`create-study-parameter-card ${
-                    settings.selected ? "is-selected" : ""
-                  }`}
-                  onClick={() => toggleParameter(parameter.id)}
-                  aria-pressed={settings.selected}
-                >
-                  <div className="create-study-parameter-card__top">
-                    <div className="create-study-parameter-card__meta">
-                      <h3>{parameter.name}</h3>
-                      <p>{parameter.description}</p>
-                    </div>
-
-                    <span className="create-study-checkmark">
-                      {settings.selected ? <CheckIcon /> : null}
-                    </span>
-                  </div>
-
-                  <span className="create-study-parameter-card__unit">
-                    {parameter.unit}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="create-study-standard-parameters-banner">
+            <InfoCircleIcon />
+            <span>
+              Parametrii monitorizați sunt incluși automat în studiu pentru a permite o analiză completă și coerentă a datelor.
+            </span>
           </div>
 
           <div className="create-study-config">
             <h3 className="create-study-subtitle">
-              Configurare parametri selectați ({selectedParameters.length})
+              Frecvență de măsurare pentru semnele vitale
             </h3>
 
-            {selectedParameters.length === 0 ? (
-              <div className="create-study-empty-state">
-                Selectează cel puțin un parametru pentru a vedea configurarea.
-              </div>
-            ) : (
-              <div className="create-study-config-grid">
-                {selectedParameters.map((parameter) => (
-                  <article key={parameter.id} className="create-study-config-card">
-                    <div className="create-study-config-card__header">
-                      <div>
-                        <h4>{parameter.name}</h4>
-                        <span>{parameter.unit}</span>
-                      </div>
+            <div className="create-study-config-grid">
+              {parameterDefinitions.map((parameter) => (
+                <article key={parameter.id} className="create-study-config-card">
+                  <div className="create-study-config-card__header">
+                    <div>
+                      <h4>{parameter.name}</h4>
+                      <span>{parameter.description}</span>
                     </div>
 
-                    <label className="create-study-field">
-                      <span className="create-study-field__label">
-                        Frecvență de măsurare
-                      </span>
-                      <select
-                        value={parameterSettings[parameter.id].frequency}
-                        onChange={(event) =>
-                          updateParameterFrequency(parameter.id, event.target.value)
-                        }
-                      >
-                        {frequencyOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </article>
-                ))}
-              </div>
-            )}
+                    <strong className="create-study-config-card__unit">
+                      {parameter.unit}
+                    </strong>
+                  </div>
+
+                  <label className="create-study-field">
+                    <span className="create-study-field__label">
+                      Frecvență de măsurare
+                    </span>
+                    <select
+                      value={parameterSettings[parameter.id].frequency}
+                      onChange={(event) =>
+                        updateParameterFrequency(parameter.id, event.target.value)
+                      }
+                    >
+                      {frequencyOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </article>
+              ))}
+            </div>
           </div>
         </>
       );
@@ -1061,25 +1013,19 @@ export default function CreateStudyPage() {
         </div>
 
         <article className="create-study-review-card create-study-review-card--full">
-          <h3>Parametri monitorizați ({selectedParameters.length})</h3>
+          <h3>Parametrii monitorizați</h3>
 
-          {selectedParameters.length === 0 ? (
-            <p className="create-study-review-description">
-              Nu ai selectat niciun parametru.
-            </p>
-          ) : (
-            <div className="create-study-review-parameter-list">
-              {selectedParameters.map((parameter) => (
-                <div key={parameter.id} className="create-study-review-parameter-item">
-                  <strong>{parameter.name}</strong>
-                  <span>{parameter.unit}</span>
-                  <small>
-                    Frecvență: {parameterSettings[parameter.id].frequency}
-                  </small>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="create-study-review-parameter-list">
+            {parameterDefinitions.map((parameter) => (
+              <div key={parameter.id} className="create-study-review-parameter-item">
+                <strong>{parameter.name}</strong>
+                <span>{parameter.unit}</span>
+                <small>
+                  Frecvență: {parameterSettings[parameter.id].frequency}
+                </small>
+              </div>
+            ))}
+          </div>
         </article>
 
         <div className="create-study-info-banner">

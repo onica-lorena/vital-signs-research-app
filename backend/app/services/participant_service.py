@@ -130,6 +130,17 @@ def generate_next_participant_code_for_study(db: Session, study_id: int) -> str:
     return f"P-{next_number:03d}"
 
 
+def sync_study_participants_count(db: Session, study: Study) -> None:
+    participants_count = db.execute(
+        select(func.count())
+        .select_from(StudyParticipant)
+        .where(StudyParticipant.study_id == study.id)
+    ).scalar_one()
+
+    study.participants_count = participants_count
+    db.add(study)
+
+
 def _replace_participant_conditions(
     participant: StudyParticipant,
     conditions,
@@ -193,11 +204,12 @@ def create_study_participant(
 
     _replace_participant_conditions(participant, payload.conditions)
 
-    study.participants_count = (study.participants_count or 0) + 1
-
     try:
         db.add(participant)
-        db.add(study)
+        db.flush()
+
+        sync_study_participants_count(db, study)
+
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -296,8 +308,10 @@ def create_study_participants_bulk(
             db.add(participant)
             created_items.append((participant, temporary_pin))
 
-        study.participants_count = (study.participants_count or 0) + len(created_items)
-        db.add(study)
+        db.flush()
+
+        sync_study_participants_count(db, study)
+
         db.commit()
 
     except IntegrityError:
@@ -1509,7 +1523,7 @@ def get_study_data_timeline(
     if group_by not in {"day", "week", "five_days", "month"}:
         raise ValueError("group_by trebuie să fie day, week, five_days sau month.")
 
-        filters = [ParticipantSubmission.study_id == study_id]
+    filters = [ParticipantSubmission.study_id == study_id]
 
     if start_date is not None:
         filters.append(ParticipantSubmissionValue.measured_at >= start_date)

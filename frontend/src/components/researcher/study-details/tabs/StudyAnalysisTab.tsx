@@ -65,6 +65,7 @@ type AnalysisParticipantResponse = {
 
 type AnalysisResultResponse = {
   id: number;
+  analysis_run_id: number | null;
   study_id: number;
   participant_id: number;
   participant: AnalysisParticipantResponse | null;
@@ -145,6 +146,37 @@ type AnalysisSummaryResponse = {
   timeline: AnalysisTimelinePointResponse[];
 };
 
+type AnalysisObservedParameterSummary = {
+  parameter_key: StudyParameterKey;
+  count: number;
+  min_value: number | null;
+  max_value: number | null;
+  average_value: number | null;
+};
+
+type AnalysisObservedRecordResponse = {
+  measured_at: string;
+  heart_rate: number | null;
+  respiratory_rate: number | null;
+  spo2: number | null;
+  temperature: number | null;
+};
+
+type AnalysisObservedValuesResponse = {
+  analysis_run_id: number;
+  study_id: number;
+  participant_id: number;
+  participant_code: string;
+  participant_full_name: string;
+  analysis_start_date: string | null;
+  analysis_end_date: string | null;
+  analysis_scope: string;
+  records_count: number;
+  values_count: number;
+  summaries: AnalysisObservedParameterSummary[];
+  records: AnalysisObservedRecordResponse[];
+};
+
 type ParticipantStatus =
   | "invited"
   | "active"
@@ -189,6 +221,7 @@ type ParticipantAnalysisGroup = {
 
 type AnalysisRunGroup = {
   key: string;
+  analysis_run_id: number | null;
   analysis_scope: string;
   analysis_start_date: string | null;
   analysis_end_date: string | null;
@@ -211,8 +244,16 @@ type AnalysisRunGroup = {
   records_used: number;
 };
 
+type OpenCollectedDataRequest = {
+  participantId: number;
+  participantCode: string;
+  startDate: string | null;
+  endDate: string | null;
+};
+
 type StudyAnalysisTabProps = {
   studyId: number;
+  onOpenCollectedData?: (request: OpenCollectedDataRequest) => void;
 };
 
 const PARAMETER_LABELS: Record<StudyParameterKey, string> = {
@@ -457,6 +498,51 @@ function formatProbability(value: number): string {
   }).format(value * 100)}%`;
 }
 
+function formatVitalValue(value: number | null | undefined, suffix: string): string {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+
+  return `${new Intl.NumberFormat("ro-RO", {
+    maximumFractionDigits: 1,
+  }).format(value)} ${suffix}`;
+}
+
+function getParameterUnit(parameterKey: StudyParameterKey): string {
+  if (parameterKey === "heartRate") {
+    return "bătăi/min";
+  }
+
+  if (parameterKey === "respiratoryRate") {
+    return "respirații/min";
+  }
+
+  if (parameterKey === "spo2") {
+    return "%";
+  }
+
+  return "°C";
+}
+
+function getObservedRecordValue(
+  record: AnalysisObservedRecordResponse,
+  parameterKey: StudyParameterKey
+): number | null {
+  if (parameterKey === "heartRate") {
+    return record.heart_rate;
+  }
+
+  if (parameterKey === "respiratoryRate") {
+    return record.respiratory_rate;
+  }
+
+  if (parameterKey === "spo2") {
+    return record.spo2;
+  }
+
+  return record.temperature;
+}
+
 function formatDate(value?: string | null): string {
   if (!value) {
     return "—";
@@ -603,6 +689,10 @@ function getAnalysisCriteriaLabels(run: AnalysisRunGroup): string[] {
 }
 
 function getRunKey(result: AnalysisResultResponse): string {
+  if (result.analysis_run_id !== null) {
+    return `run-${result.analysis_run_id}`;
+  }
+
   const createdSecond = result.created_at.slice(0, 19);
 
   return [
@@ -672,10 +762,10 @@ function buildAnalysisRuns(results: AnalysisResultResponse[]): AnalysisRunGroup[
 
       return {
         key,
+        analysis_run_id: highestRiskResult.analysis_run_id,
         analysis_scope: highestRiskResult.analysis_scope,
         analysis_start_date: highestRiskResult.analysis_start_date,
         analysis_end_date: highestRiskResult.analysis_end_date,
-
         filter_age_min: highestRiskResult.filter_age_min,
         filter_age_max: highestRiskResult.filter_age_max,
         filter_sex: highestRiskResult.filter_sex,
@@ -881,6 +971,16 @@ async function listAllAnalysisResultsRequest(params: {
   };
 }
 
+async function getAnalysisObservedValuesRequest(params: {
+  studyId: number;
+  analysisRunId: number;
+  participantId: number;
+}): Promise<AnalysisObservedValuesResponse> {
+  return apiRequest<AnalysisObservedValuesResponse>(
+    `/studies/${params.studyId}/analysis/runs/${params.analysisRunId}/participants/${params.participantId}/observed-values`
+  );
+}
+
 function ParameterRiskTooltip({
   active,
   payload,
@@ -997,7 +1097,10 @@ function TopParticipantsRiskTooltip({
   );
 }
 
-export default function StudyAnalysisTab({ studyId }: StudyAnalysisTabProps) {
+export default function StudyAnalysisTab({
+  studyId,
+  onOpenCollectedData,
+}: StudyAnalysisTabProps) {
   const [participants, setParticipants] = useState<ParticipantListItemResponse[]>([]);
   const [summary, setSummary] = useState<AnalysisSummaryResponse | null>(null);
   const [results, setResults] = useState<AnalysisResultResponse[]>([]);
@@ -1046,6 +1149,10 @@ export default function StudyAnalysisTab({ studyId }: StudyAnalysisTabProps) {
   const [selectedRun, setSelectedRun] = useState<AnalysisRunGroup | null>(null);
   const [selectedParticipantGroup, setSelectedParticipantGroup] =
     useState<ParticipantAnalysisGroup | null>(null);
+  const [observedValues, setObservedValues] =
+    useState<AnalysisObservedValuesResponse | null>(null);
+  const [isObservedValuesLoading, setIsObservedValuesLoading] = useState(false);
+  const [observedValuesError, setObservedValuesError] = useState("");
 
   useEffect(() => {
     if (!pageError) {
@@ -1241,6 +1348,64 @@ export default function StudyAnalysisTab({ studyId }: StudyAnalysisTabProps) {
     refreshToken,
   ]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadObservedValues() {
+      if (
+        !selectedRun ||
+        !selectedParticipantGroup ||
+        selectedRun.analysis_run_id === null
+      ) {
+        setObservedValues(null);
+        setObservedValuesError("");
+        return;
+      }
+
+      setIsObservedValuesLoading(true);
+      setObservedValuesError("");
+
+      try {
+        const response = await getAnalysisObservedValuesRequest({
+          studyId,
+          analysisRunId: selectedRun.analysis_run_id,
+          participantId: selectedParticipantGroup.participant_id,
+        });
+
+        if (cancelled) {
+          return;
+        }
+
+        setObservedValues(response);
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) {
+          return;
+        }
+
+        setObservedValues(null);
+        setObservedValuesError(
+          error instanceof Error
+            ? error.message
+            : "Datele observate nu au putut fi încărcate."
+        );
+      } finally {
+        if (!cancelled) {
+          setIsObservedValuesLoading(false);
+        }
+      }
+    }
+
+    void loadObservedValues();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [studyId, selectedRun, selectedParticipantGroup]);
+
   const analysisRuns = useMemo(() => buildAnalysisRuns(results), [results]);
 
   const totalRuns = analysisRuns.length;
@@ -1425,8 +1590,8 @@ export default function StudyAnalysisTab({ studyId }: StudyAnalysisTabProps) {
     [page, totalPages]
   );
 
-const rowStart = totalRuns === 0 ? 0 : (page - 1) * GROUP_PAGE_SIZE + 1;
-const rowEnd = Math.min(page * GROUP_PAGE_SIZE, totalRuns);
+  const rowStart = totalRuns === 0 ? 0 : (page - 1) * GROUP_PAGE_SIZE + 1;
+  const rowEnd = Math.min(page * GROUP_PAGE_SIZE, totalRuns);
 
   const hasTableFilters =
     filters.participantId !== "" ||
@@ -1514,6 +1679,24 @@ const rowEnd = Math.min(page * GROUP_PAGE_SIZE, totalRuns);
       conditionType: "",
       measurementContext: "",
     }));
+  }
+
+  function handleOpenCollectedDataForSelectedParticipant() {
+    if (!observedValues || !onOpenCollectedData) {
+      return;
+    }
+
+    onOpenCollectedData({
+      participantId: observedValues.participant_id,
+      participantCode: observedValues.participant_code,
+      startDate: observedValues.analysis_start_date,
+      endDate: observedValues.analysis_end_date,
+    });
+
+    setSelectedRun(null);
+    setSelectedParticipantGroup(null);
+    setObservedValues(null);
+    setObservedValuesError("");
   }
 
   return (
@@ -2208,7 +2391,6 @@ const rowEnd = Math.min(page * GROUP_PAGE_SIZE, totalRuns);
                   <th>Interval analizat</th>
                   <th>Criterii analiză</th>
                   <th>Participanți</th>
-                  <th>Parametri</th>
                   <th>Risc maxim</th>
                   <th>Status general</th>
                   <th>Înregistrări</th>
@@ -2255,23 +2437,6 @@ const rowEnd = Math.min(page * GROUP_PAGE_SIZE, totalRuns);
                     <td>
                       <strong>{formatNumber(run.participants_count)}</strong>
                       <small className="study-analysis-table-muted"> participanți</small>
-                    </td>
-
-                    <td>
-                      <div className="study-analysis-parameter-list">
-                        {Array.from(new Set(run.results.map((result) => result.parameter_key))).map(
-                          (parameterKey) => (
-                            <span
-                              key={parameterKey}
-                              className={`study-analysis-parameter ${getParameterClassName(
-                                parameterKey
-                              )}`}
-                            >
-                              {PARAMETER_SHORT_LABELS[parameterKey]}
-                            </span>
-                          )
-                        )}
-                      </div>
                     </td>
 
                     <td className="study-analysis-table__probability">
@@ -2346,6 +2511,8 @@ const rowEnd = Math.min(page * GROUP_PAGE_SIZE, totalRuns);
           onClick={() => {
             setSelectedRun(null);
             setSelectedParticipantGroup(null);
+            setObservedValues(null);
+            setObservedValuesError("");
           }}
         >
           <section
@@ -2373,6 +2540,8 @@ const rowEnd = Math.min(page * GROUP_PAGE_SIZE, totalRuns);
                 onClick={() => {
                   setSelectedRun(null);
                   setSelectedParticipantGroup(null);
+                  setObservedValues(null);
+                  setObservedValuesError("");
                 }}
                 aria-label="Închide"
               >
@@ -2519,7 +2688,11 @@ const rowEnd = Math.min(page * GROUP_PAGE_SIZE, totalRuns);
                             ? "is-selected"
                             : ""
                         }`}
-                        onClick={() => setSelectedParticipantGroup(participantGroup)}
+                        onClick={() => {
+                          setSelectedParticipantGroup(participantGroup);
+                          setObservedValues(null);
+                          setObservedValuesError("");
+                        }}
                       >
                         <span>
                           {getInitials(participantGroup.participant?.full_name ?? "P")}
@@ -2676,6 +2849,124 @@ const rowEnd = Math.min(page * GROUP_PAGE_SIZE, totalRuns);
                       ))}
                     </div>
                   </article>
+
+                  <section className="study-analysis-modal-card study-analysis-observed-card">
+                    <div className="study-analysis-observed-card__header">
+                      <div>
+                        <h4>Date observate trimise de participant</h4>
+                        <p>
+                          Valorile fiziologice folosite ca bază pentru interpretarea rezultatului ML
+                          în intervalul acestei analize.
+                        </p>
+                      </div>
+
+                      {observedValues ? (
+                        <span>
+                          {formatNumber(observedValues.records_count)} înregistrări ·{" "}
+                          {formatNumber(observedValues.values_count)} valori
+                        </span>
+                      ) : null}
+                    </div>
+
+                    {isObservedValuesLoading ? (
+                      <div className="study-analysis-observed-state">
+                        Se încarcă datele observate...
+                      </div>
+                    ) : observedValuesError ? (
+                      <div className="study-analysis-observed-state is-error">
+                        {observedValuesError}
+                      </div>
+                    ) : !observedValues ? (
+                      <div className="study-analysis-observed-state">
+                        Nu există date observate disponibile pentru acest participant.
+                      </div>
+                    ) : (
+                      <>
+                        <div className="study-analysis-observed-summary">
+                          {observedValues.summaries.map((item) => (
+                            <article key={item.parameter_key}>
+                              <span
+                                className={`study-analysis-parameter ${getParameterClassName(
+                                  item.parameter_key
+                                )}`}
+                              >
+                                {PARAMETER_LABELS[item.parameter_key]}
+                              </span>
+
+                              <dl>
+                                <div>
+                                  <dt>Minim</dt>
+                                  <dd>
+                                    {formatVitalValue(item.min_value, getParameterUnit(item.parameter_key))}
+                                  </dd>
+                                </div>
+
+                                <div>
+                                  <dt>Medie</dt>
+                                  <dd>
+                                    {formatVitalValue(
+                                      item.average_value,
+                                      getParameterUnit(item.parameter_key)
+                                    )}
+                                  </dd>
+                                </div>
+
+                                <div>
+                                  <dt>Maxim</dt>
+                                  <dd>
+                                    {formatVitalValue(item.max_value, getParameterUnit(item.parameter_key))}
+                                  </dd>
+                                </div>
+                              </dl>
+                            </article>
+                          ))}
+                        </div>
+
+                        <div className="study-analysis-observed-table-wrap">
+                          <table className="study-analysis-observed-table">
+                            <thead>
+                              <tr>
+                                <th>Moment măsurare</th>
+                                <th>Ritm cardiac</th>
+                                <th>Frecvență respiratorie</th>
+                                <th>SpO₂</th>
+                                <th>Temperatură</th>
+                              </tr>
+                            </thead>
+
+                            <tbody>
+                              {observedValues.records.slice(0, 12).map((record) => (
+                                <tr key={record.measured_at}>
+                                  <td>{formatDateTime(record.measured_at)}</td>
+                                  <td>{formatVitalValue(record.heart_rate, "bătăi/min")}</td>
+                                  <td>{formatVitalValue(record.respiratory_rate, "respirații/min")}</td>
+                                  <td>{formatVitalValue(record.spo2, "%")}</td>
+                                  <td>{formatVitalValue(record.temperature, "°C")}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+
+                          {observedValues.records.length > 12 ? (
+                            <div className="study-analysis-observed-note">
+                              <span>
+                                Sunt afișate primele 12 înregistrări din{" "}
+                                {formatNumber(observedValues.records.length)}.
+                              </span>
+
+                              <button
+                                type="button"
+                                onClick={handleOpenCollectedDataForSelectedParticipant}
+                                disabled={!onOpenCollectedData}
+                              >
+                                Vezi toate datele colectate
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      </>
+                    )}
+                  </section>
                   </section>
                 </>
               ) : null}

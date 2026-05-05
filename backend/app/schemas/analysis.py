@@ -220,3 +220,37 @@ class AnalysisSummaryResponse(BaseModel):
     average_risk_by_parameter: list[AnalysisAverageRiskByParameterItem]
     risk_distribution: list[AnalysisRiskDistributionItem]
     timeline: list[AnalysisTimelinePointResponse]
+
+
+class AnalysisObservedParameterSummary(BaseModel):
+    parameter_key: StudyParameterKey
+    count: int
+    min_value: float | None = None
+    max_value: float | None = None
+    average_value: float | None = None
+
+
+class AnalysisObservedRecordResponse(BaseModel):
+    measured_at: datetime
+    heart_rate: float | None = None
+    respiratory_rate: float | None = None
+    spo2: float | None = None
+    temperature: float | None = None
+
+
+class AnalysisObservedValuesResponse(BaseModel):
+    analysis_run_id: int
+    study_id: int
+    participant_id: int
+    participant_code: str
+    participant_full_name: str
+
+    analysis_start_date: datetime | None = None
+    analysis_end_date: datetime | None = None
+    analysis_scope: str
+
+    records_count: int
+    values_count: int
+
+    summaries: list[AnalysisObservedParameterSummary]
+    records: list[AnalysisObservedRecordResponse]

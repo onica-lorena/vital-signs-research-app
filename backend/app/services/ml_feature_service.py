@@ -150,14 +150,8 @@ def filter_task_prediction_rows(df: pd.DataFrame, task: str) -> pd.DataFrame:
 
     df = df.dropna(subset=REQUIRED_FEATURE_COLUMNS).copy()
 
-    if task == "hr":
-        df = df[df["heart_rate"].between(50, 130)]
-    elif task == "rr":
-        df = df[df["resp_rate"].between(8, 30)]
-    elif task == "spo2":
-        df = df[df["spo2"].between(90, 100)]
-    elif task == "temp":
-        df = df[df["temperature"].between(36.1, 37.5)]
+    for col, (low, high) in VALID_RANGES.items():
+        df = df[df[col].between(low, high)]
 
     return df.reset_index(drop=True)
 

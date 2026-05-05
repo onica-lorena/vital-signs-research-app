@@ -9,10 +9,19 @@ from sqlalchemy.orm import Session, selectinload
 from app.api.deps import require_role
 from app.core.database import get_db
 from app.models.analysis import AnalysisModelType, AnalysisRun, AnalysisResult
+from app.models.participant import (
+    MeasurementContext,
+    ParticipantSubmission,
+    ParticipantSubmissionValue,
+    StudyParticipant,
+)
 from app.models.study import StudyParameterKey
 from app.models.user import User, UserRole
 from app.schemas.analysis import (
     AnalysisAverageRiskByParameterItem,
+    AnalysisObservedParameterSummary,
+    AnalysisObservedRecordResponse,
+    AnalysisObservedValuesResponse,
     AnalysisResultListResponse,
     AnalysisResultResponse,
     AnalysisResultSortBy,
@@ -249,6 +258,173 @@ def read_analysis_run_detail(
         )
 
     return AnalysisRunDetailResponse.model_validate(analysis_run)
+
+
+@router.get(
+    "/runs/{analysis_run_id}/participants/{participant_id}/observed-values",
+    response_model=AnalysisObservedValuesResponse,
+    summary="Valorile observate pentru un participant într-o rulare de analiză",
+)
+def read_analysis_run_participant_observed_values(
+    study_id: int,
+    analysis_run_id: int,
+    participant_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_role(UserRole.RESEARCHER)),
+    ],
+):
+    study = get_study_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+    )
+
+    if study is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Studiul nu a fost găsit.",
+        )
+
+    analysis_run = db.execute(
+        select(AnalysisRun).where(
+            AnalysisRun.id == analysis_run_id,
+            AnalysisRun.study_id == study_id,
+        )
+    ).scalar_one_or_none()
+
+    if analysis_run is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analiza rulată nu a fost găsită.",
+        )
+    
+    if analysis_run.analysis_start_date is None or analysis_run.analysis_end_date is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Această rulare de analiză nu are interval valid asociat.",
+        )
+
+    participant = db.execute(
+        select(StudyParticipant).where(
+            StudyParticipant.id == participant_id,
+            StudyParticipant.study_id == study_id,
+        )
+    ).scalar_one_or_none()
+
+    if participant is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Participantul nu a fost găsit.",
+        )
+
+    has_result_in_run = db.execute(
+        select(AnalysisResult.id).where(
+            AnalysisResult.analysis_run_id == analysis_run_id,
+            AnalysisResult.study_id == study_id,
+            AnalysisResult.participant_id == participant_id,
+        )
+    ).first()
+
+    if has_result_in_run is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Participantul nu are rezultate în această rulare de analiză.",
+        )
+
+    filters = [
+        ParticipantSubmission.study_id == study_id,
+        ParticipantSubmission.participant_id == participant_id,
+        ParticipantSubmissionValue.measured_at >= analysis_run.analysis_start_date,
+        ParticipantSubmissionValue.measured_at <= analysis_run.analysis_end_date,
+    ]
+
+    if analysis_run.filter_measurement_context:
+        filters.append(
+            ParticipantSubmission.session.has(
+                measurement_context=MeasurementContext(analysis_run.filter_measurement_context)
+            )
+        )
+
+    rows = list(
+        db.execute(
+            select(
+                ParticipantSubmissionValue.measured_at,
+                ParticipantSubmissionValue.parameter_key,
+                ParticipantSubmissionValue.value,
+            )
+            .join(
+                ParticipantSubmission,
+                ParticipantSubmission.id == ParticipantSubmissionValue.submission_id,
+            )
+            .where(*filters)
+            .order_by(ParticipantSubmissionValue.measured_at.asc())
+        ).all()
+    )
+
+    records_map: dict[datetime, dict[str, object]] = {}
+    summary_map: dict[StudyParameterKey, list[float]] = {}
+
+    parameter_field_map = {
+        StudyParameterKey.HEART_RATE: "heart_rate",
+        StudyParameterKey.RESPIRATORY_RATE: "respiratory_rate",
+        StudyParameterKey.SPO2: "spo2",
+        StudyParameterKey.TEMPERATURE: "temperature",
+    }
+
+    for measured_at, parameter_key, value in rows:
+        if measured_at not in records_map:
+            records_map[measured_at] = {
+                "measured_at": measured_at,
+                "heart_rate": None,
+                "respiratory_rate": None,
+                "spo2": None,
+                "temperature": None,
+            }
+
+        field_name = parameter_field_map.get(parameter_key)
+
+        if field_name is not None:
+            records_map[measured_at][field_name] = value
+
+        if parameter_key not in summary_map:
+            summary_map[parameter_key] = []
+
+        summary_map[parameter_key].append(value)
+
+    summaries = []
+
+    for parameter_key, values in summary_map.items():
+        summaries.append(
+            AnalysisObservedParameterSummary(
+                parameter_key=parameter_key,
+                count=len(values),
+                min_value=min(values) if values else None,
+                max_value=max(values) if values else None,
+                average_value=(sum(values) / len(values)) if values else None,
+            )
+        )
+
+    records = [
+        AnalysisObservedRecordResponse(**record)
+        for _, record in sorted(records_map.items(), key=lambda item: item[0])
+    ]
+
+    return AnalysisObservedValuesResponse(
+        analysis_run_id=analysis_run.id,
+        study_id=study_id,
+        participant_id=participant.id,
+        participant_code=participant.participant_code,
+        participant_full_name=participant.full_name,
+        analysis_start_date=analysis_run.analysis_start_date,
+        analysis_end_date=analysis_run.analysis_end_date,
+        analysis_scope=analysis_run.analysis_scope,
+        records_count=len(records),
+        values_count=len(rows),
+        summaries=summaries,
+        records=records,
+    )
 
 
 @router.get("/results", response_model=AnalysisResultListResponse)

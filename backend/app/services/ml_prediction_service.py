@@ -210,7 +210,7 @@ def _predict_classical(task: str, model_name: str, features_df) -> float:
     X_processed = preprocess.transform(X)
 
     probabilities = model.predict_proba(X_processed)[:, 1]
-    probability = float(np.max(probabilities))
+    probability = float(np.percentile(probabilities, 90))
 
     return probability
 
@@ -420,6 +420,7 @@ def run_analysis_for_study(
                 )
                 
                 result = AnalysisResult(
+                    analysis_run_id=analysis_run.id,
                     study_id=study_id,
                     participant_id=participant.id,
                     parameter_key=parameter_key,
@@ -427,7 +428,7 @@ def run_analysis_for_study(
                     model_name=cfg["model_name"],
                     risk_probability=probability,
                     risk_label=risk_label,
-                    records_used=len(features_df),
+                    records_used=len(prediction_df),
                     window_size=window_size,
                     analysis_start_date=analysis_start_date,
                     analysis_end_date=analysis_end_date,
@@ -441,7 +442,7 @@ def run_analysis_for_study(
                     filter_condition_type=condition_type.value if condition_type else None,
                     filter_measurement_context=measurement_context.value if measurement_context else None,
                 )
-
+                
                 db.add(result)
                 results.append(result)
 
