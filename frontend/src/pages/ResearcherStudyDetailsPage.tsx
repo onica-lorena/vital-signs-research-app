@@ -7,7 +7,6 @@ import StudySummaryTab from "../components/researcher/study-details/tabs/StudySu
 import StudyParticipantsTab from "../components/researcher/study-details/tabs/StudyParticipantsTab";
 import StudyCollectedDataTab from "../components/researcher/study-details/tabs/StudyCollectedDataTab";
 import StudyAnalysisTab from "../components/researcher/study-details/tabs/StudyAnalysisTab";
-import StudyReportsTab from "../components/researcher/study-details/tabs/StudyReportsTab";
 import { SESSION_EXPIRED_ERROR } from "../auth/authFetch";
 import {
   getResearcherStudyDataSummaryRequest,
@@ -21,7 +20,7 @@ import {
 import type { ResearcherStudyDetailResponse } from "../studies/studyDetailsApi";
 import "../styles/researcher-study-details-page.css";
 
-const VALID_TABS = ["rezumat", "participanti", "date", "analize", "rapoarte"] as const;
+const VALID_TABS = ["rezumat", "participanti", "date", "analize"] as const;
 
 type StudyDetailsTab = (typeof VALID_TABS)[number];
 
@@ -306,7 +305,7 @@ export default function ResearcherStudyDetailsPage() {
     <ResearcherLayout
       activeItem="studii"
       title="Detalii studiu"
-      subtitle="Consultă structura, participanții, datele, analizele și rapoartele studiului."
+      subtitle="Consultă structura, participanții, datele colectate și analizele studiului."
       contentWidth="wide"
       actions={
         <button
@@ -370,10 +369,6 @@ export default function ResearcherStudyDetailsPage() {
                     navigate(`/cercetator/studii/${numericStudyId}/date`);
                   }}
                 />
-              ) : null}
-
-              {tab === "rapoarte" ? (
-                <StudyReportsTab studyId={numericStudyId} />
               ) : null}
             </section>
 

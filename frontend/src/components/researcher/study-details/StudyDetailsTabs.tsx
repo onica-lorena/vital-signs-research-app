@@ -5,7 +5,6 @@ const TABS = [
   { key: "participanti", label: "Participanți" },
   { key: "date", label: "Date colectate" },
   { key: "analize", label: "Analize" },
-  { key: "rapoarte", label: "Rapoarte" },
 ];
 
 type StudyDetailsTabsProps = {

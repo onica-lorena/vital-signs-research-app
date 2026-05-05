@@ -6,8 +6,13 @@ from sqlalchemy.orm import Session
 from app.api.deps import require_role
 from app.core.database import get_db
 from app.models.user import User, UserRole
-from app.schemas.report import StudyReportResponse
-from app.services.report_service import build_report_pdf, build_study_report
+from app.schemas.report import AnalysisRunReportResponse, StudyReportResponse
+from app.services.report_service import (
+    build_analysis_run_report,
+    build_analysis_run_report_pdf,
+    build_report_pdf,
+    build_study_report,
+)
 
 router = APIRouter(
     prefix="/studies/{study_id}/reports",
@@ -83,6 +88,69 @@ def export_study_report_pdf(
     pdf = build_report_pdf(report)
 
     filename = f"{report.study.code.lower()}-raport.pdf"
+
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        },
+    )
+
+
+@router.get(
+    "/analysis-runs/{analysis_run_id}",
+    response_model=AnalysisRunReportResponse,
+)
+def read_analysis_run_report(
+    study_id: int,
+    analysis_run_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_role(UserRole.RESEARCHER)),
+    ],
+):
+    try:
+        return build_analysis_run_report(
+            db=db,
+            study_id=study_id,
+            analysis_run_id=analysis_run_id,
+            current_user=current_user,
+        )
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+
+@router.get("/analysis-runs/{analysis_run_id}/export/pdf")
+def export_analysis_run_report_pdf(
+    study_id: int,
+    analysis_run_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_role(UserRole.RESEARCHER)),
+    ],
+):
+    try:
+        report = build_analysis_run_report(
+            db=db,
+            study_id=study_id,
+            analysis_run_id=analysis_run_id,
+            current_user=current_user,
+        )
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+    pdf = build_analysis_run_report_pdf(report)
+
+    filename = f"{report.study.code.lower()}-analiza-{analysis_run_id}-raport.pdf"
 
     return Response(
         content=pdf,

@@ -263,13 +263,6 @@ const PARAMETER_LABELS: Record<StudyParameterKey, string> = {
   temperature: "Temperatură",
 };
 
-const PARAMETER_SHORT_LABELS: Record<StudyParameterKey, string> = {
-  heartRate: "HR",
-  respiratoryRate: "RR",
-  spo2: "SpO₂",
-  temperature: "Temp.",
-};
-
 const MODEL_LABELS: Record<AnalysisModelType, string> = {
   random_forest: "Random Forest",
   xgboost: "XGBoost",
@@ -433,6 +426,32 @@ function EmptyIcon() {
   );
 }
 
+function DownloadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 4.5V14"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M8.2 10.5L12 14.3L15.8 10.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5.5 18.5H18.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 type SummaryIconTone = "blue" | "green" | "orange" | "gray" | "red";
 
 function SummaryIconChart({
@@ -522,25 +541,6 @@ function getParameterUnit(parameterKey: StudyParameterKey): string {
   }
 
   return "°C";
-}
-
-function getObservedRecordValue(
-  record: AnalysisObservedRecordResponse,
-  parameterKey: StudyParameterKey
-): number | null {
-  if (parameterKey === "heartRate") {
-    return record.heart_rate;
-  }
-
-  if (parameterKey === "respiratoryRate") {
-    return record.respiratory_rate;
-  }
-
-  if (parameterKey === "spo2") {
-    return record.spo2;
-  }
-
-  return record.temperature;
 }
 
 function formatDate(value?: string | null): string {
@@ -981,6 +981,34 @@ async function getAnalysisObservedValuesRequest(params: {
   );
 }
 
+async function exportAnalysisRunReportPdfRequest(
+  studyId: number,
+  analysisRunId: number
+): Promise<Blob> {
+  const response = await authFetch(
+    `/studies/${studyId}/reports/analysis-runs/${analysisRunId}/export/pdf`
+  );
+
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+
+  return response.blob();
+}
+
+function downloadBlobFile(blob: Blob, fileName: string) {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.URL.revokeObjectURL(url);
+}
+
 function ParameterRiskTooltip({
   active,
   payload,
@@ -1008,32 +1036,6 @@ function ParameterRiskTooltip({
   );
 }
 
-function RunRiskDistributionTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: Array<{
-    payload: {
-      label: string;
-      value: number;
-    };
-  }>;
-}) {
-  if (!active || !payload?.length) {
-    return null;
-  }
-
-  const item = payload[0].payload;
-
-  return (
-    <div className="study-analysis-chart-tooltip">
-      <strong>{item.label}</strong>
-      <span>{formatNumber(item.value)} analize</span>
-      <small>din istoricul afișat</small>
-    </div>
-  );
-}
 
 function SelectedAnalysisTooltip({
   active,
@@ -1109,7 +1111,8 @@ export default function StudyAnalysisTab({
   const [isSummaryLoading, setIsSummaryLoading] = useState(true);
   const [isResultsLoading, setIsResultsLoading] = useState(true);
   const [isRunLoading, setIsRunLoading] = useState(false);
-
+ 
+  const [exportingRunId, setExportingRunId] = useState<number | null>(null);
   const [pageError, setPageError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -1451,20 +1454,6 @@ export default function StudyAnalysisTab({
     return (runStats.lowRiskRuns / totalRuns) * 100;
   }, [runStats.lowRiskRuns, totalRuns]);
 
-  const runRiskDistributionData = useMemo(() => {
-    return [
-      {
-        label: "Necesită atenție",
-        value: runStats.highRiskRuns,
-        fill: "#cf6b64",
-      },
-      {
-        label: "Stabile",
-        value: runStats.lowRiskRuns,
-        fill: "#76b65c",
-      },
-    ];
-  }, [runStats.highRiskRuns, runStats.lowRiskRuns]);
   
   const averageRecordsPerRun = useMemo(() => {
     if (totalRuns === 0) {
@@ -1679,6 +1668,43 @@ export default function StudyAnalysisTab({
       conditionType: "",
       measurementContext: "",
     }));
+  }
+
+  async function handleExportAnalysisRunReportPdf(run: AnalysisRunGroup) {
+    if (run.analysis_run_id === null) {
+      setPageError("Această analiză nu are un identificator valid pentru export.");
+      return;
+    }
+
+    setExportingRunId(run.analysis_run_id);
+    setPageError("");
+    setSuccessMessage("");
+
+    try {
+      const pdfBlob = await exportAnalysisRunReportPdfRequest(
+        studyId,
+        run.analysis_run_id
+      );
+
+      downloadBlobFile(
+        pdfBlob,
+        `raport-vitalstudy-analiza-${run.analysis_run_id}.pdf`
+      );
+
+      setSuccessMessage("Raportul PDF pentru analiza selectată a fost exportat cu succes.");
+    } catch (error) {
+      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) {
+        return;
+      }
+
+      setPageError(
+        error instanceof Error
+          ? error.message
+          : "Raportul PDF pentru această analiză nu a putut fi exportat."
+      );
+    } finally {
+      setExportingRunId(null);
+    }
   }
 
   function handleOpenCollectedDataForSelectedParticipant() {
@@ -2143,10 +2169,11 @@ export default function StudyAnalysisTab({
       <div className="study-analysis-results-card">
         <div className="study-analysis-results-card__top">
           <div>
-            <h3>Istoric analize</h3>
+            <h3>Analize și rapoarte generate</h3>
             <p>
-              Sinteză cronologică a analizelor predictive rulate pentru participanți,
-              cu evidențierea intervalului analizat, a parametrilor evaluați și a nivelului general de risc.
+              Selectează o analiză din istoric pentru a consulta raportul asociat acesteia,
+              cu intervalul analizat, criteriile folosite, participanții incluși, rezultatele predictive
+              și datele observate utilizate în procesare.
             </p>
           </div>
 
@@ -2392,7 +2419,7 @@ export default function StudyAnalysisTab({
                   <th>Criterii analiză</th>
                   <th>Participanți</th>
                   <th>Risc maxim</th>
-                  <th>Status general</th>
+                  <th>Raport</th>
                   <th>Înregistrări</th>
                 </tr>
               </thead>
@@ -2445,9 +2472,7 @@ export default function StudyAnalysisTab({
 
                     <td>
                       <span className={`study-analysis-risk ${getRunRiskClassName(run)}`}>
-                        {shouldRunNeedAttention(run)
-                          ? `${run.high_risk_count} rezultate cu risc`
-                          : "Fără risc ridicat"}
+                        {shouldRunNeedAttention(run) ? "Raport cu risc" : "Raport stabil"}
                       </span>
                     </td>
 
@@ -2519,35 +2544,54 @@ export default function StudyAnalysisTab({
             className="study-analysis-modal"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="study-analysis-modal__header">
-              <div>
-                <span className="study-analysis-modal__eyebrow">
-                  Analiză rulată la {formatDateTime(selectedRun.created_at)}
+          <div className="study-analysis-modal__header">
+            <div>
+              <span className="study-analysis-modal__eyebrow">
+                Analiză rulată la {formatDateTime(selectedRun.created_at)}
+              </span>
+
+              <h3>Raport analiză predictivă</h3>
+
+              <div className="study-analysis-modal__badges">
+                <span className={`study-analysis-risk ${getRunRiskClassName(selectedRun)}`}>
+                  {shouldRunNeedAttention(selectedRun) ? "Necesită atenție" : "Stabilă"}
                 </span>
 
-                <h3>Detalii analiză predictivă</h3>
-
-                <div className="study-analysis-modal__badges">
-                  <span className={`study-analysis-risk ${getRunRiskClassName(selectedRun)}`}>
-                    {shouldRunNeedAttention(selectedRun) ? "Necesită atenție" : "Stabilă"}
-                  </span>
-                </div>
+                <button
+                  type="button"
+                  className="study-analysis-modal-export-btn"
+                  onClick={() => handleExportAnalysisRunReportPdf(selectedRun)}
+                  disabled={
+                    selectedRun.analysis_run_id === null ||
+                    exportingRunId === selectedRun.analysis_run_id
+                  }
+                >
+                  <DownloadIcon />
+                  {exportingRunId === selectedRun.analysis_run_id
+                    ? "Se exportă..."
+                    : "Exportă raport PDF"}
+                </button>
               </div>
-
-              <button
-                type="button"
-                className="study-analysis-modal__close"
-                onClick={() => {
-                  setSelectedRun(null);
-                  setSelectedParticipantGroup(null);
-                  setObservedValues(null);
-                  setObservedValuesError("");
-                }}
-                aria-label="Închide"
-              >
-                <CloseIcon />
-              </button>
+              <p className="study-analysis-modal__description">
+                Această vizualizare reprezintă raportul generat pentru analiza selectată.
+                Raportul poate fi consultat în aplicație și exportat ulterior în format PDF.
+              </p>
             </div>
+
+            <button
+              type="button"
+              className="study-analysis-modal__close"
+              onClick={() => {
+                setSelectedRun(null);
+                setSelectedParticipantGroup(null);
+                setObservedValues(null);
+                setObservedValuesError("");
+              }}
+              aria-label="Închide"
+            >
+              <CloseIcon />
+            </button>
+          </div>
 
             <div className="study-analysis-modal__content">
               <section className="study-analysis-modal-card study-analysis-modal-card--context">
