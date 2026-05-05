@@ -32,6 +32,8 @@ import AdminAccessRequests from "./AdminAccessRequests";
 import AdminUsers from "./AdminUsers";
 import AdminStudies from "./AdminStudies";
 
+const ACCESS_REQUESTS_PAGE_SIZE = 10;
+
 const ACCESS_REQUEST_STATUS_LABELS: Record<AccessRequestStatus, string> = {
   pending: "În așteptare",
   approved: "Aprobată",
@@ -98,6 +100,7 @@ export default function AdminPage() {
   const [accessRequests, setAccessRequests] = useState<AccessRequestResponse[]>([]);
   const [accessRequestsTotal, setAccessRequestsTotal] = useState(0);
   const [accessRequestsLoading, setAccessRequestsLoading] = useState(true);
+  const [accessRequestsPage, setAccessRequestsPage] = useState(1);
   const [accessRequestStatusFilter, setAccessRequestStatusFilter] = useState<
     AccessRequestStatus | ""
   >("");
@@ -142,8 +145,8 @@ export default function AdminPage() {
 
     try {
       const response = await listAccessRequestsRequest({
-        page: 1,
-        page_size: 20,
+        page: accessRequestsPage,
+        page_size: ACCESS_REQUESTS_PAGE_SIZE,
         status: accessRequestStatusFilter,
         search: accessRequestSearch.trim(),
       });
@@ -217,7 +220,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     void loadAccessRequests();
-  }, [accessRequestStatusFilter]);
+  }, [accessRequestStatusFilter, accessRequestsPage]);
 
   const pendingRequestsCount = useMemo(
     () => accessRequests.filter((item) => item.status === "pending").length,
@@ -523,6 +526,9 @@ export default function AdminPage() {
               accessRequests={accessRequests}
               accessRequestsTotal={accessRequestsTotal}
               accessRequestsLoading={accessRequestsLoading}
+              accessRequestsPage={accessRequestsPage}
+              setAccessRequestsPage={setAccessRequestsPage}
+              accessRequestsPageSize={ACCESS_REQUESTS_PAGE_SIZE}
               accessRequestStatusFilter={accessRequestStatusFilter}
               setAccessRequestStatusFilter={setAccessRequestStatusFilter}
               accessRequestSearch={accessRequestSearch}

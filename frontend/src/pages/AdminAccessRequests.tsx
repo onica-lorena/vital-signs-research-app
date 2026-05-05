@@ -20,6 +20,9 @@ type AdminAccessRequestsProps = {
   accessRequests: AccessRequestResponse[];
   accessRequestsTotal: number;
   accessRequestsLoading: boolean;
+  accessRequestsPage: number;
+  setAccessRequestsPage: React.Dispatch<React.SetStateAction<number>>;
+  accessRequestsPageSize: number;
   accessRequestStatusFilter: AccessRequestStatus | "";
   setAccessRequestStatusFilter: React.Dispatch<
     React.SetStateAction<AccessRequestStatus | "">
@@ -41,26 +44,6 @@ type AdminAccessRequestsProps = {
   onRejectAccessRequest: () => void;
   onCloseAccessRequest: () => void;
 };
-
-function EyeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M2.5 12C4.4 8.6 7.7 6.5 12 6.5C16.3 6.5 19.6 8.6 21.5 12C19.6 15.4 16.3 17.5 12 17.5C7.7 17.5 4.4 15.4 2.5 12Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <circle
-        cx="12"
-        cy="12"
-        r="2.6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-    </svg>
-  );
-}
 
 function ReviewIcon() {
   return (
@@ -159,6 +142,9 @@ export default function AdminAccessRequests({
   accessRequests,
   accessRequestsTotal,
   accessRequestsLoading,
+  accessRequestsPage,
+  setAccessRequestsPage,
+  accessRequestsPageSize,
   accessRequestStatusFilter,
   setAccessRequestStatusFilter,
   accessRequestSearch,
@@ -245,6 +231,21 @@ export default function AdminAccessRequests({
     pendingRequestsCount,
     rejectedRequestsCount,
   ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(accessRequestsTotal / accessRequestsPageSize)
+  );
+  
+  const rowStart =
+    accessRequestsTotal === 0
+      ? 0
+      : (accessRequestsPage - 1) * accessRequestsPageSize + 1;
+  
+  const rowEnd = Math.min(
+    accessRequestsPage * accessRequestsPageSize,
+    accessRequestsTotal
+  );
 
   return (
     <>
@@ -386,16 +387,20 @@ export default function AdminAccessRequests({
             type="text"
             placeholder="Caută după nume sau email..."
             value={accessRequestSearch}
-            onChange={(event) => setAccessRequestSearch(event.target.value)}
+            onChange={(event) => {
+              setAccessRequestSearch(event.target.value);
+              setAccessRequestsPage(1);
+            }}
           />
 
           <select
             value={accessRequestStatusFilter}
-            onChange={(event) =>
+            onChange={(event) => {
               setAccessRequestStatusFilter(
                 event.target.value as AccessRequestStatus | ""
-              )
-            }
+              );
+              setAccessRequestsPage(1);
+            }}
           >
             <option value="">Toate statusurile</option>
             <option value="pending">În așteptare</option>
@@ -403,7 +408,13 @@ export default function AdminAccessRequests({
             <option value="rejected">Respinse</option>
           </select>
 
-          <button type="button" onClick={onReloadAccessRequests}>
+          <button
+            type="button"
+            onClick={() => {
+              setAccessRequestsPage(1);
+              onReloadAccessRequests();
+            }}
+          >
             Aplică
           </button>
         </div>
@@ -411,61 +422,96 @@ export default function AdminAccessRequests({
         {accessRequestsLoading ? (
           <p className="admin-loading">Se încarcă cererile...</p>
         ) : (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Nume</th>
-                  <th>Email</th>
-                  <th>Status</th>
-                  <th>Data</th>
-                  <th>Detalii</th>
-                </tr>
-              </thead>
-              <tbody>
-                {accessRequests.length === 0 ? (
+          <>
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
                   <tr>
-                    <td colSpan={5} className="admin-table__empty">
-                      Nu există cereri de acces pentru filtrele selectate.
-                    </td>
+                    <th>Nume</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Data</th>
                   </tr>
-                ) : (
-                  accessRequests.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.full_name}</td>
-                      <td>{item.email}</td>
-                      <td>
-                        <span
-                          className={[
-                            "admin-status-pill",
-                            item.status === "approved"
-                              ? "admin-status-pill--success"
-                              : item.status === "rejected"
-                                ? "admin-status-pill--danger"
-                                : "admin-status-pill--warning",
-                          ].join(" ")}
-                        >
-                          {accessRequestStatusLabels[item.status]}
-                        </span>
-                      </td>
-                      <td>{formatDate(item.created_at)}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="admin-icon-btn"
-                          onClick={() => onOpenAccessRequest(item.id)}
-                          aria-label={`Vezi detalii pentru ${item.full_name}`}
-                          title="Vezi detalii"
-                        >
-                          <EyeIcon />
-                        </button>
+                </thead>
+
+                <tbody>
+                  {accessRequests.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="admin-table__empty">
+                        Nu există cereri de acces pentru filtrele selectate.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : (
+                    accessRequests.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="admin-table-clickable-row"
+                        onClick={() => onOpenAccessRequest(item.id)}
+                        tabIndex={0}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            onOpenAccessRequest(item.id);
+                          }
+                        }}
+                      >
+                        <td>{item.full_name}</td>
+
+                        <td>{item.email}</td>
+
+                        <td>
+                          <span
+                            className={[
+                              "admin-status-pill",
+                              item.status === "approved"
+                                ? "admin-status-pill--success"
+                                : item.status === "rejected"
+                                  ? "admin-status-pill--danger"
+                                  : "admin-status-pill--warning",
+                            ].join(" ")}
+                          >
+                            {accessRequestStatusLabels[item.status]}
+                          </span>
+                        </td>
+
+                        <td>{formatDate(item.created_at)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="admin-table-footer">
+              <span>
+                Afișare {rowStart} - {rowEnd} din {accessRequestsTotal} cereri
+              </span>
+
+              <div className="admin-pagination">
+                <button
+                  type="button"
+                  onClick={() => setAccessRequestsPage((prev) => Math.max(1, prev - 1))}
+                  disabled={accessRequestsPage === 1 || accessRequestsLoading}
+                >
+                  ‹
+                </button>
+
+                <button type="button" className="is-active" disabled>
+                  {accessRequestsPage}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAccessRequestsPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  disabled={accessRequestsPage === totalPages || accessRequestsLoading}
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </section>
 

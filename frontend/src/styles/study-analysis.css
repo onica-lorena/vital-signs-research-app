@@ -539,7 +539,6 @@
 }
 
 .study-analysis-results-card {
-  min-height: 560px;
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -575,9 +574,8 @@
 
 .study-analysis-table-wrap {
   width: 100%;
-  flex: 1;
-  min-height: 320px;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: visible;
   border: 1px solid var(--rd-border-soft);
   border-radius: 12px;
   background: #ffffff;
@@ -848,8 +846,11 @@
 
 .study-analysis-loading,
 .study-analysis-empty {
+  min-height: 220px;
   padding: 30px 16px;
   text-align: center;
+  display: grid;
+  place-content: center;
 }
 
 .study-analysis-loading {
