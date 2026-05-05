@@ -741,7 +741,7 @@
   min-height: 22px;
   padding: 0 9px;
   border-radius: 999px;
-  font-size: 9px;
+  font-size: 8px;
   line-height: 1;
   font-weight: 850;
   white-space: nowrap;
@@ -1012,7 +1012,7 @@
 .study-analysis-modal-card h4 {
   margin: 0 0 11px;
   color: var(--rd-text-main);
-  font-size: 13.5px;
+  font-size: 13px;
   line-height: 1.2;
   font-weight: 900;
   letter-spacing: -0.025em;
@@ -1021,7 +1021,7 @@
 .study-analysis-modal-card--context dl {
   margin: 0;
   display: grid;
-  gap: 9px;
+  gap: 7px;
 }
 
 .study-analysis-modal-card--context dl div {
@@ -1196,7 +1196,7 @@
 }
 
 .study-analysis-modal-chart {
-  min-height: 274px;
+  min-height: 244px;
   border: 1px solid var(--rd-border-soft);
   border-radius: 14px;
   background:
@@ -1206,7 +1206,7 @@
 }
 
 .study-analysis-run-participants {
-  max-height: 270px;
+  max-height: 247px;
   overflow-y: auto;
   display: grid;
   gap: 7px;

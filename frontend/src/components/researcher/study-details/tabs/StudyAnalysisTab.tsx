@@ -1923,7 +1923,7 @@ const rowEnd = Math.min(page * GROUP_PAGE_SIZE, totalRuns);
               <ResponsiveContainer width="100%" height={270}>
                 <BarChart
                   data={topParticipantsRiskData}
-                  margin={{ top: 16, right: 20, left: -14, bottom: 4 }}
+                  margin={{ top: 16, right: 20, left: -9, bottom: 4 }}
                 >
                   <CartesianGrid stroke="#e7eee8" vertical={false} />
 
