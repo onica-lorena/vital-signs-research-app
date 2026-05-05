@@ -120,9 +120,14 @@ type ParticipantCreatePayload = {
   conditions?: ParticipantConditionCreatePayload[];
 };
 
+type ParticipantBulkCreateItemResponse = {
+  participant: ParticipantDetailResponse;
+  temporary_pin: string;
+};
+
 type ParticipantBulkCreateResponse = {
-  items: ParticipantCreateResponse[];
-  total: number;
+  created_count: number;
+  items: ParticipantBulkCreateItemResponse[];
 };
 
 type ParticipantUpdatePayload = {
@@ -712,7 +717,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkFile, setBulkFile] = useState<File | null>(null);
-  const [bulkCreatedItems, setBulkCreatedItems] = useState<ParticipantCreateResponse[]>([]);
+  const [bulkCreatedItems, setBulkCreatedItems] = useState<ParticipantBulkCreateItemResponse[]>([]);
   
   const [editMode, setEditMode] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
@@ -1959,13 +1964,13 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
           <h4>{bulkCreatedItems.length} participanți creați cu succes</h4>
 
           <div className="study-participants-bulk-created-list">
-            {bulkCreatedItems.map((participant) => (
-              <article key={participant.id}>
+            {bulkCreatedItems.map((item) => (
+              <article key={item.participant.id}>
                 <strong>
-                  {participant.participant_code} · {participant.full_name}
+                  {item.participant.participant_code} · {item.participant.full_name}
                 </strong>
                 <span>
-                  PIN: <b>{participant.temporary_pin}</b>
+                  PIN: <b>{item.temporary_pin}</b>
                 </span>
               </article>
             ))}

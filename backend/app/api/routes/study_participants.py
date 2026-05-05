@@ -152,7 +152,7 @@ def create_participants_bulk(
             db=db,
             study_id=study_id,
             current_user=current_user,
-            participants_payload=payload.participants,
+            payloads=payload.participants,
         )
     except LookupError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
@@ -268,16 +268,16 @@ def create_participants_bulk_from_csv(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
-    return {
-        "items": [
-            ParticipantCreateResponse(
-                **ParticipantDetailResponse.model_validate(participant).model_dump(),
+    return ParticipantBulkCreateResponse(
+        created_count=len(created_items),
+        items=[
+            ParticipantBulkCreateItemResponse(
+                participant=ParticipantDetailResponse.model_validate(participant),
                 temporary_pin=temporary_pin,
             )
             for participant, temporary_pin in created_items
         ],
-        "total": len(created_items),
-    }
+    )
 
 @router.get("/{participant_id}", response_model=ParticipantDetailResponse, summary="Detalii participant")
 def read_study_participant(

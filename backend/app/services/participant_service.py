@@ -1183,10 +1183,15 @@ def get_study_data_summary(
 def _timeline_label(measured_at: datetime, group_by: str) -> str:
     measured_at = measured_at.astimezone(timezone.utc)
     current_date = measured_at.date()
-    
 
     if group_by == "day":
         return current_date.isoformat()
+
+    if group_by == "week":
+        week_start = current_date - timedelta(days=current_date.weekday())
+        week_end = week_start + timedelta(days=6)
+
+        return f"{week_start.isoformat()}|{week_end.isoformat()}"
 
     if group_by == "five_days":
         bucket_start_day = ((current_date.day - 1) // 5) * 5 + 1
@@ -1204,7 +1209,7 @@ def _timeline_label(measured_at: datetime, group_by: str) -> str:
     if group_by == "month":
         return current_date.strftime("%Y-%m")
 
-    raise ValueError("group_by trebuie să fie day, five_days sau month.")
+    raise ValueError("group_by trebuie să fie day, week, five_days sau month.")
 
 
 def _get_session_status_summary(session: ParticipantSubmissionSession) -> ParticipantHistoryStatus:
@@ -1501,13 +1506,10 @@ def get_study_data_timeline(
     if study is None:
         raise LookupError("Studiul nu a fost găsit.")
 
-    if group_by == "week":
-        group_by = "day"
+    if group_by not in {"day", "week", "five_days", "month"}:
+        raise ValueError("group_by trebuie să fie day, week, five_days sau month.")
 
-    if group_by not in {"day", "five_days", "month"}:
-        raise ValueError("group_by trebuie să fie day, five_days sau month.")
-
-    filters = [ParticipantSubmission.study_id == study_id]
+        filters = [ParticipantSubmission.study_id == study_id]
 
     if start_date is not None:
         filters.append(ParticipantSubmissionValue.measured_at >= start_date)

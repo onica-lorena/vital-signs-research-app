@@ -171,7 +171,7 @@ def read_study_data_timeline(
     study_id: int,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
-    group_by: str = Query("day", pattern="^(day|five_days|month)$"),
+    group_by: str = Query("day", pattern="^(day|week|five_days|month)$"),
     start_date: str | None = Query(None),
     end_date: str | None = Query(None),
 ):

@@ -17,7 +17,7 @@ const PAGE_SIZE = 10;
 
 type ParticipantDataEntryMethod = "manual" | "csv";
 type ParticipantSubmissionStatus = "submitted" | "validated" | "rejected";
-type TimelineGroupBy = "day" | "five_days" | "month";
+type TimelineGroupBy = "day" | "week" | "five_days" | "month";
 type TimelinePreset = "last_7_days" | "last_30_days" | "last_12_months" | "custom";
 
 type StudyDataSummaryResponse = {
@@ -362,7 +362,11 @@ function getCustomGroupBy(startDate: string, endDate: string): TimelineGroupBy {
     return "day";
   }
 
-  if (diffInDays <= 90) {
+  if (diffInDays <= 60) {
+    return "week";
+  }
+
+  if (diffInDays <= 120) {
     return "five_days";
   }
 
@@ -380,7 +384,7 @@ function formatTimelineLabel(label: string, groupBy: TimelineGroupBy): string {
     }).format(date);
   }
 
-  if (groupBy === "five_days") {
+  if (groupBy === "week" || groupBy === "five_days") {
     const [start, end] = label.split("|");
 
     if (!start || !end) {
@@ -649,7 +653,7 @@ export default function StudyCollectedDataTab({
     }
   
     if (timelinePreset === "last_30_days") {
-      setGroupBy("five_days");
+      setGroupBy("week");
       setTimelineStartDate(getDateDaysAgo(29));
       setTimelineEndDate(today);
       return;
