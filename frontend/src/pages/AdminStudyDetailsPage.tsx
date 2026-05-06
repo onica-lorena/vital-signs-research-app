@@ -182,11 +182,11 @@ export default function AdminStudyDetailsPage() {
                 </article>
               </div>
 
-              <section className="admin-study-content-grid admin-study-content-grid--overview">
-                <article className="admin-panel">
+              <section className="admin-study-detail-layout">
+                <article className="admin-panel admin-study-detail-main-card">
                   <div className="admin-panel__header">
                     <div>
-                      <h2>Identificare studiu</h2>
+                      <h2>Detalii studiu</h2>
                     </div>
 
                     <span className={getStudyStatusPillClass(selectedStudy.status)}>
@@ -194,42 +194,42 @@ export default function AdminStudyDetailsPage() {
                     </span>
                   </div>
 
-                  <div className="admin-detail admin-detail--overview">
+                  <div className="admin-study-detail-hero">
                     <div>
-                      <span>Titlu</span>
-                      <strong>{selectedStudy.title}</strong>
-                    </div>
-
-                    <div>
-                      <span>Cod</span>
+                      <span>Cod studiu</span>
                       <strong>{selectedStudy.code}</strong>
                     </div>
 
                     <div>
-                      <span>Status</span>
-                      <strong>{studyStatusLabels[selectedStudy.status]}</strong>
+                      <span>Titlu</span>
+                      <strong>{selectedStudy.title}</strong>
                     </div>
+                  </div>
 
+                  <div className="admin-study-detail-grid">
                     <div>
-                      <span>Tip</span>
+                      <span>Tip studiu</span>
                       <strong>{studyTypeLabels[selectedStudy.study_type]}</strong>
                     </div>
 
                     <div>
-                      <span>Mod colectare</span>
-                      <strong>
-                        {formatEntryMethodLabel(selectedStudy.data_entry_mode)}
-                      </strong>
+                      <span>Mod colectare date</span>
+                      <strong>{formatEntryMethodLabel(selectedStudy.data_entry_mode)}</strong>
                     </div>
 
                     <div>
-                      <span>Participanți</span>
+                      <span>Status curent</span>
+                      <strong>{studyStatusLabels[selectedStudy.status]}</strong>
+                    </div>
+
+                    <div>
+                      <span>Participanți înscriși</span>
                       <strong>{selectedStudy.participants_count}</strong>
                     </div>
                   </div>
                 </article>
 
-                <div className="admin-study-side-column">
+                <aside className="admin-study-detail-side">
                   <article className="admin-panel">
                     <div className="admin-panel__header">
                       <div>
@@ -237,22 +237,26 @@ export default function AdminStudyDetailsPage() {
                       </div>
                     </div>
 
-                    <div className="admin-detail admin-detail--overview">
+                    <div className="admin-study-researcher-card">
+                      <div className="admin-study-researcher-avatar">
+                        {selectedStudy.researcher.full_name
+                          .split(" ")
+                          .slice(0, 2)
+                          .map((part) => part[0])
+                          .join("")
+                          .toUpperCase()}
+                      </div>
+
                       <div>
-                        <span>Nume</span>
                         <strong>{selectedStudy.researcher.full_name}</strong>
+                        <span>{selectedStudy.researcher.email}</span>
                       </div>
+                    </div>
 
-                      <div>
-                        <span>Email</span>
-                        <strong>{selectedStudy.researcher.email}</strong>
-                      </div>
-
+                    <div className="admin-study-detail-list">
                       <div>
                         <span>Instituție</span>
-                        <strong>
-                          {selectedStudy.researcher.institution ?? "—"}
-                        </strong>
+                        <strong>{selectedStudy.researcher.institution ?? "—"}</strong>
                       </div>
                     </div>
                   </article>
@@ -260,11 +264,11 @@ export default function AdminStudyDetailsPage() {
                   <article className="admin-panel">
                     <div className="admin-panel__header">
                       <div>
-                        <h2>Informații tehnice</h2>
+                        <h2>Informații administrative</h2>
                       </div>
                     </div>
 
-                    <div className="admin-detail admin-detail--overview">
+                    <div className="admin-study-detail-list">
                       <div>
                         <span>ID studiu</span>
                         <strong>{selectedStudy.id}</strong>
@@ -286,7 +290,7 @@ export default function AdminStudyDetailsPage() {
                       </div>
                     </div>
                   </article>
-                </div>
+                </aside>
               </section>
             </>
           ) : (

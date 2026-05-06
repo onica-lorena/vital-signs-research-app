@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ResponsiveContainer,
   PieChart,
@@ -48,23 +48,7 @@ const STUDY_STATUS_COLORS: Record<StudyStatus, string> = {
   completed: "#dfe8dc",
 };
 
-function EyeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M2.5 12C4.4 7.8 7.7 5.5 12 5.5C16.3 5.5 19.6 7.8 21.5 12C19.6 16.2 16.3 18.5 12 18.5C7.7 18.5 4.4 16.2 2.5 12Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M12 15A3 3 0 1 0 12 9A3 3 0 0 0 12 15Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-    </svg>
-  );
-}
+const STUDIES_PAGE_SIZE = 10;
 
 function getStudyStatusPillClass(status: StudyStatus) {
   switch (status) {
@@ -105,6 +89,9 @@ export default function AdminStudies({
   draftStudiesCount,
   onOpenStudy,
 }: AdminStudiesProps) {
+
+  const [studiesPage, setStudiesPage] = useState(1);
+
   const studyStatusData = useMemo(
     () =>
       [
@@ -161,6 +148,30 @@ export default function AdminStudies({
       };
     });
   }, [studies]);
+
+  const studiesTotalPages = Math.max(
+    1,
+    Math.ceil(studies.length / STUDIES_PAGE_SIZE)
+  );
+
+  const paginatedStudies = useMemo(() => {
+    const start = (studiesPage - 1) * STUDIES_PAGE_SIZE;
+    return studies.slice(start, start + STUDIES_PAGE_SIZE);
+  }, [studies, studiesPage]);
+
+  const studiesRowStart =
+    studies.length === 0 ? 0 : (studiesPage - 1) * STUDIES_PAGE_SIZE + 1;
+
+  const studiesRowEnd = Math.min(
+    studiesPage * STUDIES_PAGE_SIZE,
+    studies.length
+  );
+
+  useEffect(() => {
+    if (studiesPage > studiesTotalPages) {
+      setStudiesPage(studiesTotalPages);
+    }
+  }, [studiesPage, studiesTotalPages]);
 
   return (
     <>
@@ -301,57 +312,90 @@ export default function AdminStudies({
           {studiesLoading ? (
             <p className="admin-loading">Se încarcă studiile...</p>
           ) : (
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Cod</th>
-                    <th>Titlu</th>
-                    <th>Status</th>
-                    <th>Tip</th>
-                    <th>Mod colectare</th>
-                    <th>Cercetător</th>
-                    <th>Participanți</th>
-                    <th>Detalii</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {studies.length === 0 ? (
+            <>
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
                     <tr>
-                      <td colSpan={8} className="admin-table__empty">
-                        Nu există studii disponibile.
-                      </td>
+                      <th>Cod</th>
+                      <th>Titlu</th>
+                      <th>Status</th>
+                      <th>Tip</th>
+                      <th>Mod colectare</th>
+                      <th>Cercetător</th>
+                      <th>Participanți</th>
                     </tr>
-                  ) : (
-                    studies.map((study) => (
-                      <tr key={study.id}>
-                        <td>{study.code}</td>
-                        <td>{study.title}</td>
-                        <td>
-                          <span className={getStudyStatusPillClass(study.status)}>
-                            {studyStatusLabels[study.status]}
-                          </span>
-                        </td>
-                        <td>{studyTypeLabels[study.study_type]}</td>
-                        <td>{formatEntryMethodLabel(study.data_entry_mode)}</td>
-                        <td>{study.researcher.full_name}</td>
-                        <td>{study.participants_count}</td>
-                        <td>
-                          <button
-                            type="button"
-                            className="admin-icon-btn"
-                            aria-label={`Vezi detaliile studiului ${study.title}`}
-                            onClick={() => onOpenStudy(study.id)}
-                          >
-                            <EyeIcon />
-                          </button>
+                  </thead>
+
+                  <tbody>
+                    {studies.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="admin-table__empty">
+                          Nu există studii disponibile.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    ) : (
+                      paginatedStudies.map((study) => (
+                        <tr
+                          key={study.id}
+                          className="admin-table-clickable-row"
+                          onClick={() => onOpenStudy(study.id)}
+                          tabIndex={0}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              onOpenStudy(study.id);
+                            }
+                          }}
+                        >
+                          <td>{study.code}</td>
+                          <td>{study.title}</td>
+                          <td>
+                            <span className={getStudyStatusPillClass(study.status)}>
+                              {studyStatusLabels[study.status]}
+                            </span>
+                          </td>
+                          <td>{studyTypeLabels[study.study_type]}</td>
+                          <td>{formatEntryMethodLabel(study.data_entry_mode)}</td>
+                          <td>{study.researcher.full_name}</td>
+                          <td>{study.participants_count}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="admin-table-footer">
+                <span>
+                  Afișare {studiesRowStart} - {studiesRowEnd} din {studies.length} studii
+                </span>
+
+                <div className="admin-pagination">
+                  <button
+                    type="button"
+                    onClick={() => setStudiesPage((prev) => Math.max(1, prev - 1))}
+                    disabled={studiesPage === 1 || studiesLoading}
+                  >
+                    ‹
+                  </button>
+
+                  <button type="button" className="is-active" disabled>
+                    {studiesPage}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setStudiesPage((prev) => Math.min(studiesTotalPages, prev + 1))
+                    }
+                    disabled={studiesPage === studiesTotalPages || studiesLoading}
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </section>
       </div>

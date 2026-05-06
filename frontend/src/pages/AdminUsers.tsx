@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ResponsiveContainer,
   PieChart,
@@ -123,24 +123,12 @@ function ChartIcon() {
   );
 }
 
-function EyeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M3.5 12C5.4 8.6 8.3 6.75 12 6.75C15.7 6.75 18.6 8.6 20.5 12C18.6 15.4 15.7 17.25 12 17.25C8.3 17.25 5.4 15.4 3.5 12Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.8" />
-    </svg>
-  );
-}
-
 const ROLE_COLORS: Record<UserRole, string> = {
   admin: "#ef9647",
   researcher: "#76b65c",
 };
+
+const USERS_PAGE_SIZE = 10;
 
 export default function AdminUsers({
   users,
@@ -185,6 +173,8 @@ export default function AdminUsers({
   onCreateUser,
 }: AdminUsersProps) {
 
+  const [usersPage, setUsersPage] = useState(1);
+
   const roleData = useMemo(
     () =>
       [
@@ -216,6 +206,24 @@ export default function AdminUsers({
   const activeRate = totalUsers > 0 ? Math.round((activeUsersCount / totalUsers) * 100) : 0;
   const verifiedRate =
     totalUsers > 0 ? Math.round((verifiedUsersCount / totalUsers) * 100) : 0;
+
+  const usersTotalPages = Math.max(1, Math.ceil(users.length / USERS_PAGE_SIZE));
+
+  const paginatedUsers = useMemo(() => {
+    const start = (usersPage - 1) * USERS_PAGE_SIZE;
+    return users.slice(start, start + USERS_PAGE_SIZE);
+  }, [users, usersPage]);
+
+  const usersRowStart =
+    users.length === 0 ? 0 : (usersPage - 1) * USERS_PAGE_SIZE + 1;
+
+  const usersRowEnd = Math.min(usersPage * USERS_PAGE_SIZE, users.length);
+
+  useEffect(() => {
+    if (usersPage > usersTotalPages) {
+      setUsersPage(usersTotalPages);
+    }
+  }, [usersPage, usersTotalPages]);
 
   return (
     <>
@@ -362,51 +370,84 @@ export default function AdminUsers({
           {usersLoading ? (
             <p className="admin-loading">Se încarcă utilizatorii...</p>
           ) : (
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Nume</th>
-                    <th>Email</th>
-                    <th>Rol</th>
-                    <th>Activ</th>
-                    <th>Verificat</th>
-                    <th>Creat</th>
-                    <th>Detalii</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.length === 0 ? (
+            <>
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
                     <tr>
-                      <td colSpan={7} className="admin-table__empty">
-                        Nu există utilizatori disponibili.
-                      </td>
+                      <th>Nume</th>
+                      <th>Email</th>
+                      <th>Rol</th>
+                      <th>Activ</th>
+                      <th>Verificat</th>
+                      <th>Creat</th>
                     </tr>
-                  ) : (
-                    users.map((item) => (
-                      <tr key={item.id}>
-                        <td>{item.full_name}</td>
-                        <td>{item.email}</td>
-                        <td>{userRoleLabels[item.role]}</td>
-                        <td>{item.is_active ? "Da" : "Nu"}</td>
-                        <td>{item.is_verified ? "Da" : "Nu"}</td>
-                        <td>{formatDate(item.created_at)}</td>
-                        <td>
-                          <button
-                            type="button"
-                            className="admin-icon-btn"
-                            onClick={() => onOpenUser(item.id)}
-                            aria-label={`Vezi detalii pentru ${item.full_name}`}
-                          >
-                            <EyeIcon />
-                          </button>
+                  </thead>
+
+                  <tbody>
+                    {users.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="admin-table__empty">
+                          Nu există utilizatori disponibili.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    ) : (
+                      paginatedUsers.map((item) => (
+                        <tr
+                          key={item.id}
+                          className="admin-table-clickable-row"
+                          onClick={() => onOpenUser(item.id)}
+                          tabIndex={0}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              onOpenUser(item.id);
+                            }
+                          }}
+                        >
+                          <td>{item.full_name}</td>
+                          <td>{item.email}</td>
+                          <td>{userRoleLabels[item.role]}</td>
+                          <td>{item.is_active ? "Da" : "Nu"}</td>
+                          <td>{item.is_verified ? "Da" : "Nu"}</td>
+                          <td>{formatDate(item.created_at)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="admin-table-footer">
+                <span>
+                  Afișare {usersRowStart} - {usersRowEnd} din {users.length} utilizatori
+                </span>
+
+                <div className="admin-pagination">
+                  <button
+                    type="button"
+                    onClick={() => setUsersPage((prev) => Math.max(1, prev - 1))}
+                    disabled={usersPage === 1 || usersLoading}
+                  >
+                    ‹
+                  </button>
+
+                  <button type="button" className="is-active" disabled>
+                    {usersPage}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setUsersPage((prev) => Math.min(usersTotalPages, prev + 1))
+                    }
+                    disabled={usersPage === usersTotalPages || usersLoading}
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </section>
       </div>
