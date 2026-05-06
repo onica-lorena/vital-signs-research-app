@@ -169,7 +169,9 @@
 }
 
 .studies-side-card--soft-green {
-  background: #f3f8ef;
+    background:
+    radial-gradient(circle at 85% 12%, rgba(218, 238, 208, 0.98), transparent 40%),
+    rgba(255, 255, 255, 0.94);
 }
 
 .studies-side-card__header {

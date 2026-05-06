@@ -3,7 +3,12 @@ import type { ComponentType } from "react";
 import LogoIcon from "../welcome/LogoIcon";
 import { clearAuthSession } from "../../auth/authStorage";
 
-export type NavigationKey = "dashboard" | "studii" | "analize" | "rapoarte";
+export type NavigationKey =
+  | "dashboard"
+  | "studii"
+  | "analize"
+  | "rapoarte"
+  | "profil";
 
 type ResearcherSidebarProps = {
   activeItem: NavigationKey;
@@ -131,7 +136,7 @@ export default function ResearcherSidebar({
     clearAuthSession();
     navigate("/autentificare");
   }
-
+  
   function handleNavigation(itemKey: NavigationKey) {
     if (window.innerWidth <= 1023) {
       onCloseMobileSidebar();
@@ -152,6 +157,11 @@ export default function ResearcherSidebar({
     }
   
     if (itemKey === "rapoarte") {
+      return;
+    }
+  
+    if (itemKey === "profil") {
+      navigate("/cercetator/profil");
       return;
     }
   }
@@ -211,19 +221,24 @@ export default function ResearcherSidebar({
       <div className="researcher-sidebar__footer">
       <button
         type="button"
-        className="researcher-sidebar__footer-button"
+        className={`researcher-sidebar__footer-button ${
+          activeItem === "profil" ? "is-active" : ""
+        }`}
         title="Profil"
+        aria-current={activeItem === "profil" ? "page" : undefined}
         onClick={() => {
           if (window.innerWidth <= 1023) {
             onCloseMobileSidebar();
           }
+
+          navigate("/cercetator/profil");
         }}
       >
-          <span className="researcher-sidebar__icon">
-            <ProfileIcon />
-          </span>
-          <span className="researcher-sidebar__footer-text">Profil</span>
-        </button>
+        <span className="researcher-sidebar__icon">
+          <ProfileIcon />
+        </span>
+        <span className="researcher-sidebar__footer-text">Profil</span>
+      </button>
 
         <button
           type="button"

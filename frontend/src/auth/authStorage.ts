@@ -8,7 +8,13 @@ export type AppUser = {
   role: "admin" | "researcher";
   is_active: boolean;
   is_verified: boolean;
+  institution?: string | null;
+  department?: string | null;
+  specialization?: string | null;
+  phone?: string | null;
+  bio?: string | null;
   created_at: string;
+  updated_at?: string;
 };
 
 export function saveAuthSession(token: string, user: AppUser): void {

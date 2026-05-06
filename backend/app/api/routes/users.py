@@ -109,6 +109,12 @@ def update_my_profile(
     if "bio" in data:
         current_user.bio = data["bio"]
 
+    if "department" in data:
+        current_user.department = data["department"]
+
+    if "institution" in data:
+        current_user.institution = data["institution"]
+
     db.add(current_user)
     db.commit()
     db.refresh(current_user)

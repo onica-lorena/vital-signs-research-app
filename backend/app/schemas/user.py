@@ -33,6 +33,8 @@ class UserAdminUpdate(BaseModel):
 
 class UserSelfUpdate(BaseModel):
     full_name: str | None = None
+    institution: str | None = None
+    department: str | None = None
     specialization: str | None = None
     phone: str | None = None
     bio: str | None = None

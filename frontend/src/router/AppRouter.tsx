@@ -17,6 +17,8 @@ import ResetPasswordPage from "../pages/ResetPasswordPage";
 import RequestAccessPage from "../pages/RequestAccessPage";
 import AdminStudyDetailsPage from "../pages/AdminStudyDetailsPage";
 import ResearcherStudyDetailsPage from "../pages/ResearcherStudyDetailsPage";
+import ResearcherProfile from "../pages/ResearcherProfile";
+import ParticipantHistoryPage from "../pages/ParticipantHistory";
 
 function RoleRedirect() {
   const user = getCurrentUser();
@@ -108,6 +110,15 @@ export default function AppRouter() {
         }
       />
 
+      <Route
+        path="/cercetator/profil"
+        element={
+          <ProtectedRoute allowedRole="researcher">
+            <ResearcherProfile />
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="/participant/cod-studiu" element={<ParticipantCodePage />} />
 
       <Route
@@ -133,6 +144,15 @@ export default function AppRouter() {
         element={
           <ParticipantProtectedRoute>
             <ParticipantCsvPage />
+          </ParticipantProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/participant/istoric"
+        element={
+          <ParticipantProtectedRoute>
+            <ParticipantHistoryPage />
           </ParticipantProtectedRoute>
         }
       />

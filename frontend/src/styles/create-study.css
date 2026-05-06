@@ -647,57 +647,6 @@
   height: 14px;
 }
 
-.create-study-side-card {
-  border: 1px solid var(--rd-border);
-  border-radius: 15px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: var(--rd-shadow-soft);
-  padding: 14px;
-}
-
-.create-study-side-card--green {
-  background: rgba(240, 247, 237, 0.94);
-}
-
-.create-study-side-card--orange {
-  background: rgba(252, 244, 236, 0.96);
-}
-
-.create-study-side-card h3 {
-  margin: 0 0 8px;
-  color: var(--rd-text-main);
-  font-size: 14px;
-  line-height: 1.2;
-  font-weight: 850;
-}
-
-.create-study-side-card p {
-  margin: 0;
-  color: var(--rd-text-soft);
-  font-size: 12px;
-  line-height: 1.55;
-  font-weight: 500;
-}
-
-.create-study-side-card {
-  border: 1px solid #e6ece6;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: none;
-  padding: 18px 18px 20px;
-}
-
-.create-study-side-card--green {
-  background: #f2f8ef;
-}
-
-.create-study-side-card--orange {
-  background: #fbf3ec;
-}
-.create-study-side-card--blue {
-  background: #eef5fb;
-}
-
 .create-study-side-card__title-row {
   display: flex;
   align-items: center;
@@ -856,6 +805,32 @@
 .create-study-side-list--step3 .create-study-side-list__icon svg {
   width: 19px;
   height: 19px;
+}
+
+.create-study-side-column .create-study-side-card {
+  border: 1px solid var(--rd-border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--rd-shadow-soft);
+  padding: 18px 18px 20px;
+}
+
+.create-study-side-column .create-study-side-card.create-study-side-card--green {
+  background:
+    radial-gradient(circle at top right, rgba(232, 242, 226, 0.8), transparent 80%),
+    rgba(255, 255, 255, 0.94);
+}
+
+.create-study-side-column .create-study-side-card.create-study-side-card--orange {
+  background:
+    radial-gradient(circle at top right, rgba(252, 240, 228, 0.82), transparent 80%),
+    rgba(255, 255, 255, 0.94);
+}
+
+.create-study-side-column .create-study-side-card.create-study-side-card--blue {
+  background:
+    radial-gradient(circle at top right, rgba(237, 245, 255, 0.72), transparent 80%),
+    rgba(255, 255, 255, 0.94);
 }
 
 @media (max-width: 1200px) {
