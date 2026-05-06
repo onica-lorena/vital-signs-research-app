@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import WelcomePage from "../pages/WelcomePage";
 import LoginPage from "../pages/LoginPage";
 import AdminPage from "../pages/AdminPage";
-import ResearcherPage from "../pages/ResearcherPage";
 import StudiesPage from "../pages/StudiesPage";
 import CreateStudyPage from "../pages/CreateStudyPage";
 import ProtectedRoute from "./ProtectedRoute";
@@ -19,6 +18,8 @@ import AdminStudyDetailsPage from "../pages/AdminStudyDetailsPage";
 import ResearcherStudyDetailsPage from "../pages/ResearcherStudyDetailsPage";
 import ResearcherProfile from "../pages/ResearcherProfile";
 import ParticipantHistoryPage from "../pages/ParticipantHistory";
+import ResearcherAnalysis from "../pages/ResearcherAnalysis";
+import ResearcherActivity from "../pages/ResearcherActivity";
 
 function RoleRedirect() {
   const user = getCurrentUser();
@@ -69,7 +70,7 @@ export default function AppRouter() {
         path="/cercetator"
         element={
           <ProtectedRoute allowedRole="researcher">
-            <ResearcherPage />
+            <Navigate to="/cercetator/activitate" replace />
           </ProtectedRoute>
         }
       />
@@ -115,6 +116,24 @@ export default function AppRouter() {
         element={
           <ProtectedRoute allowedRole="researcher">
             <ResearcherProfile />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/cercetator/analize"
+        element={
+          <ProtectedRoute allowedRole="researcher">
+            <ResearcherAnalysis />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/cercetator/activitate"
+        element={
+          <ProtectedRoute allowedRole="researcher">
+            <ResearcherActivity />
           </ProtectedRoute>
         }
       />

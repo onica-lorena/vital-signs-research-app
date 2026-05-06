@@ -4,10 +4,9 @@ import LogoIcon from "../welcome/LogoIcon";
 import { clearAuthSession } from "../../auth/authStorage";
 
 export type NavigationKey =
-  | "dashboard"
+  | "activitate"
   | "studii"
   | "analize"
-  | "rapoarte"
   | "profil";
 
 type ResearcherSidebarProps = {
@@ -16,25 +15,6 @@ type ResearcherSidebarProps = {
   onToggleBrandClick: () => void;
   onCloseMobileSidebar: () => void;
 };
-
-function DashboardIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M5 11.5L12 6L19 11.5V18C19 18.55 18.55 19 18 19H6C5.45 19 5 18.55 5 18V11.5Z"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9.2 19V13.5H14.8V19"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 function StudyIcon() {
   return (
@@ -62,18 +42,23 @@ function AnalysisIcon() {
   );
 }
 
-function ReportIcon() {
+function MonitoringIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M7 4.5H13L17 8.5V18.5C17 19.05 16.55 19.5 16 19.5H8C7.45 19.5 7 19.05 7 18.5V4.5Z"
+        d="M4 12H7.2L9.3 7.5L12 17L14.2 11H20"
         stroke="currentColor"
         strokeWidth="1.9"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path d="M13 4.5V8.5H17" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
-      <path d="M9.5 12H14.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-      <path d="M9.5 15H13.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <circle
+        cx="18"
+        cy="6.5"
+        r="2.2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
     </svg>
   );
 }
@@ -118,10 +103,9 @@ const navigationItems: {
   label: string;
   icon: ComponentType;
 }[] = [
-  { key: "dashboard", label: "Pagina principală", icon: DashboardIcon },
+  { key: "activitate", label: "Activitate", icon: MonitoringIcon },
   { key: "studii", label: "Studii", icon: StudyIcon },
   { key: "analize", label: "Analize", icon: AnalysisIcon },
-  { key: "rapoarte", label: "Rapoarte", icon: ReportIcon },
 ];
 
 export default function ResearcherSidebar({
@@ -136,14 +120,14 @@ export default function ResearcherSidebar({
     clearAuthSession();
     navigate("/autentificare");
   }
-  
+
   function handleNavigation(itemKey: NavigationKey) {
     if (window.innerWidth <= 1023) {
       onCloseMobileSidebar();
     }
-  
-    if (itemKey === "dashboard") {
-      navigate("/cercetator");
+
+    if (itemKey === "activitate") {
+      navigate("/cercetator/activitate");
       return;
     }
   
@@ -153,10 +137,7 @@ export default function ResearcherSidebar({
     }
   
     if (itemKey === "analize") {
-      return;
-    }
-  
-    if (itemKey === "rapoarte") {
+      navigate("/cercetator/analize");
       return;
     }
   

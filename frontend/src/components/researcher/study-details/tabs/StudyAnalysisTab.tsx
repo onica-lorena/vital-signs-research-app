@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Bar,
   BarChart,
@@ -1103,6 +1104,7 @@ export default function StudyAnalysisTab({
   studyId,
   onOpenCollectedData,
 }: StudyAnalysisTabProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [participants, setParticipants] = useState<ParticipantListItemResponse[]>([]);
   const [summary, setSummary] = useState<AnalysisSummaryResponse | null>(null);
   const [results, setResults] = useState<AnalysisResultResponse[]>([]);
@@ -1157,6 +1159,7 @@ export default function StudyAnalysisTab({
   const [isObservedValuesLoading, setIsObservedValuesLoading] = useState(false);
   const [observedValuesError, setObservedValuesError] = useState("");
 
+  const [hasOpenedRunFromUrl, setHasOpenedRunFromUrl] = useState(false);
   useEffect(() => {
     if (!pageError) {
       return;
@@ -1410,6 +1413,36 @@ export default function StudyAnalysisTab({
   }, [studyId, selectedRun, selectedParticipantGroup]);
 
   const analysisRuns = useMemo(() => buildAnalysisRuns(results), [results]);
+
+  useEffect(() => {
+    if (hasOpenedRunFromUrl || isResultsLoading) {
+      return;
+    }
+
+    const analysisRunIdParam = searchParams.get("analysisRunId");
+
+    if (!analysisRunIdParam) {
+      return;
+    }
+
+    const analysisRunId = Number(analysisRunIdParam);
+
+    if (Number.isNaN(analysisRunId)) {
+      return;
+    }
+
+    const matchingRun = analysisRuns.find(
+      (run) => run.analysis_run_id === analysisRunId
+    );
+
+    if (!matchingRun) {
+      return;
+    }
+
+    setSelectedRun(matchingRun);
+    setSelectedParticipantGroup(matchingRun.participant_groups[0] ?? null);
+    setHasOpenedRunFromUrl(true);
+  }, [analysisRuns, hasOpenedRunFromUrl, isResultsLoading, searchParams]);
 
   const totalRuns = analysisRuns.length;
   const totalPages = Math.max(1, Math.ceil(totalRuns / GROUP_PAGE_SIZE));
@@ -1723,6 +1756,17 @@ export default function StudyAnalysisTab({
     setSelectedParticipantGroup(null);
     setObservedValues(null);
     setObservedValuesError("");
+  }
+
+  function handleCloseAnalysisModal() {
+    setSelectedRun(null);
+    setSelectedParticipantGroup(null);
+    setObservedValues(null);
+    setObservedValuesError("");
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("analysisRunId");
+    setSearchParams(nextParams, { replace: true });
   }
 
   return (
@@ -2431,6 +2475,12 @@ export default function StudyAnalysisTab({
                     onClick={() => {
                       setSelectedRun(run);
                       setSelectedParticipantGroup(run.participant_groups[0] ?? null);
+
+                      if (run.analysis_run_id !== null) {
+                        const nextParams = new URLSearchParams(searchParams);
+                        nextParams.set("analysisRunId", String(run.analysis_run_id));
+                        setSearchParams(nextParams, { replace: true });
+                      }
                     }}
                     tabIndex={0}
                     onKeyDown={(event) => {
@@ -2533,12 +2583,7 @@ export default function StudyAnalysisTab({
       {selectedRun ? (
         <div
           className="study-analysis-modal-overlay"
-          onClick={() => {
-            setSelectedRun(null);
-            setSelectedParticipantGroup(null);
-            setObservedValues(null);
-            setObservedValuesError("");
-          }}
+          onClick={handleCloseAnalysisModal}
         >
           <section
             className="study-analysis-modal"
@@ -2581,12 +2626,7 @@ export default function StudyAnalysisTab({
             <button
               type="button"
               className="study-analysis-modal__close"
-              onClick={() => {
-                setSelectedRun(null);
-                setSelectedParticipantGroup(null);
-                setObservedValues(null);
-                setObservedValuesError("");
-              }}
+              onClick={handleCloseAnalysisModal}
               aria-label="Închide"
             >
               <CloseIcon />

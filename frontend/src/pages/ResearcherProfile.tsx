@@ -678,9 +678,6 @@ export default function ResearcherProfile() {
             </div>
 
             <div>
-              <span className="researcher-profile-eyebrow">
-                Cont {user ? ROLE_LABELS[user.role] : "Cercetător"}
-              </span>
 
               <h2>{user?.full_name ?? "Profil cercetător"}</h2>
 
