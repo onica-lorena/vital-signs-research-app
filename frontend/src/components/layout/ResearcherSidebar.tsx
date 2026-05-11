@@ -4,9 +4,9 @@ import LogoIcon from "../welcome/LogoIcon";
 import { clearAuthSession } from "../../auth/authStorage";
 
 export type NavigationKey =
-  | "activitate"
   | "studii"
   | "analize"
+  | "activitate"
   | "profil";
 
 type ResearcherSidebarProps = {
@@ -103,9 +103,9 @@ const navigationItems: {
   label: string;
   icon: ComponentType;
 }[] = [
-  { key: "activitate", label: "Activitate", icon: MonitoringIcon },
   { key: "studii", label: "Studii", icon: StudyIcon },
   { key: "analize", label: "Analize", icon: AnalysisIcon },
+  { key: "activitate", label: "Activitate", icon: MonitoringIcon },
 ];
 
 export default function ResearcherSidebar({
@@ -125,11 +125,6 @@ export default function ResearcherSidebar({
     if (window.innerWidth <= 1023) {
       onCloseMobileSidebar();
     }
-
-    if (itemKey === "activitate") {
-      navigate("/cercetator/activitate");
-      return;
-    }
   
     if (itemKey === "studii") {
       navigate("/cercetator/studii");
@@ -141,6 +136,11 @@ export default function ResearcherSidebar({
       return;
     }
   
+    if (itemKey === "activitate") {
+      navigate("/cercetator/activitate");
+      return;
+    }
+
     if (itemKey === "profil") {
       navigate("/cercetator/profil");
       return;

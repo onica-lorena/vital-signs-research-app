@@ -453,6 +453,45 @@ function DownloadIcon() {
   );
 }
 
+function InfoBulbIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M9.5 18H14.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10 21H14"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M8.2 14.6C6.9 13.5 6.1 11.9 6.1 10.1C6.1 6.8 8.7 4.3 12 4.3C15.3 4.3 17.9 6.8 17.9 10.1C17.9 11.9 17.1 13.5 15.8 14.6C15.1 15.2 14.7 15.9 14.6 16.7H9.4C9.3 15.9 8.9 15.2 8.2 14.6Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CheckMiniIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M6.5 12.2L10.1 15.8L17.5 8.4"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 type SummaryIconTone = "blue" | "green" | "orange" | "gray" | "red";
 
 function SummaryIconChart({
@@ -2110,7 +2149,7 @@ export default function StudyAnalysisTab({
                 Nu există rezultate suficiente pentru acest grafic.
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={270}>
+              <ResponsiveContainer width="100%" height={210}>
                 <BarChart
                   data={parameterRiskData}
                   margin={{ top: 16, right: 20, left: -14, bottom: 4 }}
@@ -2173,7 +2212,7 @@ export default function StudyAnalysisTab({
                 Nu există participanți analizați pentru criteriile selectate.
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={270}>
+              <ResponsiveContainer width="100%" height={210}>
                 <BarChart
                   data={topParticipantsRiskData}
                   margin={{ top: 16, right: 20, left: -9, bottom: 4 }}
@@ -2634,33 +2673,52 @@ export default function StudyAnalysisTab({
           </div>
 
             <div className="study-analysis-modal__content">
-              <section className="study-analysis-modal-card study-analysis-modal-card--context">
-                <h4>Contextul analizei</h4>
+              <section className="study-analysis-modal-info-grid">
+                <article className="study-analysis-modal-card study-analysis-modal-card--context">
+                  <h4>Contextul analizei</h4>
 
-                <dl>
-                  <div>
-                    <dt>Interval analizat</dt>
-                    <dd>{getAnalysisIntervalLabel(selectedRun)}</dd>
+                  <dl>
+                    <div>
+                      <dt>Interval analizat</dt>
+                      <dd>{getAnalysisIntervalLabel(selectedRun)}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Tip interval</dt>
+                      <dd>{getScopeLabel(selectedRun.analysis_scope)}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Criterii selectate</dt>
+                      <dd>
+                        <div>
+                          {getAnalysisCriteriaLabels(selectedRun).map((label) => (
+                            <span key={label}>{label}</span>
+                          ))}
+                        </div>
+                      </dd>
+                    </div>
+                  </dl>
+                </article>
+
+                <article className="study-analysis-modal-card study-analysis-modal-card--probability">
+                  <div className="study-analysis-probability-header">
+                    <span className="study-analysis-probability-icon">
+                      <InfoBulbIcon />
+                    </span>
+
+                    <div>
+                      <h4>Ce reprezintă probabilitatea?</h4>
+                    </div>
                   </div>
 
-                  <div>
-                    <dt>Tip interval</dt>
-                    <dd>{getScopeLabel(selectedRun.analysis_scope)}</dd>
-                  </div>
-
-                  <div>
-                    <dt>Criterii selectate</dt>
-                    <dd>
-                      <div>
-                        {getAnalysisCriteriaLabels(selectedRun).map((label) => (
-                          <span key={label}>
-                            {label}
-                          </span>
-                        ))}
-                      </div>
-                    </dd>
-                  </div>
-                </dl>
+                <div className="study-analysis-probability-list">
+                  <p>
+                    Valoarea indică riscul estimat ca semnul vital analizat să ajungă
+                    în afara intervalului normal în ora următoare.
+                  </p>
+                </div>
+                </article>
               </section>
 
               <section className="study-analysis-modal-stats">
@@ -2718,7 +2776,7 @@ export default function StudyAnalysisTab({
                   <h4>Risc mediu pe parametri</h4>
 
                   <div className="study-analysis-modal-chart">
-                    <ResponsiveContainer width="100%" height={200}>
+                    <ResponsiveContainer width="100%" height={175}>
                       <BarChart
                         data={selectedRunChartData}
                         margin={{ top: 12, right: 12, left: -8, bottom: 2 }}
@@ -2841,7 +2899,7 @@ export default function StudyAnalysisTab({
                     </div>
 
                     <div className="study-analysis-modal-chart">
-                      <ResponsiveContainer width="100%" height={190}>
+                      <ResponsiveContainer width="100%" height={170}>
                         <BarChart
                           data={selectedParticipantChartData}
                           margin={{ top: 12, right: 12, left: -8, bottom: 2 }}
@@ -2939,7 +2997,7 @@ export default function StudyAnalysisTab({
                       <div>
                         <h4>Date observate trimise de participant</h4>
                         <p>
-                          Valorile fiziologice folosite ca bază pentru interpretarea rezultatului ML
+                          Valorile fiziologice folosite ca bază pentru interpretarea rezultatului
                           în intervalul acestei analize.
                         </p>
                       </div>
@@ -3019,7 +3077,7 @@ export default function StudyAnalysisTab({
                             </thead>
 
                             <tbody>
-                              {observedValues.records.slice(0, 12).map((record) => (
+                              {observedValues.records.slice(0, 3).map((record) => (
                                 <tr key={record.measured_at}>
                                   <td>{formatDateTime(record.measured_at)}</td>
                                   <td>{formatVitalValue(record.heart_rate, "bătăi/min")}</td>
@@ -3031,10 +3089,10 @@ export default function StudyAnalysisTab({
                             </tbody>
                           </table>
 
-                          {observedValues.records.length > 12 ? (
+                          {observedValues.records.length > 3 ? (
                             <div className="study-analysis-observed-note">
                               <span>
-                                Sunt afișate primele 12 înregistrări din{" "}
+                                Sunt afișate primele 3 înregistrări din{" "}
                                 {formatNumber(observedValues.records.length)}.
                               </span>
 

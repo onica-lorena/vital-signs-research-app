@@ -24,7 +24,7 @@ const STUDY_TYPE_LABELS = {
 const DATA_ENTRY_MODE_LABELS = {
   manual: "Manual",
   csv: "CSV",
-  manual_csv: "Manual + CSV",
+  manual_csv: "Manual / CSV",
 } as const;
 
 function formatDate(value?: string | null): string {

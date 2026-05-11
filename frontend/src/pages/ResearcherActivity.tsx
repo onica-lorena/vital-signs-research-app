@@ -354,6 +354,38 @@ function getSeverityOrder(severity: MonitoringIssue["severity"]): number {
   return 2;
 }
 
+function getIssueVisualClass(type: MonitoringIssueType): string {
+  if (type === "high_risk" || type === "study_without_data") {
+    return "is-red";
+  }
+
+  if (type === "pending_data" || type === "low_validation") {
+    return "is-orange";
+  }
+
+  if (type === "inactive_participant") {
+    return "is-blue";
+  }
+
+  return "is-blue";
+}
+
+function getIssueIcon(type: MonitoringIssueType) {
+  if (type === "high_risk" || type === "study_without_data") {
+    return <AlertIcon />;
+  }
+
+  if (type === "pending_data" || type === "low_validation") {
+    return <ClockIcon />;
+  }
+
+  if (type === "inactive_participant") {
+    return <UsersIcon />;
+  }
+
+  return <AlertIcon />;
+}
+
 async function readError(response: Response): Promise<string> {
   try {
     const data = await response.json();
@@ -1035,14 +1067,10 @@ export default function ResearcherActivity() {
                 {filteredIssues.map((issue) => (
                   <article
                     key={issue.key}
-                    className={`researcher-monitoring-issue is-${issue.severity}`}
+                    className={`researcher-monitoring-issue ${getIssueVisualClass(issue.type)}`}
                   >
                     <div className="researcher-monitoring-issue__icon">
-                      {issue.type === "high_risk" ? <AlertIcon /> : null}
-                      {issue.type === "pending_data" ? <ClockIcon /> : null}
-                      {issue.type === "inactive_participant" ? <UsersIcon /> : null}
-                      {issue.type === "study_without_data" ? <StudyIcon /> : null}
-                      {issue.type === "low_validation" ? <PulseIcon /> : null}
+                      {getIssueIcon(issue.type)}
                     </div>
 
                     <div className="researcher-monitoring-issue__content">
@@ -1073,53 +1101,6 @@ export default function ResearcherActivity() {
           </article>
 
           <aside className="researcher-monitoring-side">
-            <article className="researcher-monitoring-card">
-              <div className="researcher-monitoring-card__header">
-                <div>
-                  <h3>Studii urmărite</h3>
-                  <p>Rezumat rapid al studiilor incluse în această pagină.</p>
-                </div>
-              </div>
-
-              {isLoading ? (
-                <div className="researcher-monitoring-compact-state">
-                  Se încarcă studiile...
-                </div>
-              ) : monitoringData.length === 0 ? (
-                <div className="researcher-monitoring-compact-state">
-                  Nu există studii disponibile.
-                </div>
-              ) : (
-                <div className="researcher-monitoring-study-list">
-                  {monitoringData.slice(0, 8).map((item) => {
-                    const validationRate = getValidationRate(item.dataSummary);
-
-                    return (
-                      <button
-                        key={item.study.id}
-                        type="button"
-                        onClick={() =>
-                          navigate(`/cercetator/studii/${item.study.id}/rezumat`)
-                        }
-                      >
-                        <span>
-                          <strong>{item.study.code}</strong>
-                          <small>{STATUS_LABELS[item.study.status]}</small>
-                        </span>
-
-                        <em>
-                          {formatNumber(item.study.participants_count)} participanți
-                        </em>
-
-                        <small>
-                          {formatPercent(validationRate)} date validate
-                        </small>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </article>
             <article className="researcher-monitoring-card researcher-monitoring-card--guide">
               <div className="researcher-monitoring-card__header">
                 <div>
@@ -1171,6 +1152,53 @@ export default function ResearcherActivity() {
                   </div>
                 </article>
               </div>
+            </article>
+                        <article className="researcher-monitoring-card">
+              <div className="researcher-monitoring-card__header">
+                <div>
+                  <h3>Studii urmărite</h3>
+                  <p>Rezumat rapid al studiilor incluse în această pagină.</p>
+                </div>
+              </div>
+
+              {isLoading ? (
+                <div className="researcher-monitoring-compact-state">
+                  Se încarcă studiile...
+                </div>
+              ) : monitoringData.length === 0 ? (
+                <div className="researcher-monitoring-compact-state">
+                  Nu există studii disponibile.
+                </div>
+              ) : (
+                <div className="researcher-monitoring-study-list">
+                  {monitoringData.slice(0, 8).map((item) => {
+                    const validationRate = getValidationRate(item.dataSummary);
+
+                    return (
+                      <button
+                        key={item.study.id}
+                        type="button"
+                        onClick={() =>
+                          navigate(`/cercetator/studii/${item.study.id}/rezumat`)
+                        }
+                      >
+                        <span>
+                          <strong>{item.study.code}</strong>
+                          <small>{STATUS_LABELS[item.study.status]}</small>
+                        </span>
+
+                        <em>
+                          {formatNumber(item.study.participants_count)} participanți
+                        </em>
+
+                        <small>
+                          {formatPercent(validationRate)} date validate
+                        </small>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </article>
 
           </aside>

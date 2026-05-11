@@ -135,8 +135,7 @@ export default function WelcomePage() {
         </h1>
 
         <p className="welcome-description">
-          VitalStudy este o platformă destinată colectării, analizei și interpretării
-          datelor privind semnele vitale în cadrul studiilor clinice.
+          VitalStudy este o platformă destinată colectării, organizării și analizării datelor privind semnele vitale în cadrul studiilor de cercetare.
         </p>
 
         <p className="welcome-section-label">Alege modul în care vrei să continui:</p>
@@ -177,7 +176,7 @@ export default function WelcomePage() {
             <h2>Participant la studiu</h2>
 
             <p>
-            Introdu codul studiului pentru a trimite datele solicitate și a urmări progresul.
+            Accesează studiul pe baza codului primit și transmite valorile solicitate.
           </p>
 
           <button

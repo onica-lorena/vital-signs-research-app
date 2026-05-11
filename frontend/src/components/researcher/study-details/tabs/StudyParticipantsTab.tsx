@@ -1946,7 +1946,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
           <h3>Importă mai mulți participanți</h3>
           <p>
             Încarcă un fișier CSV cu participanții care trebuie adăugați în studiu.
-            PIN-ul poate fi lăsat gol, iar backendul îl va genera automat.
+            PIN-ul poate fi lăsat gol și se va genera automat.
           </p>
         </div>
 

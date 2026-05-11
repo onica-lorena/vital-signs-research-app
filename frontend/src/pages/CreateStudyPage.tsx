@@ -43,7 +43,7 @@ const studyTypeOptions = [
 const dataEntryModeOptions = [
   { value: "manual", label: "Introducere manuală" },
   { value: "csv", label: "Import fișier CSV" },
-  { value: "manual_csv", label: "Manual + CSV" },
+  { value: "manual_csv", label: "Manual / CSV" },
 ] as const;
 
 const studyStatusOptions = [
@@ -630,9 +630,9 @@ export default function CreateStudyPage() {
           infoText:
             "Parametrii fiziologici sunt standardizați pentru compatibilitatea cu analiza predictivă. Poți configura frecvența de măsurare pentru fiecare semn vital.",
           tips: [
-            "Cele patru semne vitale sunt necesare pentru rularea modelelor ML.",
-            "Frecvența de măsurare poate fi ajustată în funcție de obiectivul studiului.",
-            "Pentru testarea analizei, asigură-te că datele încărcate conțin toate valorile necesare.",
+            "Cele patru semne vitale sunt necesare pentru analiză.",
+            "Ajustează frecvența după obiectivul studiului.",
+            "Asigură-te că datele includ toate valorile cerute.",
           ],
           nextVariant: "ordered",
           next: [
@@ -856,13 +856,6 @@ export default function CreateStudyPage() {
               necesare pentru colectarea datelor și rularea analizei predictive.
               Configurează frecvența de măsurare pentru fiecare parametru.
             </p>
-          </div>
-
-          <div className="create-study-standard-parameters-banner">
-            <InfoCircleIcon />
-            <span>
-              Parametrii monitorizați sunt incluși automat în studiu pentru a permite o analiză completă și coerentă a datelor.
-            </span>
           </div>
 
           <div className="create-study-config">

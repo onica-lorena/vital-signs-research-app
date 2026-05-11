@@ -70,7 +70,7 @@ export default function AppRouter() {
         path="/cercetator"
         element={
           <ProtectedRoute allowedRole="researcher">
-            <Navigate to="/cercetator/activitate" replace />
+            <Navigate to="/cercetator/studii" replace />
           </ProtectedRoute>
         }
       />
