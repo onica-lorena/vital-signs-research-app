@@ -1,0 +1,36 @@
+services:
+  database:
+    image: postgres:16
+    container_name: vitalstudy-db
+    restart: always
+    environment:
+      POSTGRES_DB: vitalstudy
+      POSTGRES_USER: onicalorena
+      POSTGRES_PASSWORD: andreea17
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    container_name: vitalstudy-backend
+    restart: always
+    depends_on:
+      - database
+    env_file:
+      - ./backend/.env.docker
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    container_name: vitalstudy-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:
