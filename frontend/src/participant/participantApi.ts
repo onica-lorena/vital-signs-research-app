@@ -7,7 +7,7 @@ import type {
 import type { StudyParameterKey } from "../studies/studiesApi";
 import type { MeasurementContext } from "../studies/studyDetailsApi";
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 type ParticipantLoginResponse = {
   access_token: string;
