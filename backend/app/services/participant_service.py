@@ -1,9 +1,13 @@
 from datetime import date, datetime, timedelta, timezone
 from math import ceil
+import smtplib
 
 from sqlalchemy import func, or_, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
+
+from app.core.config import settings
+from app.services.email_service import send_participant_invitation_email
 
 from app.core.security import (
     create_access_token,
@@ -141,6 +145,33 @@ def sync_study_participants_count(db: Session, study: Study) -> None:
     db.add(study)
 
 
+def _send_participant_invitation_if_possible(
+    participant: StudyParticipant,
+    temporary_pin: str,
+) -> tuple[bool, str | None]:
+    if not participant.email:
+        return False, None
+
+    portal_link = f"{settings.frontend_base_url}/participant/cod-studiu"
+
+    try:
+        send_participant_invitation_email(
+            to_email=participant.email,
+            study_title=participant.study.title,
+            study_code=participant.study.code,
+            participant_code=participant.participant_code,
+            temporary_pin=temporary_pin,
+            portal_link=portal_link,
+        )
+        return True, None
+
+    except smtplib.SMTPException as exc:
+        return False, str(exc)
+
+    except Exception as exc:
+        return False, str(exc)
+       
+
 def _replace_participant_conditions(
     participant: StudyParticipant,
     conditions,
@@ -161,7 +192,7 @@ def create_study_participant(
     study_id: int,
     current_user: User,
     payload: ParticipantCreate,
-) -> tuple[StudyParticipant, str]:
+) -> tuple[StudyParticipant, str, bool, str | None]:
     study = get_study_for_current_user(
         db=db,
         study_id=study_id,
@@ -190,6 +221,7 @@ def create_study_participant(
         study_id=study_id,
         participant_code=participant_code,
         full_name=payload.full_name,
+        email=str(payload.email).strip().lower() if payload.email else None,
         participant_identifier=participant_identifier,
         birth_date=payload.birth_date,
         sex=payload.sex,
@@ -219,7 +251,12 @@ def create_study_participant(
     if created_participant is None:
         raise LookupError("Participantul creat nu a mai putut fi încărcat.")
 
-    return created_participant, temporary_pin
+    email_sent, email_error = _send_participant_invitation_if_possible(
+        participant=created_participant,
+        temporary_pin=temporary_pin,
+    )
+
+    return created_participant, temporary_pin, email_sent, email_error
 
 
 def create_study_participants_bulk(
@@ -227,7 +264,7 @@ def create_study_participants_bulk(
     study_id: int,
     current_user: User,
     payloads: list[ParticipantCreate],
-) -> list[tuple[StudyParticipant, str]]:
+) -> list[tuple[StudyParticipant, str, bool, str | None]]:
     study = get_study_for_current_user(
         db=db,
         study_id=study_id,
@@ -291,6 +328,7 @@ def create_study_participants_bulk(
                 study_id=study_id,
                 participant_code=participant_code,
                 full_name=payload.full_name,
+                email=str(payload.email).strip().lower() if payload.email else None,
                 participant_identifier=participant_identifier,
                 birth_date=payload.birth_date,
                 sex=payload.sex,
@@ -322,7 +360,7 @@ def create_study_participants_bulk(
         db.rollback()
         raise
 
-    refreshed_items: list[tuple[StudyParticipant, str]] = []
+    refreshed_items: list[tuple[StudyParticipant, str, bool, str | None]] = []
 
     for participant, temporary_pin in created_items:
         refreshed = get_participant_by_id(db, participant.id)
@@ -330,7 +368,12 @@ def create_study_participants_bulk(
         if refreshed is None:
             raise LookupError("Un participant creat nu a mai putut fi încărcat.")
 
-        refreshed_items.append((refreshed, temporary_pin))
+        email_sent, email_error = _send_participant_invitation_if_possible(
+            participant=refreshed,
+            temporary_pin=temporary_pin,
+        )
+
+        refreshed_items.append((refreshed, temporary_pin, email_sent, email_error))
 
     return refreshed_items
 
@@ -519,6 +562,9 @@ def update_study_participant_for_current_user(
 
     if "full_name" in data and data["full_name"] is not None:
         participant.full_name = data["full_name"]
+
+    if "email" in data:
+        participant.email = str(data["email"]).strip().lower() if data["email"] else None
 
     if "participant_identifier" in data and data["participant_identifier"] is not None:
         participant.participant_identifier = data["participant_identifier"]

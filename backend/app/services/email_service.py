@@ -76,3 +76,40 @@ Echipa VitalStudy
 """.strip()
 
     send_email(to_email=to_email, subject=subject, body=body)
+
+
+def send_participant_invitation_email(
+    to_email: str,
+    study_title: str,
+    study_code: str,
+    participant_code: str,
+    temporary_pin: str,
+    portal_link: str,
+) -> None:
+    subject = "Invitație participare studiu VitalStudy"
+
+    body = f"""
+Salut,
+
+Ai fost invitat să participi la studiul "{study_title}" în platforma VitalStudy.
+
+Pentru autentificare, folosește următoarele date:
+
+Cod studiu: {study_code}
+Cod participant: {participant_code}
+PIN temporar: {temporary_pin}
+
+Poți accesa portalul participantului aici:
+{portal_link}
+
+Te rugăm să păstrezi aceste date confidențiale și să nu le transmiți altor persoane.
+
+Cu drag,
+Echipa VitalStudy
+""".strip()
+
+    send_email(
+        to_email=to_email,
+        subject=subject,
+        body=body,
+    )

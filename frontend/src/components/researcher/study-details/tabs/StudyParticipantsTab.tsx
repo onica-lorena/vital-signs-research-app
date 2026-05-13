@@ -41,6 +41,7 @@ type ParticipantListItemResponse = {
   id: number;
   participant_code: string;
   full_name: string;
+  email: string | null;
   participant_identifier: string;
   status: ParticipantStatus;
   submissions_count: number;
@@ -95,6 +96,8 @@ type ParticipantDetailResponse = ParticipantListItemResponse & {
 
 type ParticipantCreateResponse = ParticipantDetailResponse & {
   temporary_pin: string;
+  invitation_email_sent: boolean;
+  invitation_email_error: string | null;
 };
 
 type ParticipantPinResetResponse = {
@@ -110,6 +113,7 @@ type ParticipantConditionCreatePayload = {
 
 type ParticipantCreatePayload = {
   full_name: string;
+  email?: string | null;
   participant_identifier: string | null;
   pin?: string | null;
   birth_date?: string | null;
@@ -123,6 +127,8 @@ type ParticipantCreatePayload = {
 type ParticipantBulkCreateItemResponse = {
   participant: ParticipantDetailResponse;
   temporary_pin: string;
+  invitation_email_sent: boolean;
+  invitation_email_error: string | null;
 };
 
 type ParticipantBulkCreateResponse = {
@@ -132,6 +138,7 @@ type ParticipantBulkCreateResponse = {
 
 type ParticipantUpdatePayload = {
   full_name?: string;
+  email?: string | null;
   participant_identifier?: string;
   status?: ParticipantStatus;
   birth_date?: string | null;
@@ -728,6 +735,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
 
   const [createForm, setCreateForm] = useState({
     full_name: "",
+    email: "",
     participant_identifier: "",
     pin: "",
     birth_date: "",
@@ -739,6 +747,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
 
   const [editForm, setEditForm] = useState({
     full_name: "",
+    email: "",
     participant_identifier: "",
     status: "invited" as ParticipantStatus,
     birth_date: "",
@@ -961,6 +970,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
   function resetCreateForm() {
     setCreateForm({
       full_name: "",
+      email: "",
       participant_identifier: "",
       pin: "",
       birth_date: "",
@@ -1014,6 +1024,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
 
       setEditForm({
         full_name: detail.full_name,
+        email: detail.email ?? "",
         participant_identifier: detail.participant_identifier,
         status: detail.status,
         birth_date: detail.birth_date ?? "",
@@ -1045,6 +1056,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
 
     const payload: ParticipantCreatePayload = {
     full_name: createForm.full_name.trim(),
+    email: createForm.email.trim().toLowerCase() || null,
     participant_identifier: createForm.participant_identifier.trim() || null,
     pin: createForm.pin.trim() || null,
     birth_date: createForm.birth_date || null,
@@ -1119,6 +1131,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
 
     const payload: ParticipantUpdatePayload = {
       full_name: editForm.full_name,
+      email: editForm.email.trim().toLowerCase() || null,
       participant_identifier: editForm.participant_identifier,
       status: editForm.status,
       birth_date: editForm.birth_date || null,
@@ -1695,6 +1708,21 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
                   </label>
 
                   <label>
+                    <span>Email participant</span>
+                    <input
+                      type="email"
+                      value={editForm.email}
+                      onChange={(event) =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          email: event.target.value,
+                        }))
+                      }
+                      placeholder="exemplu@email.com"
+                    />
+                  </label>
+
+                  <label>
                     <span>Status</span>
                     <select
                       value={editForm.status}
@@ -1822,6 +1850,10 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
                   <h4>Profil cercetare</h4>
 
                   <dl>
+                    <div>
+                      <dt>Email</dt>
+                      <dd>{selectedParticipant.email || "Nespecificat"}</dd>
+                    </div>
                     <div>
                       <dt>Sex</dt>
                       <dd>
@@ -1969,9 +2001,32 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
                 <strong>
                   {item.participant.participant_code} · {item.participant.full_name}
                 </strong>
+
+                {item.participant.email ? (
+                  <span>Email: {item.participant.email}</span>
+                ) : (
+                  <span>Email: —</span>
+                )}
+
                 <span>
                   PIN: <b>{item.temporary_pin}</b>
                 </span>
+
+                {item.participant.email ? (
+                  item.invitation_email_sent ? (
+                    <span className="study-participants-email-line is-success">
+                      Invitație trimisă automat.
+                    </span>
+                  ) : (
+                    <span className="study-participants-email-line is-warning">
+                      Invitația nu a putut fi trimisă. Transmite manual datele de acces.
+                    </span>
+                  )
+                ) : (
+                  <span className="study-participants-email-line is-neutral">
+                    Fără email. Datele trebuie transmise manual.
+                  </span>
+                )}
               </article>
             ))}
           </div>
@@ -2005,9 +2060,10 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
 
             <small>
               Fișierul trebuie să conțină cel puțin coloana{" "}
-              <strong>full_name</strong>. Coloanele recomandate sunt:
-              participant_identifier, pin, birth_date, sex, participant_group,
-              activity_level, notes, condition_type și condition_notes.
+              <strong>full_name</strong>. Coloana <strong>email</strong> este opțională,
+              dar permite trimiterea automată a invitației către participant. Coloanele
+              recomandate sunt: email, participant_identifier, pin, birth_date, sex,
+              participant_group, activity_level, notes, condition_type și condition_notes.
             </small>
           </label>
 
@@ -2021,7 +2077,7 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
           <div className="study-participants-bulk-help">
             Exemplu antet CSV:
             <code>
-              full_name,participant_identifier,pin,birth_date,sex,participant_group,activity_level,notes,condition_type,condition_notes
+              full_name,email,participant_identifier,pin,birth_date,sex,participant_group,activity_level,notes,condition_type,condition_notes
             </code>
           </div>
 
@@ -2075,12 +2131,32 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
             {createdPin ? (
               <div className="study-participants-created">
                 <h4>Participant creat cu succes</h4>
+
                 <p>
                   Cod participant: <strong>{createdPin.participant_code}</strong>
                 </p>
+
                 <p>
                   PIN: <strong>{createdPin.temporary_pin}</strong>
                 </p>
+
+                {createdPin.email ? (
+                  createdPin.invitation_email_sent ? (
+                    <p className="study-participants-email-status study-participants-email-status--success">
+                      Invitația a fost trimisă la <strong>{createdPin.email}</strong>.
+                    </p>
+                  ) : (
+                    <p className="study-participants-email-status study-participants-email-status--warning">
+                      Participantul are email, dar invitația nu a putut fi trimisă automat.
+                      Trimite manual codul și PIN-ul.
+                    </p>
+                  )
+                ) : (
+                  <p className="study-participants-email-status study-participants-email-status--neutral">
+                    Nu a fost completat un email, deci datele de acces trebuie transmise manual.
+                  </p>
+                )}
+
                 <small>
                   Copiază PIN-ul înainte de a închide fereastra. Acesta nu va mai
                   fi afișat ulterior.
@@ -2109,6 +2185,21 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
                         }))
                       }
                       required
+                    />
+                  </label>
+
+                  <label>
+                    <span>Email participant</span>
+                    <input
+                      type="email"
+                      value={createForm.email}
+                      onChange={(event) =>
+                        setCreateForm((prev) => ({
+                          ...prev,
+                          email: event.target.value,
+                        }))
+                      }
+                      placeholder="exemplu@email.com"
                     />
                   </label>
 

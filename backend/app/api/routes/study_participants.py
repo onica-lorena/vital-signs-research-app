@@ -120,7 +120,7 @@ def create_participant(
     current_user: Annotated[User, Depends(require_role(UserRole.RESEARCHER))],
 ):
     try:
-        participant, temporary_pin = create_study_participant(
+        participant, temporary_pin, email_sent, email_error = create_study_participant(
             db=db,
             study_id=study_id,
             current_user=current_user,
@@ -132,7 +132,12 @@ def create_participant(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     base_data = ParticipantDetailResponse.model_validate(participant).model_dump()
-    return ParticipantCreateResponse(**base_data, temporary_pin=temporary_pin)
+    return ParticipantCreateResponse(
+        **base_data,
+        temporary_pin=temporary_pin,
+        invitation_email_sent=email_sent,
+        invitation_email_error=email_error,
+    )
 
 
 @router.post(
@@ -165,8 +170,10 @@ def create_participants_bulk(
             ParticipantBulkCreateItemResponse(
                 participant=ParticipantDetailResponse.model_validate(participant),
                 temporary_pin=temporary_pin,
+                invitation_email_sent=email_sent,
+                invitation_email_error=email_error,
             )
-            for participant, temporary_pin in created_items
+            for participant, temporary_pin, email_sent, email_error in created_items
         ],
     )
 
@@ -233,6 +240,7 @@ def create_participants_bulk_from_csv(
 
             participant = ParticipantCreate(
                 full_name=full_name,
+                email=(row.get("email") or "").strip().lower() or None,
                 participant_identifier=(row.get("participant_identifier") or "").strip() or None,
                 pin=(row.get("pin") or "").strip() or None,
                 birth_date=(row.get("birth_date") or "").strip() or None,
@@ -274,8 +282,10 @@ def create_participants_bulk_from_csv(
             ParticipantBulkCreateItemResponse(
                 participant=ParticipantDetailResponse.model_validate(participant),
                 temporary_pin=temporary_pin,
+                invitation_email_sent=email_sent,
+                invitation_email_error=email_error,
             )
-            for participant, temporary_pin in created_items
+            for participant, temporary_pin, email_sent, email_error in created_items
         ],
     )
 

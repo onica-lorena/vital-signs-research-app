@@ -1,7 +1,7 @@
 from datetime import date, datetime, timezone
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from app.models.participant import (
     ActivityLevel,
@@ -69,6 +69,7 @@ class ParticipantConditionResponse(BaseModel):
 class ParticipantCreate(BaseModel):
     full_name: str = Field(min_length=2, max_length=255)
     participant_identifier: str | None = Field(default=None, min_length=2, max_length=100)
+    email: EmailStr | None = None
     notes: str | None = None
     pin: str | None = Field(default=None, min_length=4, max_length=12)
     birth_date: date | None = None
@@ -82,6 +83,14 @@ class ParticipantCreate(BaseModel):
     def normalize_full_name(cls, value):
         if isinstance(value, str):
             return " ".join(value.strip().split())
+        return value
+    
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value):
+        if isinstance(value, str):
+            value = value.strip().lower()
+            return value or None
         return value
 
     @field_validator("participant_identifier", mode="before")
@@ -125,6 +134,7 @@ class ParticipantCreate(BaseModel):
 
 class ParticipantUpdate(BaseModel):
     full_name: str | None = Field(default=None, min_length=2, max_length=255)
+    email: EmailStr | None = None
     participant_identifier: str | None = Field(default=None, min_length=2, max_length=100)
     status: ParticipantStatus | None = None
     notes: str | None = None
@@ -139,6 +149,14 @@ class ParticipantUpdate(BaseModel):
     def normalize_full_name(cls, value):
         if isinstance(value, str):
             return " ".join(value.strip().split())
+        return value
+    
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value):
+        if isinstance(value, str):
+            value = value.strip().lower()
+            return value or None
         return value
 
     @field_validator("participant_identifier", mode="before")
@@ -179,6 +197,7 @@ class ParticipantListItemResponse(BaseModel):
     id: int
     participant_code: str
     full_name: str
+    email: EmailStr | None = None
     participant_identifier: str
     status: ParticipantStatus
     submissions_count: int
@@ -198,6 +217,7 @@ class ParticipantDetailResponse(BaseModel):
     study_id: int
     participant_code: str
     full_name: str
+    email: EmailStr | None = None
     participant_identifier: str
     status: ParticipantStatus
     submissions_count: int
@@ -217,6 +237,8 @@ class ParticipantDetailResponse(BaseModel):
 
 class ParticipantCreateResponse(ParticipantDetailResponse):
     temporary_pin: str
+    invitation_email_sent: bool = False
+    invitation_email_error: str | None = None
 
     
 class ParticipantBulkCreate(BaseModel):
@@ -226,6 +248,8 @@ class ParticipantBulkCreate(BaseModel):
 class ParticipantBulkCreateItemResponse(BaseModel):
     participant: ParticipantDetailResponse
     temporary_pin: str
+    invitation_email_sent: bool = False
+    invitation_email_error: str | None = None
 
 
 class ParticipantBulkCreateResponse(BaseModel):

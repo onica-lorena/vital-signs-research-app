@@ -78,6 +78,7 @@ class StudyParticipant(Base):
 
     participant_code: Mapped[str] = mapped_column(String(50), nullable=False)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     participant_identifier: Mapped[str] = mapped_column(String(100), nullable=False)
 
     birth_date: Mapped[date | None] = mapped_column(Date(), nullable=True)

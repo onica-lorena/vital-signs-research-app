@@ -1340,6 +1340,57 @@
   letter-spacing: 0.08em;
 }
 
+.study-participants-email-status {
+  margin: 10px 0 0;
+  border-radius: 12px;
+  padding: 9px 10px;
+  font-size: 10.5px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.study-participants-email-status strong {
+  color: inherit;
+  font-weight: 900;
+}
+
+.study-participants-email-status--success {
+  border: 1px solid #d9e8d3;
+  background: #f3f8ef;
+  color: #4f8f4f;
+}
+
+.study-participants-email-status--warning {
+  border: 1px solid #f0d3b8;
+  background: #fff8f0;
+  color: #c9792f;
+}
+
+.study-participants-email-status--neutral {
+  border: 1px solid #d8e2dc;
+  background: #fafcf9;
+  color: var(--rd-text-soft);
+}
+
+.study-participants-email-line {
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 800;
+}
+
+.study-participants-email-line.is-success {
+  color: #4f8f4f;
+}
+
+.study-participants-email-line.is-warning {
+  color: #c9792f;
+}
+
+.study-participants-email-line.is-neutral {
+  color: var(--rd-text-soft);
+}
+
 @media (max-width: 1180px) {
   .study-participants-summary {
     grid-template-columns: repeat(3, minmax(0, 1fr));
