@@ -1533,59 +1533,65 @@ export default function StudyParticipants({ studyId }: StudyParticipantsProps) {
               </p>
             </div>
           ) : (
-            <table className="study-participants-table">
-              <thead>
-                <tr>
-                  <th>Cod participant</th>
-                  <th>Nume</th>
-                  <th>Status</th>
-                  <th>Grup</th>
-                  <th>Nr. trimiteri</th>
-                  <th>Ultima autentificare</th>
-                  <th>Ultima trimitere</th>
+          <table className="study-participants-table">
+            <thead>
+              <tr>
+                <th className="study-participants-col-code">Cod participant</th>
+                <th className="study-participants-col-name">Nume</th>
+                <th className="study-participants-col-status">Status</th>
+                <th className="study-participants-col-group">Grup</th>
+                <th className="study-participants-col-submissions">Nr. trimiteri</th>
+                <th className="study-participants-col-login">Ultima autentificare</th>
+                <th className="study-participants-col-submission">Ultima trimitere</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {participants.map((participant) => (
+                <tr
+                  key={participant.id}
+                  className={selectedLoadingId === participant.id ? "is-loading" : ""}
+                  onClick={() => void handleOpenParticipant(participant.id)}
+                >
+                  <td className="study-participants-table__code study-participants-col-code">
+                    {participant.participant_code}
+                  </td>
+
+                  <td className="study-participants-col-name">
+                    <div className="study-participants-name-cell">
+                      <strong>{participant.full_name}</strong>
+                    </div>
+                  </td>
+
+                  <td className="study-participants-col-status">
+                    <span
+                      className={`study-participants-status ${getStatusClassName(
+                        participant.status
+                      )}`}
+                    >
+                      {STATUS_LABELS[participant.status]}
+                    </span>
+                  </td>
+
+                  <td className="study-participants-col-group">
+                    {participant.participant_group || "—"}
+                  </td>
+
+                  <td className="study-participants-col-submissions">
+                    {participant.submissions_count}
+                  </td>
+
+                  <td className="study-participants-col-login">
+                    {formatDateTime(participant.last_login_at)}
+                  </td>
+
+                  <td className="study-participants-col-submission">
+                    {formatDateTime(participant.last_submission_at)}
+                  </td>
                 </tr>
-              </thead>
-
-              <tbody>
-                {participants.map((participant) => (
-                  <tr
-                    key={participant.id}
-                    className={
-                      selectedLoadingId === participant.id ? "is-loading" : ""
-                    }
-                    onClick={() => void handleOpenParticipant(participant.id)}
-                  >
-                    <td className="study-participants-table__code">
-                      {participant.participant_code}
-                    </td>
-
-                    <td>
-                      <div className="study-participants-name-cell">
-                        <strong>{participant.full_name}</strong>
-                      </div>
-                    </td>
-
-                    <td>
-                      <span
-                        className={`study-participants-status ${getStatusClassName(
-                          participant.status
-                        )}`}
-                      >
-                        {STATUS_LABELS[participant.status]}
-                      </span>
-                    </td>
-
-                    <td>{participant.participant_group || "—"}</td>
-
-                    <td>{participant.submissions_count}</td>
-
-                    <td>{formatDateTime(participant.last_login_at)}</td>
-
-                    <td>{formatDateTime(participant.last_submission_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
           )}
         </div>
 

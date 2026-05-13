@@ -264,6 +264,13 @@ const PARAMETER_LABELS: Record<StudyParameterKey, string> = {
   temperature: "Temperatură",
 };
 
+const PARAMETER_SHORT_LABELS: Record<StudyParameterKey, string> = {
+  heartRate: "Ritm",
+  respiratoryRate: "Resp.",
+  spo2: "SpO₂",
+  temperature: "Temp.",
+};
+
 const MODEL_LABELS: Record<AnalysisModelType, string> = {
   random_forest: "Random Forest",
   xgboost: "XGBoost",
@@ -1055,8 +1062,11 @@ function ParameterRiskTooltip({
 }: {
   active?: boolean;
   payload?: Array<{
-    payload: AnalysisAverageRiskByParameterItem & {
+    payload: {
       label: string;
+      full_label?: string;
+      average_risk_probability: number;
+      results_count: number;
       percentage_value: number;
     };
   }>;
@@ -1069,7 +1079,7 @@ function ParameterRiskTooltip({
 
   return (
     <div className="study-analysis-chart-tooltip">
-      <strong>{item.label}</strong>
+      <strong>{item.full_label ?? item.label}</strong>
       <span>{formatProbability(item.average_risk_probability)} risc mediu</span>
       <small>{formatNumber(item.results_count)} rezultate</small>
     </div>
@@ -1086,6 +1096,7 @@ function SelectedAnalysisTooltip({
     payload: {
       parameter_key: StudyParameterKey;
       label: string;
+      full_label?: string;
       probability_percent: number;
       risk_probability: number;
       risk_label: AnalysisRiskLabel;
@@ -1100,7 +1111,7 @@ function SelectedAnalysisTooltip({
 
   return (
     <div className="study-analysis-chart-tooltip">
-      <strong>{item.label}</strong>
+      <strong>{item.full_label ?? item.label}</strong>
       <span>{formatProbability(item.risk_probability)} probabilitate</span>
       <small>{RISK_LABELS[item.risk_label]}</small>
     </div>
@@ -1538,7 +1549,8 @@ export default function StudyAnalysisTab({
   const parameterRiskData = useMemo(() => {
     return (summary?.average_risk_by_parameter ?? []).map((item) => ({
       ...item,
-      label: PARAMETER_LABELS[item.parameter_key],
+      label: PARAMETER_SHORT_LABELS[item.parameter_key],
+      full_label: PARAMETER_LABELS[item.parameter_key],
       percentage_value: item.average_risk_probability * 100,
     }));
   }, [summary]);
@@ -1583,7 +1595,8 @@ export default function StudyAnalysisTab({
 
     return {
       parameter_key: item.parameter_key,
-      label: PARAMETER_LABELS[item.parameter_key],
+      label: PARAMETER_SHORT_LABELS[item.parameter_key],
+      full_label: PARAMETER_LABELS[item.parameter_key],
       probability_percent: averageRisk * 100,
       risk_probability: averageRisk,
       risk_label: item.high_risk_count > 0 ? "high_risk" as AnalysisRiskLabel : "low_risk" as AnalysisRiskLabel,
@@ -1600,7 +1613,8 @@ export default function StudyAnalysisTab({
   
     return selectedParticipantGroup.results.map((result) => ({
       parameter_key: result.parameter_key,
-      label: PARAMETER_LABELS[result.parameter_key],
+      label: PARAMETER_SHORT_LABELS[result.parameter_key],
+      full_label: PARAMETER_LABELS[result.parameter_key],
       probability_percent: result.risk_probability * 100,
       risk_probability: result.risk_probability,
       risk_label: result.risk_label,
@@ -2149,7 +2163,7 @@ export default function StudyAnalysisTab({
                 Nu există rezultate suficiente pentru acest grafic.
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={210}>
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={parameterRiskData}
                   margin={{ top: 16, right: 20, left: -14, bottom: 4 }}
@@ -2160,13 +2174,13 @@ export default function StudyAnalysisTab({
                     dataKey="label"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 10, fill: "#6f7f83", fontWeight: 700 }}
+                    tick={{ fontSize: 9, fill: "#6f7f83", fontWeight: 700 }}
                   />
 
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 10, fill: "#6f7f83", fontWeight: 700 }}
+                    tick={{ fontSize: 9, fill: "#6f7f83", fontWeight: 700 }}
                     width={42}
                     tickFormatter={(value) => `${value}%`}
                   />
@@ -2212,7 +2226,7 @@ export default function StudyAnalysisTab({
                 Nu există participanți analizați pentru criteriile selectate.
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={210}>
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={topParticipantsRiskData}
                   margin={{ top: 16, right: 20, left: -9, bottom: 4 }}
@@ -2223,13 +2237,13 @@ export default function StudyAnalysisTab({
                     dataKey="label"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 10, fill: "#6f7f83", fontWeight: 700 }}
+                    tick={{ fontSize: 9, fill: "#6f7f83", fontWeight: 700 }}
                   />
 
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 10, fill: "#6f7f83", fontWeight: 700 }}
+                    tick={{ fontSize: 9, fill: "#6f7f83", fontWeight: 700 }}
                     width={42}
                     tickFormatter={(value) => `${value}%`}
                   />
@@ -2497,13 +2511,13 @@ export default function StudyAnalysisTab({
             <table className="study-analysis-table">
               <thead>
                 <tr>
-                  <th>Data rulării</th>
-                  <th>Interval analizat</th>
-                  <th>Criterii analiză</th>
-                  <th>Participanți</th>
-                  <th>Risc maxim</th>
-                  <th>Raport</th>
-                  <th>Înregistrări</th>
+                  <th className="study-analysis-col-created">Data rulării</th>
+                  <th className="study-analysis-col-interval">Interval analizat</th>
+                  <th className="study-analysis-col-criteria">Criterii analiză</th>
+                  <th className="study-analysis-col-participants">Participanți</th>
+                  <th className="study-analysis-col-risk">Risc maxim</th>
+                  <th className="study-analysis-col-report">Raport</th>
+                  <th className="study-analysis-col-records">Înregistrări</th>
                 </tr>
               </thead>
 
@@ -2530,11 +2544,15 @@ export default function StudyAnalysisTab({
                       }
                     }}
                   >
-                    <td>{formatDateTime(run.created_at)}</td>
+                    <td className="study-analysis-col-created">
+                      {formatDateTime(run.created_at)}
+                    </td>
 
-                    <td>{getAnalysisIntervalLabel(run)}</td>
+                    <td className="study-analysis-col-interval">
+                      {getAnalysisIntervalLabel(run)}
+                    </td>
 
-                    <td>
+                    <td className="study-analysis-col-criteria">
                       <div className="study-analysis-criteria-list">
                         {getAnalysisCriteriaLabels(run).slice(0, 3).map((label) => (
                           <span key={label} className="study-analysis-criteria-badge">
@@ -2550,22 +2568,24 @@ export default function StudyAnalysisTab({
                       </div>
                     </td>
 
-                    <td>
+                    <td className="study-analysis-col-participants">
                       <strong>{formatNumber(run.participants_count)}</strong>
                       <small className="study-analysis-table-muted"> participanți</small>
                     </td>
 
-                    <td className="study-analysis-table__probability">
+                    <td className="study-analysis-table__probability study-analysis-col-risk">
                       {formatProbability(run.highest_risk_result.risk_probability)}
                     </td>
 
-                    <td>
+                    <td className="study-analysis-col-report">
                       <span className={`study-analysis-risk ${getRunRiskClassName(run)}`}>
                         {shouldRunNeedAttention(run) ? "Raport cu risc" : "Raport stabil"}
                       </span>
                     </td>
 
-                    <td>{formatNumber(run.records_used)}</td>
+                    <td className="study-analysis-col-records">
+                      {formatNumber(run.records_used)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -2776,7 +2796,7 @@ export default function StudyAnalysisTab({
                   <h4>Risc mediu pe parametri</h4>
 
                   <div className="study-analysis-modal-chart">
-                    <ResponsiveContainer width="100%" height={175}>
+                    <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={selectedRunChartData}
                         margin={{ top: 12, right: 12, left: -8, bottom: 2 }}
@@ -2787,13 +2807,13 @@ export default function StudyAnalysisTab({
                           dataKey="label"
                           axisLine={false}
                           tickLine={false}
-                          tick={{ fontSize: 10, fill: "#6f7f83", fontWeight: 700 }}
+                          tick={{ fontSize: 9, fill: "#6f7f83", fontWeight: 700 }}
                         />
 
                         <YAxis
                           axisLine={false}
                           tickLine={false}
-                          tick={{ fontSize: 10, fill: "#6f7f83", fontWeight: 700 }}
+                          tick={{ fontSize: 9, fill: "#6f7f83", fontWeight: 700 }}
                           width={38}
                           tickFormatter={(value) => `${value}%`}
                         />
@@ -2899,7 +2919,7 @@ export default function StudyAnalysisTab({
                     </div>
 
                     <div className="study-analysis-modal-chart">
-                      <ResponsiveContainer width="100%" height={170}>
+                      <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                           data={selectedParticipantChartData}
                           margin={{ top: 12, right: 12, left: -8, bottom: 2 }}
@@ -3068,22 +3088,36 @@ export default function StudyAnalysisTab({
                           <table className="study-analysis-observed-table">
                             <thead>
                               <tr>
-                                <th>Moment măsurare</th>
-                                <th>Ritm cardiac</th>
-                                <th>Frecvență respiratorie</th>
-                                <th>SpO₂</th>
-                                <th>Temperatură</th>
+                                <th className="study-analysis-observed-col-moment">Moment măsurare</th>
+                                <th className="study-analysis-observed-col-hr">Ritm cardiac</th>
+                                <th className="study-analysis-observed-col-rr">Frecvență respiratorie</th>
+                                <th className="study-analysis-observed-col-spo2">SpO₂</th>
+                                <th className="study-analysis-observed-col-temp">Temperatură</th>
                               </tr>
                             </thead>
 
                             <tbody>
                               {observedValues.records.slice(0, 3).map((record) => (
                                 <tr key={record.measured_at}>
-                                  <td>{formatDateTime(record.measured_at)}</td>
-                                  <td>{formatVitalValue(record.heart_rate, "bătăi/min")}</td>
-                                  <td>{formatVitalValue(record.respiratory_rate, "respirații/min")}</td>
-                                  <td>{formatVitalValue(record.spo2, "%")}</td>
-                                  <td>{formatVitalValue(record.temperature, "°C")}</td>
+                                  <td className="study-analysis-observed-col-moment">
+                                    {formatDateTime(record.measured_at)}
+                                  </td>
+
+                                  <td className="study-analysis-observed-col-hr">
+                                    {formatVitalValue(record.heart_rate, "bătăi/min")}
+                                  </td>
+
+                                  <td className="study-analysis-observed-col-rr">
+                                    {formatVitalValue(record.respiratory_rate, "respirații/min")}
+                                  </td>
+
+                                  <td className="study-analysis-observed-col-spo2">
+                                    {formatVitalValue(record.spo2, "%")}
+                                  </td>
+
+                                  <td className="study-analysis-observed-col-temp">
+                                    {formatVitalValue(record.temperature, "°C")}
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>

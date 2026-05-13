@@ -110,6 +110,7 @@ type StudyRiskChartItem = {
 type ParameterRiskChartItem = {
   parameter_key: StudyParameterKey;
   label: string;
+  full_label: string;
   average_risk_probability: number;
   percentage_value: number;
   results_count: number;
@@ -120,6 +121,13 @@ const PARAMETER_LABELS: Record<StudyParameterKey, string> = {
   respiratoryRate: "Frecvență respiratorie",
   spo2: "SpO₂",
   temperature: "Temperatură",
+};
+
+const PARAMETER_SHORT_LABELS: Record<StudyParameterKey, string> = {
+  heartRate: "Ritm",
+  respiratoryRate: "Resp.",
+  spo2: "SpO₂",
+  temperature: "Temp.",
 };
 
 const PARAMETER_COLORS: Record<StudyParameterKey, string> = {
@@ -484,7 +492,7 @@ function ParameterRiskTooltip({
 
   return (
     <div className="researcher-analysis-tooltip">
-      <strong>{item.label}</strong>
+      <strong>{item.full_label}</strong>
       <span>{formatProbability(item.average_risk_probability)} risc mediu</span>
       <small>{formatNumber(item.results_count)} rezultate</small>
     </div>
@@ -715,7 +723,8 @@ export default function ResearcherAnalysis() {
 
       return {
         parameter_key: item.parameter_key,
-        label: PARAMETER_LABELS[item.parameter_key],
+        label: PARAMETER_SHORT_LABELS[item.parameter_key],
+        full_label: PARAMETER_LABELS[item.parameter_key],
         average_risk_probability: averageRisk,
         percentage_value: averageRisk * 100,
         results_count: item.count,
@@ -910,7 +919,7 @@ export default function ResearcherAnalysis() {
                   Nu există suficiente rezultate pentru acest grafic.
                 </div>
               ) : (
-                <ResponsiveContainer width="100%" height={270}>
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={studyRiskChartData}
                     margin={{ top: 16, right: 20, left: -10, bottom: 4 }}
@@ -962,7 +971,7 @@ export default function ResearcherAnalysis() {
                   Nu există suficiente rezultate pentru acest grafic.
                 </div>
               ) : (
-                <ResponsiveContainer width="100%" height={270}>
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={parameterRiskChartData}
                     margin={{ top: 16, right: 20, left: -10, bottom: 4 }}
@@ -1025,13 +1034,13 @@ export default function ResearcherAnalysis() {
               <table className="researcher-analysis-table">
                 <thead>
                   <tr>
-                    <th>Data rulării</th>
-                    <th>Studiu</th>
-                    <th>Interval</th>
-                    <th>Participanți</th>
-                    <th>Risc maxim</th>
-                    <th>Status</th>
-                    <th>Înregistrări</th>
+                    <th className="researcher-analysis-col-date">Data rulării</th>
+                    <th className="researcher-analysis-col-study">Studiu</th>
+                    <th className="researcher-analysis-col-interval">Interval</th>
+                    <th className="researcher-analysis-col-participants">Participanți</th>
+                    <th className="researcher-analysis-col-risk">Risc maxim</th>
+                    <th className="researcher-analysis-col-status">Status</th>
+                    <th className="researcher-analysis-col-records">Înregistrări</th>
                   </tr>
                 </thead>
 
@@ -1058,32 +1067,40 @@ export default function ResearcherAnalysis() {
                     }
                     }}
                     >
-                    <td>{formatDateTime(run.created_at)}</td>
-
-                    <td>
-                        <strong>{run.study.code}</strong>
-                        <small>{run.study.title}</small>
+                    <td className="researcher-analysis-col-date">
+                      {formatDateTime(run.created_at)}
                     </td>
 
-                    <td>{getAnalysisIntervalLabel(run)}</td>
-
-                    <td>{formatNumber(run.participants_count)}</td>
-
-                    <td className="researcher-analysis-table__probability">
-                        {formatProbability(run.highest_risk_result.risk_probability)}
+                    <td className="researcher-analysis-col-study">
+                      <strong>{run.study.code}</strong>
+                      <small>{run.study.title}</small>
                     </td>
 
-                    <td>
-                        <span
+                    <td className="researcher-analysis-col-interval">
+                      {getAnalysisIntervalLabel(run)}
+                    </td>
+
+                    <td className="researcher-analysis-col-participants">
+                      {formatNumber(run.participants_count)}
+                    </td>
+
+                    <td className="researcher-analysis-table__probability researcher-analysis-col-risk">
+                      {formatProbability(run.highest_risk_result.risk_probability)}
+                    </td>
+
+                    <td className="researcher-analysis-col-status">
+                      <span
                         className={`researcher-analysis-status ${
-                            run.high_risk_count > 0 ? "is-high" : "is-low"
+                          run.high_risk_count > 0 ? "is-high" : "is-low"
                         }`}
-                        >
+                      >
                         {run.high_risk_count > 0 ? "Necesită atenție" : "Stabilă"}
-                        </span>
+                      </span>
                     </td>
 
-                    <td>{formatNumber(run.records_used)}</td>
+                    <td className="researcher-analysis-col-records">
+                      {formatNumber(run.records_used)}
+                    </td>
                     </tr>
                 ))}
                 </tbody>

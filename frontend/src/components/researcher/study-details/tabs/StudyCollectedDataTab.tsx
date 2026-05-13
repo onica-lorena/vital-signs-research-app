@@ -1228,7 +1228,7 @@ export default function StudyCollectedDataTab({
             <strong>
               {isSummaryLoading ? "..." : formatNumber(summary?.rejected_count)}
             </strong>
-            <small>{formatPercent(rejectedRate)}din total</small>
+            <small>{formatPercent(rejectedRate)} din total</small>
           </div>
         </article>
       </div>
@@ -1505,13 +1505,13 @@ export default function StudyCollectedDataTab({
             <table className="study-collected-table">
               <thead>
                 <tr>
-                  <th>Participant</th>
-                  <th>Metodă</th>
-                  <th>Status sesiune</th>
-                  <th>Înregistrări</th>
-                  <th>Valori</th>
-                  <th>Interval date</th>
-                  <th>Data trimiterii</th>
+                  <th className="study-collected-col-participant">Participant</th>
+                  <th className="study-collected-col-method">Metodă</th>
+                  <th className="study-collected-col-status">Status sesiune</th>
+                  <th className="study-collected-col-records">Înregistrări</th>
+                  <th className="study-collected-col-values">Valori</th>
+                  <th className="study-collected-col-interval">Interval date</th>
+                  <th className="study-collected-col-submitted">Data trimiterii</th>
                 </tr>
               </thead>
 
@@ -1531,7 +1531,7 @@ export default function StudyCollectedDataTab({
                       }
                     }}
                   >
-                    <td>
+                    <td className="study-collected-col-participant">
                       <div className="study-collected-participant-cell">
                         <span>{getInitials(session.participant_full_name)}</span>
                         <div>
@@ -1541,7 +1541,7 @@ export default function StudyCollectedDataTab({
                       </div>
                     </td>
 
-                    <td>
+                    <td className="study-collected-col-method">
                       <span
                         className={`study-collected-method ${getMethodClassName(
                           session.entry_method
@@ -1551,7 +1551,7 @@ export default function StudyCollectedDataTab({
                       </span>
                     </td>
 
-                    <td>
+                    <td className="study-collected-col-status">
                       <span
                         className={`study-collected-status ${getStatusClassName(
                           session.status_summary
@@ -1561,17 +1561,25 @@ export default function StudyCollectedDataTab({
                       </span>
                     </td>
 
-                    <td>{formatNumber(session.records_count)}</td>
+                    <td className="study-collected-col-records">
+                      {formatNumber(session.records_count)}
+                    </td>
 
-                    <td>{formatNumber(session.values_count)}</td>
+                    <td className="study-collected-col-values">
+                      {formatNumber(session.values_count)}
+                    </td>
 
-                    <td>
+                    <td className="study-collected-col-interval">
                       {session.interval_start && session.interval_end
-                        ? `${formatDate(session.interval_start)} - ${formatDate(session.interval_end)}`
+                        ? `${formatDate(session.interval_start)} - ${formatDate(
+                            session.interval_end
+                          )}`
                         : "—"}
                     </td>
 
-                    <td>{formatDateTime(session.submitted_at)}</td>
+                    <td className="study-collected-col-submitted">
+                      {formatDateTime(session.submitted_at)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1766,11 +1774,11 @@ export default function StudyCollectedDataTab({
                 <table className="study-collected-values-table">
                   <thead>
                     <tr>
-                      <th>Moment</th>
-                      <th>Ritm cardiac</th>
-                      <th>Frecvență respiratorie</th>
-                      <th>SpO₂</th>
-                      <th>Temperatură</th>
+                      <th className="study-collected-value-col-moment">Moment</th>
+                      <th className="study-collected-value-col-hr">Ritm cardiac</th>
+                      <th className="study-collected-value-col-rr">Frecvență respiratorie</th>
+                      <th className="study-collected-value-col-spo2">SpO₂</th>
+                      <th className="study-collected-value-col-temp">Temperatură</th>
                     </tr>
                   </thead>
 
@@ -1783,15 +1791,26 @@ export default function StudyCollectedDataTab({
 
                       return (
                         <tr key={record.submission_id}>
-                          <td>
+                          <td className="study-collected-value-col-moment">
                             <strong>{formatDateTime(getRecordMeasuredAt(record))}</strong>
                             <small>#{record.submission_id}</small>
                           </td>
 
-                          <td>{formatParameterValue(heartRate)}</td>
-                          <td>{formatParameterValue(respiratoryRate)}</td>
-                          <td>{formatParameterValue(spo2)}</td>
-                          <td>{formatParameterValue(temperature)}</td>
+                          <td className="study-collected-value-col-hr">
+                            {formatParameterValue(heartRate)}
+                          </td>
+
+                          <td className="study-collected-value-col-rr">
+                            {formatParameterValue(respiratoryRate)}
+                          </td>
+
+                          <td className="study-collected-value-col-spo2">
+                            {formatParameterValue(spo2)}
+                          </td>
+
+                          <td className="study-collected-value-col-temp">
+                            {formatParameterValue(temperature)}
+                          </td>
                         </tr>
                       );
                     })}

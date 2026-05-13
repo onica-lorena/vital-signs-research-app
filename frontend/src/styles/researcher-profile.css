@@ -564,6 +564,630 @@
 }
 
 @media (max-width: 1180px) {
+  .researcher-profile-page {
+    gap: 11px;
+  }
+
+  .researcher-profile-hero {
+    padding: 15px;
+    border-radius: 16px;
+    gap: 14px;
+  }
+
+  .researcher-profile-avatar {
+    width: 58px;
+    height: 58px;
+    border-radius: 19px;
+    font-size: 18px;
+  }
+
+  .researcher-profile-hero h2 {
+    font-size: 22px;
+  }
+
+  .researcher-profile-hero p {
+    font-size: 11px;
+  }
+
+  .researcher-profile-status-card {
+    width: 235px;
+    padding: 11px;
+    border-radius: 14px;
+  }
+
+  .researcher-profile-status-card__top span {
+    font-size: 9.2px;
+  }
+
+  .researcher-profile-status-card__top strong {
+    font-size: 20px;
+  }
+
+  .researcher-profile-status-card small {
+    font-size: 8.8px;
+  }
+
+  .researcher-profile-grid {
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 10px;
+  }
+
+  .researcher-profile-main-column,
+  .researcher-profile-side-column {
+    gap: 10px;
+  }
+
+  .researcher-profile-card,
+  .researcher-profile-side-card {
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .researcher-profile-card__header {
+    gap: 11px;
+    margin-bottom: 13px;
+  }
+
+  .researcher-profile-card__header h3,
+  .researcher-profile-side-card__header h3 {
+    font-size: 15px;
+  }
+
+  .researcher-profile-card__header p {
+    font-size: 10.2px;
+    line-height: 1.42;
+  }
+
+  .researcher-profile-card__icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 11px;
+  }
+
+  .researcher-profile-card__icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .researcher-profile-form-grid {
+    gap: 9px 10px;
+  }
+
+  .researcher-profile-field {
+    gap: 5px;
+  }
+
+  .researcher-profile-field span {
+    font-size: 10px;
+  }
+
+  .researcher-profile-field input {
+    min-height: 36px;
+    padding: 0 10px;
+    border-radius: 11px;
+    font-size: 10.5px;
+  }
+
+  .researcher-profile-field textarea {
+    min-height: 92px;
+    padding: 9px 10px;
+    border-radius: 11px;
+    font-size: 10.5px;
+  }
+
+  .researcher-profile-field small {
+    font-size: 9px;
+  }
+
+  .researcher-profile-actions {
+    padding-top: 10px;
+  }
+
+  .researcher-profile-primary-btn,
+  .researcher-profile-secondary-btn {
+    min-height: 35px;
+    padding: 0 12px;
+    border-radius: 11px;
+    font-size: 10px;
+  }
+
+  .researcher-profile-primary-btn svg,
+  .researcher-profile-secondary-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .researcher-profile-side-card__header {
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+
+  .researcher-profile-side-card__header > span {
+    width: 29px;
+    height: 29px;
+    border-radius: 10px;
+  }
+
+  .researcher-profile-side-card__header svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .researcher-profile-info-list {
+    gap: 8px;
+  }
+
+  .researcher-profile-info-item {
+    grid-template-columns: 27px minmax(0, 1fr);
+    gap: 7px;
+    padding: 7px;
+    border-radius: 11px;
+  }
+
+  .researcher-profile-info-item__icon {
+    width: 27px;
+    height: 27px;
+    border-radius: 9px;
+  }
+
+  .researcher-profile-info-item__icon svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .researcher-profile-info-item div > span,
+  .researcher-profile-definition-list dt {
+    font-size: 8.5px;
+  }
+
+  .researcher-profile-info-item strong {
+    font-size: 9.2px;
+  }
+
+  .researcher-profile-definition-list {
+    gap: 7px;
+  }
+
+  .researcher-profile-definition-list div {
+    padding: 8px;
+    border-radius: 11px;
+  }
+
+  .researcher-profile-definition-list dd {
+    font-size: 9.6px;
+    line-height: 1.35;
+  }
+
+  .researcher-profile-status-list {
+    gap: 8px;
+  }
+
+  .researcher-profile-status-list div {
+    min-height: 46px;
+    padding: 0 8px;
+    border-radius: 11px;
+  }
+
+  .researcher-profile-status-list span {
+    font-size: 9px;
+  }
+
+  .researcher-profile-status-list strong {
+    min-height: 20px;
+    padding: 0 7px;
+    font-size: 8px;
+  }
+
+  .researcher-profile-side-card p {
+    margin-top: 16px;
+    font-size: 9.2px;
+    line-height: 1.45;
+  }
+}
+
+@media (max-width: 1024px) {
+  .researcher-profile-grid {
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 9px;
+  }
+
+  .researcher-profile-hero {
+    padding: 13px;
+  }
+
+  .researcher-profile-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 17px;
+    font-size: 16px;
+  }
+
+  .researcher-profile-hero h2 {
+    margin-top: 5px;
+    font-size: 19px;
+  }
+
+  .researcher-profile-hero p {
+    margin-top: 4px;
+    font-size: 10px;
+  }
+
+  .researcher-profile-status-card {
+    width: 210px;
+    padding: 10px;
+  }
+
+  .researcher-profile-status-card__top strong {
+    font-size: 18px;
+  }
+
+  .researcher-profile-progress {
+    height: 7px;
+    margin-top: 9px;
+  }
+
+  .researcher-profile-status-card small {
+    margin-top: 7px;
+    font-size: 8px;
+    line-height: 1.3;
+  }
+
+  .researcher-profile-card,
+  .researcher-profile-side-card {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .researcher-profile-card__header h3,
+  .researcher-profile-side-card__header h3 {
+    font-size: 13.5px;
+  }
+
+  .researcher-profile-card__header p {
+    font-size: 9.2px;
+  }
+
+  .researcher-profile-form-grid {
+    gap: 8px;
+  }
+
+  .researcher-profile-field span {
+    font-size: 9.2px;
+  }
+
+  .researcher-profile-field input {
+    min-height: 34px;
+    font-size: 9.5px;
+    border-radius: 10px;
+  }
+
+  .researcher-profile-field textarea {
+    min-height: 84px;
+    font-size: 9.5px;
+    border-radius: 10px;
+  }
+
+  .researcher-profile-primary-btn,
+  .researcher-profile-secondary-btn {
+    min-height: 33px;
+    padding: 0 10px;
+    border-radius: 10px;
+    font-size: 9.2px;
+  }
+
+  .researcher-profile-side-card__header > span {
+    width: 27px;
+    height: 27px;
+  }
+
+  .researcher-profile-info-item {
+    grid-template-columns: 25px minmax(0, 1fr);
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .researcher-profile-info-item__icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  .researcher-profile-info-item div > span,
+  .researcher-profile-definition-list dt {
+    font-size: 8px;
+  }
+
+  .researcher-profile-info-item strong,
+  .researcher-profile-definition-list dd {
+    font-size: 8.8px;
+  }
+
+  .researcher-profile-status-list div {
+    min-height: 42px;
+  }
+
+  .researcher-profile-status-list span {
+    font-size: 8.4px;
+  }
+
+  .researcher-profile-side-card p {
+    font-size: 8.5px;
+  }
+}
+
+@media (max-width: 900px) {
+  .researcher-profile-page {
+    gap: 10px;
+  }
+
+  .researcher-profile-hero {
+    align-items: center;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .researcher-profile-hero__identity {
+    gap: 10px;
+  }
+
+  .researcher-profile-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    font-size: 14px;
+  }
+
+  .researcher-profile-hero h2 {
+    font-size: 17px;
+  }
+
+  .researcher-profile-hero p {
+    font-size: 9px;
+  }
+
+  .researcher-profile-status-card {
+    width: 190px;
+    flex-shrink: 0;
+  }
+
+  .researcher-profile-status-card__top span {
+    font-size: 8px;
+  }
+
+  .researcher-profile-status-card__top strong {
+    font-size: 16px;
+  }
+
+  .researcher-profile-status-card small {
+    font-size: 7.2px;
+  }
+
+  .researcher-profile-grid {
+    grid-template-columns: minmax(0, 1fr) 200px;
+    gap: 8px;
+  }
+
+  .researcher-profile-main-column,
+  .researcher-profile-side-column {
+    gap: 8px;
+  }
+
+  .researcher-profile-card,
+  .researcher-profile-side-card {
+    padding: 10px;
+    border-radius: 13px;
+  }
+
+  .researcher-profile-card__header {
+    margin-bottom: 10px;
+  }
+
+  .researcher-profile-card__header h3,
+  .researcher-profile-side-card__header h3 {
+    font-size: 12.5px;
+  }
+
+  .researcher-profile-card__header p {
+    font-size: 8.4px;
+    line-height: 1.35;
+  }
+
+  .researcher-profile-card__icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+  }
+
+  .researcher-profile-card__icon svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .researcher-profile-form {
+    gap: 10px;
+  }
+
+  .researcher-profile-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .researcher-profile-field--full {
+    grid-column: 1 / -1;
+  }
+
+  .researcher-profile-field span {
+    font-size: 8.5px;
+  }
+
+  .researcher-profile-field input {
+    min-height: 32px;
+    padding: 0 8px;
+    font-size: 8.8px;
+    border-radius: 9px;
+  }
+
+  .researcher-profile-field textarea {
+    min-height: 76px;
+    padding: 8px;
+    font-size: 8.8px;
+    border-radius: 9px;
+  }
+
+  .researcher-profile-field small {
+    font-size: 8px;
+  }
+
+  .researcher-profile-actions {
+    padding-top: 8px;
+  }
+
+  .researcher-profile-primary-btn,
+  .researcher-profile-secondary-btn {
+    min-height: 31px;
+    padding: 0 8px;
+    border-radius: 9px;
+    font-size: 8.5px;
+  }
+
+  .researcher-profile-side-card__header {
+    margin-bottom: 8px;
+  }
+
+  .researcher-profile-side-card__header > span {
+    width: 25px;
+    height: 25px;
+    border-radius: 9px;
+  }
+
+  .researcher-profile-side-card__header svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .researcher-profile-info-list,
+  .researcher-profile-definition-list,
+  .researcher-profile-status-list {
+    gap: 6px;
+  }
+
+  .researcher-profile-info-item {
+    grid-template-columns: 23px minmax(0, 1fr);
+    padding: 6px;
+    border-radius: 10px;
+  }
+
+  .researcher-profile-info-item__icon {
+    width: 23px;
+    height: 23px;
+    border-radius: 8px;
+  }
+
+  .researcher-profile-info-item__icon svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .researcher-profile-info-item div > span,
+  .researcher-profile-definition-list dt {
+    font-size: 7.3px;
+  }
+
+  .researcher-profile-info-item strong,
+  .researcher-profile-definition-list dd {
+    font-size: 8px;
+  }
+
+  .researcher-profile-definition-list div {
+    padding: 7px;
+    border-radius: 10px;
+  }
+
+  .researcher-profile-status-list div {
+    min-height: 38px;
+    padding: 0 7px;
+    border-radius: 10px;
+  }
+
+  .researcher-profile-status-list span {
+    font-size: 7.6px;
+  }
+
+  .researcher-profile-status-list strong {
+    min-height: 18px;
+    padding: 0 6px;
+    font-size: 7.2px;
+  }
+
+  .researcher-profile-side-card p {
+    margin-top: 11px;
+    font-size: 7.7px;
+    line-height: 1.38;
+  }
+}
+
+@media (max-width: 760px) {
+  .researcher-profile-page {
+    gap: 9px;
+  }
+
+  .researcher-profile-banner,
+  .researcher-profile-inline-banner {
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+
+  .researcher-profile-hero {
+    padding: 9px;
+    border-radius: 12px;
+    align-items: stretch;
+  }
+
+  .researcher-profile-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    font-size: 13px;
+  }
+
+  .researcher-profile-hero h2 {
+    font-size: 15.5px;
+  }
+
+  .researcher-profile-hero p {
+    font-size: 8.2px;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+
+  .researcher-profile-status-card {
+    width: 170px;
+    padding: 8px;
+    border-radius: 11px;
+  }
+
+  .researcher-profile-status-card__top {
+    gap: 7px;
+  }
+
+  .researcher-profile-status-card__top span {
+    font-size: 7.2px;
+  }
+
+  .researcher-profile-status-card__top strong {
+    font-size: 14px;
+  }
+
+  .researcher-profile-progress {
+    height: 6px;
+    margin-top: 7px;
+  }
+
+  .researcher-profile-status-card small {
+    margin-top: 6px;
+    font-size: 6.4px;
+    line-height: 1.25;
+  }
+
   .researcher-profile-grid {
     grid-template-columns: 1fr;
   }
@@ -572,48 +1196,138 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  .researcher-profile-card,
+  .researcher-profile-side-card {
+    padding: 9px;
+    border-radius: 12px;
+  }
+
+  .researcher-profile-card__header h3,
+  .researcher-profile-side-card__header h3 {
+    font-size: 11.5px;
+  }
+
+  .researcher-profile-card__header p {
+    font-size: 7.8px;
+  }
+
+  .researcher-profile-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .researcher-profile-field span {
+    font-size: 7.8px;
+  }
+
+  .researcher-profile-field input {
+    min-height: 30px;
+    font-size: 8px;
+    border-radius: 8px;
+  }
+
+  .researcher-profile-field textarea {
+    min-height: 68px;
+    font-size: 8px;
+    border-radius: 8px;
+  }
+
+  .researcher-profile-actions {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .researcher-profile-primary-btn,
+  .researcher-profile-secondary-btn {
+    width: auto;
+    min-height: 29px;
+    font-size: 7.8px;
+    border-radius: 8px;
+  }
+
+  .researcher-profile-side-card__header > span {
+    width: 22px;
+    height: 22px;
+    border-radius: 8px;
+  }
+
+  .researcher-profile-side-card__header svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .researcher-profile-info-item {
+    grid-template-columns: 20px minmax(0, 1fr);
+    gap: 5px;
+    padding: 5px;
+  }
+
+  .researcher-profile-info-item__icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 7px;
+  }
+
+  .researcher-profile-info-item__icon svg {
+    width: 9px;
+    height: 9px;
+  }
+
+  .researcher-profile-info-item div > span,
+  .researcher-profile-definition-list dt {
+    font-size: 6.6px;
+  }
+
+  .researcher-profile-info-item strong,
+  .researcher-profile-definition-list dd {
+    font-size: 7.2px;
+  }
+
+  .researcher-profile-definition-list div {
+    padding: 6px;
+  }
+
+  .researcher-profile-status-list div {
+    min-height: 34px;
+    padding: 0 6px;
+  }
+
+  .researcher-profile-status-list span {
+    font-size: 6.8px;
+  }
+
+  .researcher-profile-status-list strong {
+    min-height: 16px;
+    font-size: 6.5px;
+  }
+
+  .researcher-profile-side-card p {
+    font-size: 6.8px;
+  }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 640px) {
   .researcher-profile-hero {
     flex-direction: column;
-    align-items: stretch;
   }
 
   .researcher-profile-status-card {
     width: 100%;
   }
 
+  .researcher-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
   .researcher-profile-side-column {
     grid-template-columns: 1fr;
   }
-}
 
-@media (max-width: 640px) {
-  .researcher-profile-hero,
   .researcher-profile-card,
   .researcher-profile-side-card {
-    border-radius: 14px;
-    padding: 13px;
-  }
-
-  .researcher-profile-hero__identity {
-    align-items: flex-start;
-  }
-
-  .researcher-profile-avatar {
-    width: 54px;
-    height: 54px;
-    border-radius: 18px;
-    font-size: 17px;
-  }
-
-  .researcher-profile-hero h2 {
-    font-size: 20px;
-  }
-
-  .researcher-profile-card__header {
-    align-items: flex-start;
+    padding: 10px;
+    border-radius: 13px;
   }
 
   .researcher-profile-form-grid {
@@ -624,17 +1338,244 @@
     grid-column: auto;
   }
 
-  .researcher-profile-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
+  .researcher-profile-actions,
   .researcher-profile-actions--end {
+    flex-direction: column;
     align-items: stretch;
   }
 
   .researcher-profile-primary-btn,
   .researcher-profile-secondary-btn {
     width: 100%;
+  }
+
+  .researcher-profile-card__header h3,
+  .researcher-profile-side-card__header h3 {
+    font-size: 12px;
+  }
+
+  .researcher-profile-card__header p {
+    font-size: 8.4px;
+  }
+
+  .researcher-profile-field span {
+    font-size: 8.5px;
+  }
+
+  .researcher-profile-field input {
+    min-height: 32px;
+    font-size: 8.8px;
+  }
+
+  .researcher-profile-field textarea {
+    min-height: 74px;
+    font-size: 8.8px;
+  }
+
+  .researcher-profile-primary-btn,
+  .researcher-profile-secondary-btn {
+    min-height: 31px;
+    font-size: 8.5px;
+  }
+
+  .researcher-profile-info-item {
+    grid-template-columns: 24px minmax(0, 1fr);
+    padding: 6px;
+  }
+
+  .researcher-profile-info-item__icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .researcher-profile-info-item div > span,
+  .researcher-profile-definition-list dt {
+    font-size: 7.5px;
+  }
+
+  .researcher-profile-info-item strong,
+  .researcher-profile-definition-list dd {
+    font-size: 8.4px;
+  }
+
+  .researcher-profile-status-list span {
+    font-size: 7.8px;
+  }
+
+  .researcher-profile-status-list strong {
+    font-size: 7.2px;
+  }
+
+  .researcher-profile-side-card p {
+    font-size: 7.8px;
+  }
+}
+
+@media (max-width: 430px) {
+  .researcher-profile-page {
+    gap: 8px;
+  }
+
+  .researcher-profile-hero,
+  .researcher-profile-card,
+  .researcher-profile-side-card {
+    padding: 8px;
+    border-radius: 11px;
+  }
+
+  .researcher-profile-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .researcher-profile-hero h2 {
+    font-size: 14px;
+  }
+
+  .researcher-profile-hero p {
+    font-size: 7.6px;
+  }
+
+  .researcher-profile-status-card {
+    padding: 7px;
+    border-radius: 10px;
+  }
+
+  .researcher-profile-status-card__top span {
+    font-size: 6.8px;
+  }
+
+  .researcher-profile-status-card__top strong {
+    font-size: 13px;
+  }
+
+  .researcher-profile-status-card small {
+    font-size: 6.2px;
+  }
+
+  .researcher-profile-card__header {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .researcher-profile-card__header h3,
+  .researcher-profile-side-card__header h3 {
+    font-size: 10.8px;
+  }
+
+  .researcher-profile-card__header p {
+    font-size: 7.3px;
+  }
+
+  .researcher-profile-card__icon {
+    width: 25px;
+    height: 25px;
+    border-radius: 8px;
+  }
+
+  .researcher-profile-card__icon svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .researcher-profile-form {
+    gap: 8px;
+  }
+
+  .researcher-profile-form-grid {
+    gap: 6px;
+  }
+
+  .researcher-profile-field {
+    gap: 4px;
+  }
+
+  .researcher-profile-field span {
+    font-size: 7.8px;
+  }
+
+  .researcher-profile-field input {
+    min-height: 30px;
+    padding: 0 7px;
+    font-size: 8px;
+    border-radius: 8px;
+  }
+
+  .researcher-profile-field textarea {
+    min-height: 66px;
+    padding: 7px;
+    font-size: 8px;
+    border-radius: 8px;
+  }
+
+  .researcher-profile-field small {
+    font-size: 7.2px;
+  }
+
+  .researcher-profile-primary-btn,
+  .researcher-profile-secondary-btn {
+    min-height: 29px;
+    font-size: 7.8px;
+    border-radius: 8px;
+  }
+
+  .researcher-profile-info-item div > span,
+  .researcher-profile-definition-list dt {
+    font-size: 6.9px;
+  }
+
+  .researcher-profile-info-item strong,
+  .researcher-profile-definition-list dd {
+    font-size: 7.7px;
+  }
+
+  .researcher-profile-status-list div {
+    min-height: 32px;
+  }
+
+  .researcher-profile-status-list span {
+    font-size: 7px;
+  }
+
+  .researcher-profile-status-list strong {
+    min-height: 16px;
+    font-size: 6.5px;
+  }
+
+  .researcher-profile-side-card p {
+    margin-top: 9px;
+    font-size: 7px;
+  }
+}
+
+@media (max-width: 380px) {
+  .researcher-profile-card__header h3,
+  .researcher-profile-side-card__header h3 {
+    font-size: 10px;
+  }
+
+  .researcher-profile-card__header p {
+    font-size: 6.8px;
+  }
+
+  .researcher-profile-field span {
+    font-size: 7.2px;
+  }
+
+  .researcher-profile-field input,
+  .researcher-profile-field textarea {
+    font-size: 7.4px;
+  }
+
+  .researcher-profile-primary-btn,
+  .researcher-profile-secondary-btn {
+    font-size: 7.2px;
+  }
+
+  .researcher-profile-info-item strong,
+  .researcher-profile-definition-list dd {
+    font-size: 7.1px;
   }
 }

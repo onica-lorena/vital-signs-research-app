@@ -213,15 +213,7 @@ export default function LoginPage() {
         <div className="login-card">
           <form className="login-form" onSubmit={handleSubmit}>
             {sessionExpired ? (
-              <p
-                style={{
-                  margin: 0,
-                  color: "#c65a4b",
-                  fontSize: "0.92rem",
-                  fontWeight: 700,
-                  textAlign: "center",
-                }}
-              >
+              <p className="login-message login-message--error">
                 Sesiunea a expirat. Te rugăm să te autentifici din nou.
               </p>
             ) : null}
@@ -292,17 +284,9 @@ export default function LoginPage() {
             </div>
 
             {errorMessage ? (
-                <p
-                    style={{
-                    margin: 0,
-                    color: "#c65a4b",
-                    fontSize: "0.92rem",
-                    fontWeight: 700,
-                    textAlign: "center",
-                    }}
-                >
-                    {errorMessage}
-                </p>
+              <p className="login-message login-message--error">
+                {errorMessage}
+              </p>
             ) : null}
 
             <button type="submit" className="login-primary-btn" disabled={isLoading}>
