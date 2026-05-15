@@ -1124,3 +1124,9 @@
     opacity: 0.4;
   }
 }
+
+@media (min-width: 901px) and (max-height: 900px) {
+  .login-center {
+    transform: translateY(-28px);
+  }
+}

@@ -928,3 +928,9 @@
     opacity: 0.35;
   }
 }
+
+@media (min-width: 901px) and (max-height: 900px) {
+  .participant-code-center {
+    transform: translateY(-28px);
+  }
+}

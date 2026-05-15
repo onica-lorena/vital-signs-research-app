@@ -2135,7 +2135,7 @@ export default function StudyAnalysisTab({
           <SummaryIconChart value={100} tone="orange" icon={<RecordsIcon />} />
 
           <div className="study-analysis-summary-card__content">
-            <span>Date procesate</span>
+            <span>Înregistrări analizate</span>
             <strong>{isResultsLoading ? "..." : formatNumber(runStats.recordsUsed)}</strong>
             <small>{formatNumber(averageRecordsPerRun)} înregistrări / analiză</small>
           </div>

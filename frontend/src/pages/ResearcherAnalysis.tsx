@@ -415,6 +415,24 @@ async function listAllAnalysisResultsForStudyRequest(
   return results;
 }
 
+function getEstimatedRecordsUsedForRun(results: AnalysisResultResponse[]): number {
+  const recordsByParticipant = new Map<number, number>();
+
+  for (const result of results) {
+    const current = recordsByParticipant.get(result.participant_id) ?? 0;
+
+    recordsByParticipant.set(
+      result.participant_id,
+      Math.max(current, result.records_used)
+    );
+  }
+
+  return Array.from(recordsByParticipant.values()).reduce(
+    (total, recordsUsed) => total + recordsUsed,
+    0
+  );
+}
+
 function buildAnalysisRunsForStudy(
   study: StudyListItemResponse,
   results: AnalysisResultResponse[]
@@ -449,7 +467,7 @@ function buildAnalysisRunsForStudy(
       participants_count: participantIds.size,
       high_risk_count: runResults.filter((item) => item.risk_label === "high_risk").length,
       low_risk_count: runResults.filter((item) => item.risk_label === "low_risk").length,
-      records_used: runResults.reduce((total, item) => total + item.records_used, 0),
+      records_used: getEstimatedRecordsUsedForRun(runResults),
       highest_risk_result: highestRiskResult,
     };
   });
@@ -813,7 +831,7 @@ export default function ResearcherAnalysis() {
               <UsersIcon />
             </span>
             <div>
-              <span>Participanți analizați</span>
+              <span>Participanți</span>
               <strong>{isLoading ? "..." : formatNumber(stats.participantsAnalyzed)}</strong>
               <small>participanți unici</small>
             </div>
@@ -824,9 +842,9 @@ export default function ResearcherAnalysis() {
               <RecordsIcon />
             </span>
             <div>
-              <span>Date procesate</span>
+              <span>Înregistrări</span>
               <strong>{isLoading ? "..." : formatNumber(stats.recordsUsed)}</strong>
-              <small>înregistrări folosite</small>
+              <small>total analizate</small>
             </div>
           </article>
         </section>

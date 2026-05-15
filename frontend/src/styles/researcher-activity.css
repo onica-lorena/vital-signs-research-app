@@ -70,8 +70,8 @@
 }
 
 .researcher-monitoring-summary-card {
-  min-height: 118px;
-  padding: 16px;
+  min-height: 92px;
+  padding: 12px 14px;
   border: 1px solid var(--rd-border);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.94);
@@ -144,9 +144,9 @@
 
 .researcher-monitoring-summary-card strong {
   display: block;
-  margin-top: 8px;
+  margin-top: 5px;
   color: var(--rd-text-main);
-  font-size: 25px;
+  font-size: 21px;
   line-height: 1;
   font-weight: 950;
   letter-spacing: -0.04em;
@@ -154,7 +154,7 @@
 
 .researcher-monitoring-summary-card small {
   display: block;
-  margin-top: 7px;
+  margin-top: 4px;
   color: var(--rd-text-muted);
   font-size: 9.5px;
   line-height: 1.3;
