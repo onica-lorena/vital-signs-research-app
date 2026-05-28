@@ -249,3 +249,17 @@ class StudySummaryResponse(BaseModel):
     studies_in_analysis: int
     completed_studies: int
     study_type_distribution: list[StudyTypeDistributionItem]
+
+
+class StudyMonthlyCountResponse(BaseModel):
+    month: str
+    studies_count: int
+
+
+class StudyAdminSummaryResponse(BaseModel):
+    total_studies: int
+    draft_studies: int
+    active_studies: int
+    studies_in_analysis: int
+    completed_studies: int
+    monthly_studies: list[StudyMonthlyCountResponse]

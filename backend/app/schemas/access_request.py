@@ -82,3 +82,16 @@ class AccessRequestListResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+
+class AccessRequestMonthlyCountResponse(BaseModel):
+    month: str
+    requests_count: int
+
+
+class AccessRequestSummaryResponse(BaseModel):
+    total_requests: int
+    pending_requests: int
+    approved_requests: int
+    rejected_requests: int
+    monthly_requests: list[AccessRequestMonthlyCountResponse]

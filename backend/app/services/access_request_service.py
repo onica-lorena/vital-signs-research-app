@@ -235,3 +235,68 @@ def reject_access_request(
         raise
 
     return access_request
+
+
+def _add_months(year: int, month: int, offset: int) -> tuple[int, int]:
+    month_index = year * 12 + (month - 1) + offset
+    new_year = month_index // 12
+    new_month = month_index % 12 + 1
+    return new_year, new_month
+
+
+def get_access_requests_summary(db: Session) -> dict:
+    grouped_rows = db.execute(
+        select(AccessRequest.status, func.count())
+        .group_by(AccessRequest.status)
+    ).all()
+
+    grouped = {row[0]: row[1] for row in grouped_rows}
+
+    pending = grouped.get(AccessRequestStatus.PENDING, 0)
+    approved = grouped.get(AccessRequestStatus.APPROVED, 0)
+    rejected = grouped.get(AccessRequestStatus.REJECTED, 0)
+
+    now = datetime.now(timezone.utc)
+
+    month_starts = []
+
+    for offset in range(-5, 1):
+        year, month = _add_months(now.year, now.month, offset)
+        month_starts.append(datetime(year, month, 1, tzinfo=timezone.utc))
+
+    start_date = month_starts[0]
+
+    monthly_rows = db.execute(
+        select(
+            func.date_trunc("month", AccessRequest.created_at).label("month"),
+            func.count().label("requests_count"),
+        )
+        .where(AccessRequest.created_at >= start_date)
+        .group_by("month")
+        .order_by("month")
+    ).all()
+
+    monthly_map: dict[str, int] = {}
+
+    for month_value, requests_count in monthly_rows:
+        if month_value.tzinfo is None:
+            month_value = month_value.replace(tzinfo=timezone.utc)
+
+        key = month_value.strftime("%Y-%m")
+        monthly_map[key] = requests_count
+
+    monthly_requests = [
+        {
+            "month": month_start.strftime("%Y-%m"),
+            "requests_count": monthly_map.get(month_start.strftime("%Y-%m"), 0),
+        }
+        for month_start in month_starts
+    ]
+
+    return {
+        "total_requests": pending + approved + rejected,
+        "pending_requests": pending,
+        "approved_requests": approved,
+        "rejected_requests": rejected,
+        "monthly_requests": monthly_requests,
+    }

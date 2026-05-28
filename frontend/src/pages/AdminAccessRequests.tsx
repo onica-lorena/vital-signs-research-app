@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type {
   AccessRequestResponse,
   AccessRequestStatus,
+  AccessRequestMonthlyCountResponse,
 } from "../admin/adminApi";
 import {
   ResponsiveContainer,
@@ -19,6 +20,8 @@ import {
 type AdminAccessRequestsProps = {
   accessRequests: AccessRequestResponse[];
   accessRequestsTotal: number;
+  accessRequestsGlobalTotal: number;
+  accessRequestsMonthlyData: AccessRequestMonthlyCountResponse[];
   accessRequestsLoading: boolean;
   accessRequestsPage: number;
   setAccessRequestsPage: React.Dispatch<React.SetStateAction<number>>;
@@ -126,21 +129,11 @@ function formatMonthLabel(date: Date) {
   });
 }
 
-function getLastSixMonthsLabels() {
-  const now = new Date();
-  const result: string[] = [];
-
-  for (let index = 5; index >= 0; index -= 1) {
-    const date = new Date(now.getFullYear(), now.getMonth() - index, 1);
-    result.push(formatMonthLabel(date));
-  }
-
-  return result;
-}
-
 export default function AdminAccessRequests({
   accessRequests,
   accessRequestsTotal,
+  accessRequestsGlobalTotal,
+  accessRequestsMonthlyData,
   accessRequestsLoading,
   accessRequestsPage,
   setAccessRequestsPage,
@@ -181,33 +174,17 @@ export default function AdminAccessRequests({
       color: STATUS_COLORS[status],
     })).filter((item) => item.value > 0);
 
-    const monthLabels = getLastSixMonthsLabels();
     const monthsMap = new Map<string, number>();
 
-    monthLabels.forEach((label) => {
-      monthsMap.set(label, 0);
-    });
+    const monthlyData = accessRequestsMonthlyData.map((item) => {
+    const [year, month] = item.month.split("-").map(Number);
+    const date = new Date(year, month - 1, 1);
 
-    accessRequests.forEach((request) => {
-      if (!request.created_at) {
-        return;
-      }
-
-      const createdAt = new Date(request.created_at);
-      if (Number.isNaN(createdAt.getTime())) {
-        return;
-      }
-
-      const label = formatMonthLabel(createdAt);
-      if (monthsMap.has(label)) {
-        monthsMap.set(label, (monthsMap.get(label) ?? 0) + 1);
-      }
-    });
-
-    const monthlyData = monthLabels.map((label) => ({
-      month: label,
-      cereri: monthsMap.get(label) ?? 0,
-    }));
+    return {
+      month: formatMonthLabel(date),
+      cereri: item.requests_count,
+    };
+  });
 
     const latestRequests = [...accessRequests]
       .sort((left, right) => {
@@ -227,6 +204,7 @@ export default function AdminAccessRequests({
   }, [
     accessRequestStatusLabels,
     accessRequests,
+    accessRequestsMonthlyData,
     approvedRequestsCount,
     pendingRequestsCount,
     rejectedRequestsCount,
@@ -258,8 +236,8 @@ export default function AdminAccessRequests({
                 <UsersIcon />
               </div>
             </div>
-            <strong>{accessRequestsTotal}</strong>
-            <small>Total cereri identificate pentru filtrele și căutarea curentă.</small>
+            <strong>{accessRequestsGlobalTotal}</strong>
+            <small>Numărul total al solicitărilor de acces.</small>
           </article>
 
           <article className="admin-kpi-card admin-kpi-card--analysis">
@@ -281,7 +259,7 @@ export default function AdminAccessRequests({
               </div>
             </div>
             <strong>{approvedRequestsCount}</strong>
-            <small>Cereri acceptate din setul curent de rezultate afișate.</small>
+            <small>Cereri acceptate din totalul cererilor existente.</small>
           </article>
 
           <article className="admin-kpi-card admin-kpi-card--studies">
@@ -301,29 +279,28 @@ export default function AdminAccessRequests({
         </div>
 
         <div className="admin-section-grid admin-section-grid--access">
-          <section className="admin-panel">
-            <div className="admin-panel__header">
-              <div>
-                {/*<div className="admin-panel__hint">Distribuție statusuri</div>*/}
-                <h2>Starea cererilor de acces</h2>
-              </div>
+        <section className="admin-panel admin-panel--status-chart">
+          <div className="admin-panel__header">
+            <div>
+              <h2>Starea cererilor de acces</h2>
             </div>
+          </div>
 
             {summary.pieData.length === 0 ? (
               <p className="admin-empty">
                 Nu există suficiente date pentru afișarea distribuției.
               </p>
             ) : (
-              <>
-                <div className="admin-chart-box">
+              <div className="admin-status-chart-layout">
+                <div className="admin-chart-box admin-chart-box--status">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={summary.pieData}
                         dataKey="value"
                         nameKey="name"
-                        innerRadius={58}
-                        outerRadius={86}
+                        innerRadius={44}
+                        outerRadius={66}
                         paddingAngle={3}
                       >
                         {summary.pieData.map((entry) => (
@@ -335,7 +312,7 @@ export default function AdminAccessRequests({
                   </ResponsiveContainer>
                 </div>
 
-                <div className="admin-legend-list">
+                <div className="admin-legend-list admin-legend-list--status">
                   {summary.pieData.map((item) => (
                     <div key={item.key}>
                       <span
@@ -347,7 +324,7 @@ export default function AdminAccessRequests({
                     </div>
                   ))}
                 </div>
-              </>
+              </div>
             )}
           </section>
 
@@ -366,7 +343,7 @@ export default function AdminAccessRequests({
                   <XAxis dataKey="month" tickLine={false} axisLine={false} />
                   <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
                   <Tooltip formatter={(value) => [value, "Cereri"]} />
-                  <Bar dataKey="cereri" radius={[8, 8, 0, 0]} fill="#76b65c" />
+                  <Bar dataKey="cereri" fill="#76b65c" radius={[8, 8, 0, 0]} barSize={32} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

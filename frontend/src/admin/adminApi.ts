@@ -63,6 +63,19 @@ export type AccessRequestListResponse = {
   total_pages: number;
 };
 
+export type AccessRequestMonthlyCountResponse = {
+  month: string;
+  requests_count: number;
+};
+
+export type AccessRequestSummaryResponse = {
+  total_requests: number;
+  pending_requests: number;
+  approved_requests: number;
+  rejected_requests: number;
+  monthly_requests: AccessRequestMonthlyCountResponse[];
+};
+
 export type UserResponse = {
   id: number;
   email: string;
@@ -77,6 +90,22 @@ export type UserResponse = {
   is_verified: boolean;
   created_at: string;
   updated_at: string;
+};
+
+export type UserMonthlyCountResponse = {
+  month: string;
+  users_count: number;
+};
+
+export type UserAdminSummaryResponse = {
+  total_users: number;
+  admin_users: number;
+  researcher_users: number;
+  active_users: number;
+  inactive_users: number;
+  verified_users: number;
+  unverified_users: number;
+  monthly_users: UserMonthlyCountResponse[];
 };
 
 export type StudyResearcherResponse = {
@@ -153,6 +182,20 @@ export type StudyAdminListResponse = {
   page: number;
   page_size: number;
   total_pages: number;
+};
+
+export type StudyMonthlyCountResponse = {
+  month: string;
+  studies_count: number;
+};
+
+export type StudyAdminSummaryResponse = {
+  total_studies: number;
+  draft_studies: number;
+  active_studies: number;
+  studies_in_analysis: number;
+  completed_studies: number;
+  monthly_studies: StudyMonthlyCountResponse[];
 };
 
 export type StudyListResponse = {
@@ -524,6 +567,32 @@ export async function listStudiesAdminRequest(
   return (await response.json()) as StudyAdminListResponse;
 }
 
+export async function listAllStudiesAdminRequest(): Promise<StudyAdminOverviewResponse[]> {
+  const pageSize = 100;
+
+  const firstPage = await listStudiesAdminRequest({
+    page: 1,
+    page_size: pageSize,
+    sort_by: "created_at",
+    sort_order: "desc",
+  });
+
+  const allStudies = [...firstPage.items];
+
+  for (let page = 2; page <= firstPage.total_pages; page += 1) {
+    const response = await listStudiesAdminRequest({
+      page,
+      page_size: pageSize,
+      sort_by: "created_at",
+      sort_order: "desc",
+    });
+
+    allStudies.push(...response.items);
+  }
+
+  return allStudies;
+}
+
 export async function getStudyByIdAdminRequest(
   studyId: number
 ): Promise<StudyAdminOverviewResponse> {
@@ -653,4 +722,46 @@ export async function resetStudyParticipantPinRequest(
   }
 
   return (await response.json()) as ParticipantPinResetResponse;
+}
+
+export async function getAccessRequestsSummaryRequest(): Promise<AccessRequestSummaryResponse> {
+  const response = await authFetch("/access-requests/summary", {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await parseError(response, "Nu s-au putut prelua statisticile cererilor de acces.")
+    );
+  }
+
+  return (await response.json()) as AccessRequestSummaryResponse;
+}
+
+export async function getUsersAdminSummaryRequest(): Promise<UserAdminSummaryResponse> {
+  const response = await authFetch("/users/summary", {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await parseError(response, "Nu s-au putut prelua statisticile utilizatorilor.")
+    );
+  }
+
+  return (await response.json()) as UserAdminSummaryResponse;
+}
+
+export async function getStudiesAdminSummaryRequest(): Promise<StudyAdminSummaryResponse> {
+  const response = await authFetch("/studies/admin-overview/summary", {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await parseError(response, "Nu s-au putut prelua statisticile studiilor.")
+    );
+  }
+
+  return (await response.json()) as StudyAdminSummaryResponse;
 }

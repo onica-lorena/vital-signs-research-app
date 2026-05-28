@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from math import ceil
 
 from sqlalchemy import func, or_, select, text
@@ -416,4 +417,69 @@ def get_studies_summary_for_user(db: Session, researcher_id: int):
         "studies_in_analysis": studies_in_analysis,
         "completed_studies": completed_studies,
         "study_type_distribution": distribution,
+    }
+
+def _add_months(year: int, month: int, offset: int) -> tuple[int, int]:
+    month_index = year * 12 + (month - 1) + offset
+    new_year = month_index // 12
+    new_month = month_index % 12 + 1
+    return new_year, new_month
+
+
+def get_studies_admin_summary(db: Session) -> dict:
+    grouped_rows = db.execute(
+        select(Study.status, func.count())
+        .group_by(Study.status)
+    ).all()
+
+    grouped = {row[0]: row[1] for row in grouped_rows}
+
+    draft = grouped.get(StudyStatus.DRAFT, 0)
+    active = grouped.get(StudyStatus.ACTIVE, 0)
+    in_analysis = grouped.get(StudyStatus.IN_ANALYSIS, 0)
+    completed = grouped.get(StudyStatus.COMPLETED, 0)
+
+    now = datetime.now(timezone.utc)
+
+    month_starts = []
+    for offset in range(-5, 1):
+        year, month = _add_months(now.year, now.month, offset)
+        month_starts.append(datetime(year, month, 1, tzinfo=timezone.utc))
+
+    start_date = month_starts[0]
+
+    monthly_rows = db.execute(
+        select(
+            func.date_trunc("month", Study.created_at).label("month"),
+            func.count().label("studies_count"),
+        )
+        .where(Study.created_at >= start_date)
+        .group_by("month")
+        .order_by("month")
+    ).all()
+
+    monthly_map: dict[str, int] = {}
+
+    for month_value, studies_count in monthly_rows:
+        if month_value.tzinfo is None:
+            month_value = month_value.replace(tzinfo=timezone.utc)
+
+        key = month_value.strftime("%Y-%m")
+        monthly_map[key] = studies_count
+
+    monthly_studies = [
+        {
+            "month": month_start.strftime("%Y-%m"),
+            "studies_count": monthly_map.get(month_start.strftime("%Y-%m"), 0),
+        }
+        for month_start in month_starts
+    ]
+
+    return {
+        "total_studies": draft + active + in_analysis + completed,
+        "draft_studies": draft,
+        "active_studies": active,
+        "studies_in_analysis": in_analysis,
+        "completed_studies": completed,
+        "monthly_studies": monthly_studies,
     }

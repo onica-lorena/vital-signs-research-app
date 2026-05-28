@@ -7,7 +7,8 @@ export type AdminNavigationKey =
   | "dashboard"
   | "access_requests"
   | "users"
-  | "studies";
+  | "studies"
+  | "profile";
 
 type AdminSidebarProps = {
   activeItem: AdminNavigationKey;
@@ -150,7 +151,7 @@ const navigationItems: {
   icon: ComponentType;
 }[] = [
   /*{ key: "dashboard", label: "Dashboard", icon: DashboardIcon },*/
-  { key: "access_requests", label: "Acces cereri", icon: AccessRequestIcon },
+  { key: "access_requests", label: "Cereri acces", icon: AccessRequestIcon },
   { key: "users", label: "Utilizatori", icon: UsersIcon },
   { key: "studies", label: "Studii", icon: StudyIcon },
 ];
@@ -232,12 +233,14 @@ export default function AdminSidebar({
       <div className="admin-sidebar__footer">
         <button
           type="button"
-          className="admin-sidebar__footer-button"
+          className={`admin-sidebar__footer-button ${
+            activeItem === "profile" ? "is-active" : ""
+          }`}
           title="Profil"
+          aria-current={activeItem === "profile" ? "page" : undefined}
           onClick={() => {
-            if (window.innerWidth <= 1023) {
-              onCloseMobileSidebar();
-            }
+            onCloseMobileSidebar();
+            navigate("/admin/profil");
           }}
         >
           <span className="admin-sidebar__icon">

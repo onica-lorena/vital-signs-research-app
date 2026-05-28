@@ -174,6 +174,8 @@ export default function AdminUsers({
 }: AdminUsersProps) {
 
   const [usersPage, setUsersPage] = useState(1);
+  const [userSearch, setUserSearch] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState<UserRole | "">("");
 
   const roleData = useMemo(
     () =>
@@ -196,7 +198,7 @@ export default function AdminUsers({
 
   const statusData = useMemo(
     () => [
-      { name: "Active", value: activeUsersCount },
+      { name: "Activi", value: activeUsersCount },
       { name: "Inactivi", value: inactiveUsersCount },
       { name: "Verificați", value: verifiedUsersCount },
     ],
@@ -207,17 +209,41 @@ export default function AdminUsers({
   const verifiedRate =
     totalUsers > 0 ? Math.round((verifiedUsersCount / totalUsers) * 100) : 0;
 
-  const usersTotalPages = Math.max(1, Math.ceil(users.length / USERS_PAGE_SIZE));
+  const filteredUsers = useMemo(() => {
+    const searchTerm = userSearch.trim().toLowerCase();
+
+    return users.filter((user) => {
+      const matchesSearch =
+        !searchTerm ||
+        [
+          user.full_name,
+          user.email,
+          user.institution,
+          user.department,
+          user.specialization,
+          user.phone,
+          userRoleLabels[user.role],
+        ]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(searchTerm));
+
+      const matchesRole = !userRoleFilter || user.role === userRoleFilter;
+
+      return matchesSearch && matchesRole;
+    });
+  }, [users, userSearch, userRoleFilter, userRoleLabels]);
+
+  const usersTotalPages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PAGE_SIZE));
 
   const paginatedUsers = useMemo(() => {
     const start = (usersPage - 1) * USERS_PAGE_SIZE;
-    return users.slice(start, start + USERS_PAGE_SIZE);
-  }, [users, usersPage]);
+    return filteredUsers.slice(start, start + USERS_PAGE_SIZE);
+  }, [filteredUsers, usersPage]);
 
   const usersRowStart =
-    users.length === 0 ? 0 : (usersPage - 1) * USERS_PAGE_SIZE + 1;
+    filteredUsers.length === 0 ? 0 : (usersPage - 1) * USERS_PAGE_SIZE + 1;
 
-  const usersRowEnd = Math.min(usersPage * USERS_PAGE_SIZE, users.length);
+  const usersRowEnd = Math.min(usersPage * USERS_PAGE_SIZE, filteredUsers.length);
 
   useEffect(() => {
     if (usersPage > usersTotalPages) {
@@ -287,7 +313,7 @@ export default function AdminUsers({
         </div>
 
         <div className="admin-section-grid admin-section-grid--access">
-          <section className="admin-panel">
+          <section className="admin-panel admin-panel--status-chart">
             <div className="admin-panel__header">
               <div>
                 {/*<div className="admin-panel__hint">Distribuție roluri</div>*/}
@@ -298,16 +324,16 @@ export default function AdminUsers({
             {roleData.length === 0 ? (
               <p className="admin-empty">Nu există date pentru afișarea rolurilor.</p>
             ) : (
-              <>
-                <div className="admin-chart-box">
+              <div className="admin-status-chart-layout">
+                <div className="admin-chart-box admin-chart-box--status">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={roleData}
                         dataKey="value"
                         nameKey="name"
-                        innerRadius={58}
-                        outerRadius={86}
+                        innerRadius={44}
+                        outerRadius={66}
                         paddingAngle={3}
                       >
                         {roleData.map((entry) => (
@@ -319,7 +345,7 @@ export default function AdminUsers({
                   </ResponsiveContainer>
                 </div>
 
-                <div className="admin-legend-list">
+                <div className="admin-legend-list admin-legend-list--status">
                   {roleData.map((item) => (
                     <div key={item.key}>
                       <span
@@ -331,7 +357,7 @@ export default function AdminUsers({
                     </div>
                   ))}
                 </div>
-              </>
+              </div>
             )}
           </section>
 
@@ -350,7 +376,7 @@ export default function AdminUsers({
                   <XAxis dataKey="name" tickLine={false} axisLine={false} />
                   <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
                   <Tooltip formatter={(value) => [value, "Utilizatori"]} />
-                  <Bar dataKey="value" radius={[10, 10, 0, 0]} maxBarSize={70} fill="#76b65c" />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={34} fill="#76b65c" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -365,6 +391,39 @@ export default function AdminUsers({
               {/*<div className="admin-panel__hint">Administrare conturi</div>*/}
               <h2>Utilizatori existenți</h2>
             </div>
+          </div>
+
+          <div className="admin-filters">
+            <input
+              type="text"
+              placeholder="Caută după nume, email sau instituție..."
+              value={userSearch}
+              onChange={(event) => {
+                setUserSearch(event.target.value);
+                setUsersPage(1);
+              }}
+            />
+
+            <select
+              value={userRoleFilter}
+              onChange={(event) => {
+                setUserRoleFilter(event.target.value as UserRole | "");
+                setUsersPage(1);
+              }}
+            >
+              <option value="">Toate rolurile</option>
+              <option value="admin">Admin</option>
+              <option value="researcher">Cercetător</option>
+            </select>
+
+            <button
+              type="button"
+              onClick={() => {
+                setUsersPage(1);
+              }}
+            >
+              Aplică
+            </button>
           </div>
 
           {usersLoading ? (
@@ -385,10 +444,10 @@ export default function AdminUsers({
                   </thead>
 
                   <tbody>
-                    {users.length === 0 ? (
+                    {filteredUsers.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="admin-table__empty">
-                          Nu există utilizatori disponibili.
+                          Nu există utilizatori disponibili pentru filtrele selectate.
                         </td>
                       </tr>
                     ) : (
@@ -420,7 +479,7 @@ export default function AdminUsers({
 
               <div className="admin-table-footer">
                 <span>
-                  Afișare {usersRowStart} - {usersRowEnd} din {users.length} utilizatori
+                  Afișare {usersRowStart} - {usersRowEnd} din {filteredUsers.length} utilizatori
                 </span>
 
                 <div className="admin-pagination">

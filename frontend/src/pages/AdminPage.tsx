@@ -6,9 +6,13 @@ import {
   approveAccessRequestRequest,
   createUserRequest,
   getAccessRequestByIdRequest,
+  getAccessRequestsSummaryRequest,
   getUserByIdRequest,
+  getStudiesAdminSummaryRequest,
+  getUsersAdminSummaryRequest,
   listAccessRequestsRequest,
   listStudiesAdminRequest,
+  listAllStudiesAdminRequest,
   listUsersRequest,
   rejectAccessRequestRequest,
   resetUserPasswordRequest,
@@ -16,6 +20,7 @@ import {
   updateUserStatusRequest,
   type AccessRequestResponse,
   type AccessRequestStatus,
+  type AccessRequestSummaryResponse,
   type ParticipantListItemResponse,
   type ParticipantSubmissionStatus,
   type StudyDataSummaryResponse,
@@ -24,6 +29,8 @@ import {
   type StudyType,
   type UserResponse,
   type UserRole,
+  type StudyAdminSummaryResponse,
+  type UserAdminSummaryResponse,
 } from "../admin/adminApi";
 import { SESSION_EXPIRED_ERROR } from "../auth/authFetch";
 import AdminLayout from "../components/layout/AdminLayout";
@@ -109,6 +116,34 @@ export default function AdminPage() {
     useState<AccessRequestResponse | null>(null);
   const [accessReviewNotes, setAccessReviewNotes] = useState("");
   const [accessActionLoading, setAccessActionLoading] = useState(false);
+  const [accessRequestsSummary, setAccessRequestsSummary] =
+    useState<AccessRequestSummaryResponse>({
+      total_requests: 0,
+      pending_requests: 0,
+      approved_requests: 0,
+      rejected_requests: 0,
+      monthly_requests: [],
+    });
+
+  const [usersSummary, setUsersSummary] = useState<UserAdminSummaryResponse>({
+    total_users: 0,
+    admin_users: 0,
+    researcher_users: 0,
+    active_users: 0,
+    inactive_users: 0,
+    verified_users: 0,
+    unverified_users: 0,
+    monthly_users: [],
+  });
+
+  const [studiesSummary, setStudiesSummary] = useState<StudyAdminSummaryResponse>({
+    total_studies: 0,
+    draft_studies: 0,
+    active_studies: 0,
+    studies_in_analysis: 0,
+    completed_studies: 0,
+    monthly_studies: [],
+  });
 
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
@@ -168,6 +203,57 @@ export default function AdminPage() {
     }
   }
 
+  async function loadAccessRequestsSummary() {
+    try {
+      const response = await getAccessRequestsSummaryRequest();
+      setAccessRequestsSummary(response);
+    } catch (error) {
+      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) {
+        return;
+      }
+
+      setPageError(
+        error instanceof Error
+          ? error.message
+          : "Nu s-au putut încărca statisticile cererilor de acces."
+      );
+    }
+  }
+
+  async function loadUsersSummary() {
+    try {
+      const response = await getUsersAdminSummaryRequest();
+      setUsersSummary(response);
+    } catch (error) {
+      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) {
+        return;
+      }
+
+      setPageError(
+        error instanceof Error
+          ? error.message
+          : "Nu s-au putut încărca statisticile utilizatorilor."
+      );
+    }
+  }
+
+  async function loadStudiesSummary() {
+    try {
+      const response = await getStudiesAdminSummaryRequest();
+      setStudiesSummary(response);
+    } catch (error) {
+      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) {
+        return;
+      }
+
+      setPageError(
+        error instanceof Error
+          ? error.message
+          : "Nu s-au putut încărca statisticile studiilor."
+      );
+    }
+  }
+
   async function loadUsers() {
     setUsersLoading(true);
 
@@ -191,14 +277,8 @@ export default function AdminPage() {
     setStudiesLoading(true);
 
     try {
-      const response = await listStudiesAdminRequest({
-        page: 1,
-        page_size: 20,
-        sort_by: "created_at",
-        sort_order: "desc",
-      });
-      
-      setStudies(response.items);
+      const allStudies = await listAllStudiesAdminRequest();
+      setStudies(allStudies);
     } catch (error) {
       if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) {
         return;
@@ -214,73 +294,34 @@ export default function AdminPage() {
 
   useEffect(() => {
     void loadAccessRequests();
+    void loadAccessRequestsSummary();
     void loadUsers();
+    void loadUsersSummary();
     void loadStudies();
+    void loadStudiesSummary();
   }, []);
 
   useEffect(() => {
     void loadAccessRequests();
   }, [accessRequestStatusFilter, accessRequestsPage]);
 
-  const pendingRequestsCount = useMemo(
-    () => accessRequests.filter((item) => item.status === "pending").length,
-    [accessRequests]
-  );
+  const pendingRequestsCount = accessRequestsSummary.pending_requests;
+  const approvedRequestsCount = accessRequestsSummary.approved_requests;
+  const rejectedRequestsCount = accessRequestsSummary.rejected_requests;
+  const totalAccessRequestsCount = accessRequestsSummary.total_requests;
 
-  const approvedRequestsCount = useMemo(
-    () => accessRequests.filter((item) => item.status === "approved").length,
-    [accessRequests]
-  );
+  const totalUsersCount = usersSummary.total_users;
+  const activeUsersCount = usersSummary.active_users;
+  const inactiveUsersCount = usersSummary.inactive_users;
+  const verifiedUsersCount = usersSummary.verified_users;
+  const adminsCount = usersSummary.admin_users;
+  const researchersCount = usersSummary.researcher_users;
 
-  const rejectedRequestsCount = useMemo(
-    () => accessRequests.filter((item) => item.status === "rejected").length,
-    [accessRequests]
-  );
-
-  const activeUsersCount = useMemo(
-    () => users.filter((item) => item.is_active).length,
-    [users]
-  );
-
-  const verifiedUsersCount = useMemo(
-    () => users.filter((item) => item.is_verified).length,
-    [users]
-  );
-
-  const adminsCount = useMemo(
-    () => users.filter((item) => item.role === "admin").length,
-    [users]
-  );
-
-  const researchersCount = useMemo(
-    () => users.filter((item) => item.role === "researcher").length,
-    [users]
-  );
-
-  const inactiveUsersCount = useMemo(
-    () => users.filter((item) => !item.is_active).length,
-    [users]
-  );
-
-  const studiesInAnalysisCount = useMemo(
-    () => studies.filter((item) => item.status === "in_analysis").length,
-    [studies]
-  );
-
-  const activeStudiesCount = useMemo(
-    () => studies.filter((item) => item.status === "active").length,
-    [studies]
-  );
-
-  const completedStudiesCount = useMemo(
-    () => studies.filter((item) => item.status === "completed").length,
-    [studies]
-  );
-
-  const draftStudiesCount = useMemo(
-    () => studies.filter((item) => item.status === "draft").length,
-    [studies]
-  );
+  const totalStudiesCount = studiesSummary.total_studies;
+  const activeStudiesCount = studiesSummary.active_studies;
+  const studiesInAnalysisCount = studiesSummary.studies_in_analysis;
+  const completedStudiesCount = studiesSummary.completed_studies;
+  const draftStudiesCount = studiesSummary.draft_studies;
 
   async function handleOpenAccessRequest(accessRequestId: number) {
     setPageError("");
@@ -379,6 +420,7 @@ export default function AdminPage() {
       setSelectedUser(updated);
       setUserActionMessage("Statusul utilizatorului a fost actualizat.");
       await loadUsers();
+      await loadUsersSummary();
     } catch (error) {
       setPageError(
         error instanceof Error
@@ -438,6 +480,7 @@ export default function AdminPage() {
       setSelectedUser(updated);
       setUserActionMessage("Datele utilizatorului au fost actualizate.");
       await loadUsers();
+      await loadUsersSummary();
     } catch (error) {
       setPageError(
         error instanceof Error
@@ -483,6 +526,7 @@ export default function AdminPage() {
       setIsCreateUserModalOpen(false);
 
       await loadUsers();
+      await loadUsersSummary();
     } catch (error) {
       setPageError(
         error instanceof Error ? error.message : "Nu s-a putut crea utilizatorul."
@@ -500,7 +544,6 @@ export default function AdminPage() {
     <AdminLayout
       activeItem={activeTab}
       title="Administrare VitalStudy"
-      subtitle="Panou central pentru cereri de acces, utilizatori, studii și monitorizarea administrativă."
       actions={
         activeTab === "users" ? (
           <button
@@ -525,6 +568,8 @@ export default function AdminPage() {
             <AdminAccessRequests
               accessRequests={accessRequests}
               accessRequestsTotal={accessRequestsTotal}
+              accessRequestsGlobalTotal={totalAccessRequestsCount}
+              accessRequestsMonthlyData={accessRequestsSummary.monthly_requests}
               accessRequestsLoading={accessRequestsLoading}
               accessRequestsPage={accessRequestsPage}
               setAccessRequestsPage={setAccessRequestsPage}
@@ -583,17 +628,17 @@ export default function AdminPage() {
               newUserBio={newUserBio}
               setNewUserBio={setNewUserBio}
               userRoleLabels={USER_ROLE_LABELS}
-              totalUsers={users.length}
+              totalUsers={totalUsersCount}
               activeUsersCount={activeUsersCount}
               inactiveUsersCount={inactiveUsersCount}
               verifiedUsersCount={verifiedUsersCount}
               adminsCount={adminsCount}
               researchersCount={researchersCount}
               formatDate={formatDate}
-              onOpenUser={(userId) => void handleOpenUser(userId)}
-              onSaveUserEdits={() => void handleSaveUserEdits()}
-              onToggleUserStatus={() => void handleToggleUserStatus()}
-              onResetUserPassword={() => void handleResetUserPassword()}
+              onOpenUser={handleOpenUser}
+              onSaveUserEdits={handleSaveUserEdits}
+              onToggleUserStatus={handleToggleUserStatus}
+              onResetUserPassword={handleResetUserPassword}
               onCreateUser={handleCreateUser}
             />
           ) : null}
@@ -605,11 +650,12 @@ export default function AdminPage() {
               studyTypeLabels={STUDY_TYPE_LABELS}
               studyStatusLabels={STUDY_STATUS_LABELS}
               formatDate={formatDate}
-              totalStudies={studies.length}
+              totalStudies={totalStudiesCount}
               activeStudiesCount={activeStudiesCount}
               studiesInAnalysisCount={studiesInAnalysisCount}
               completedStudiesCount={completedStudiesCount}
               draftStudiesCount={draftStudiesCount}
+              monthlyStudies={studiesSummary.monthly_studies}
               onOpenStudy={(studyId) => void handleOpenStudy(studyId)}
             />
           ) : null}

@@ -14,6 +14,7 @@ from app.models.user import User, UserRole
 from app.schemas.auth import MessageResponse
 from app.schemas.user import (
     AdminUserPasswordUpdate,
+    UserAdminSummaryResponse,
     UserAdminUpdate,
     UserCreate,
     UserPasswordUpdate,
@@ -21,7 +22,12 @@ from app.schemas.user import (
     UserSelfUpdate,
     UserStatusUpdate,
 )
-from app.services.auth_service import get_user_by_email, get_user_by_id, list_users
+from app.services.auth_service import (
+    get_user_by_email,
+    get_user_by_id,
+    get_users_admin_summary,
+    list_users,
+)
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -156,6 +162,16 @@ def change_my_password(
     db.commit()
 
     return MessageResponse(message="Parola a fost actualizată cu succes.")
+
+
+
+@router.get("/summary", response_model=UserAdminSummaryResponse)
+def read_users_admin_summary(
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[User, Depends(require_role(UserRole.ADMIN))],
+):
+    summary = get_users_admin_summary(db)
+    return UserAdminSummaryResponse(**summary)
 
 
 @router.get("/{user_id}", response_model=UserResponse)

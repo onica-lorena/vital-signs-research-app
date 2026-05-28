@@ -12,12 +12,14 @@ from app.schemas.access_request import (
     AccessRequestListResponse,
     AccessRequestResponse,
     AccessRequestReview,
+    AccessRequestSummaryResponse,
 )
 from app.schemas.auth import MessageResponse
 from app.services.access_request_service import (
     approve_access_request,
     create_access_request,
     get_access_request_by_id,
+    get_access_requests_summary,
     list_access_requests,
     reject_access_request,
 )
@@ -65,6 +67,15 @@ def read_access_requests(
         page_size=page_size,
         total_pages=total_pages,
     )
+
+
+@router.get("/summary", response_model=AccessRequestSummaryResponse)
+def read_access_requests_summary(
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[User, Depends(require_role(UserRole.ADMIN))],
+):
+    summary = get_access_requests_summary(db)
+    return AccessRequestSummaryResponse(**summary)
 
 
 @router.get("/{access_request_id}", response_model=AccessRequestResponse)

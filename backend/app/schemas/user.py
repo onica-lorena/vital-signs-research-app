@@ -61,3 +61,19 @@ class UserResponse(UserBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserMonthlyCountResponse(BaseModel):
+    month: str
+    users_count: int
+
+
+class UserAdminSummaryResponse(BaseModel):
+    total_users: int
+    admin_users: int
+    researcher_users: int
+    active_users: int
+    inactive_users: int
+    verified_users: int
+    unverified_users: int
+    monthly_users: list[UserMonthlyCountResponse]

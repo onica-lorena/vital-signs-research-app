@@ -13,19 +13,11 @@ import {
 } from "recharts";
 import type {
   StudyAdminOverviewResponse,
+  StudyMonthlyCountResponse,
   StudyType,
 } from "../admin/adminApi";
 
 type StudyStatus = StudyAdminOverviewResponse["status"];
-
-type ParticipantSummary = {
-  total_participants: number;
-  invited_participants: number;
-  active_participants: number;
-  suspended_participants: number;
-  completed_participants: number;
-  withdrawn_participants: number;
-} | null;
 
 type AdminStudiesProps = {
   studies: StudyAdminOverviewResponse[];
@@ -38,6 +30,7 @@ type AdminStudiesProps = {
   studiesInAnalysisCount: number;
   completedStudiesCount: number;
   draftStudiesCount: number;
+  monthlyStudies: StudyMonthlyCountResponse[];
   onOpenStudy: (studyId: number) => void;
 };
 
@@ -83,6 +76,7 @@ export default function AdminStudies({
   studyTypeLabels,
   studyStatusLabels,
   totalStudies,
+  monthlyStudies,
   activeStudiesCount,
   studiesInAnalysisCount,
   completedStudiesCount,
@@ -91,6 +85,8 @@ export default function AdminStudies({
 }: AdminStudiesProps) {
 
   const [studiesPage, setStudiesPage] = useState(1);
+  const [studySearch, setStudySearch] = useState("");
+  const [studyStatusFilter, setStudyStatusFilter] = useState<StudyStatus | "">("");
 
   const studyStatusData = useMemo(
     () =>
@@ -123,48 +119,62 @@ export default function AdminStudies({
     [activeStudiesCount, studiesInAnalysisCount, completedStudiesCount, draftStudiesCount]
   );
 
-  const recentStudiesChartData = useMemo(() => {
-    const now = new Date();
-  
-    return Array.from({ length: 6 }, (_, index) => {
-      const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
-  
-      const month = date.toLocaleDateString("ro-RO", {
-        month: "short",
-        year: "2-digit",
-      });
-  
-      const value = studies.filter((study) => {
-        const createdAt = new Date(study.created_at);
-        return (
-          createdAt.getMonth() === date.getMonth() &&
-          createdAt.getFullYear() === date.getFullYear()
-        );
-      }).length;
-  
-      return {
-        name: month,
-        value,
-      };
+  const recentStudiesChartData = useMemo(
+    () =>
+      monthlyStudies.map((item) => {
+        const [year, month] = item.month.split("-").map(Number);
+        const date = new Date(year, month - 1, 1);
+
+        return {
+          name: date.toLocaleDateString("ro-RO", {
+            month: "short",
+            year: "2-digit",
+          }),
+          value: item.studies_count,
+        };
+      }),
+    [monthlyStudies]
+  );
+
+  const filteredStudies = useMemo(() => {
+    const searchTerm = studySearch.trim().toLowerCase();
+
+    return studies.filter((study) => {
+      const matchesSearch =
+        !searchTerm ||
+        [
+          study.code,
+          study.title,
+          study.researcher?.full_name,
+          study.researcher?.email,
+          study.institution,
+        ]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(searchTerm));
+
+      const matchesStatus =
+        !studyStatusFilter || study.status === studyStatusFilter;
+
+      return matchesSearch && matchesStatus;
     });
-  }, [studies]);
+  }, [studies, studySearch, studyStatusFilter]);
 
   const studiesTotalPages = Math.max(
     1,
-    Math.ceil(studies.length / STUDIES_PAGE_SIZE)
+    Math.ceil(filteredStudies.length / STUDIES_PAGE_SIZE)
   );
 
   const paginatedStudies = useMemo(() => {
     const start = (studiesPage - 1) * STUDIES_PAGE_SIZE;
-    return studies.slice(start, start + STUDIES_PAGE_SIZE);
-  }, [studies, studiesPage]);
+    return filteredStudies.slice(start, start + STUDIES_PAGE_SIZE);
+  }, [filteredStudies, studiesPage]);
 
   const studiesRowStart =
-    studies.length === 0 ? 0 : (studiesPage - 1) * STUDIES_PAGE_SIZE + 1;
+    filteredStudies.length === 0 ? 0 : (studiesPage - 1) * STUDIES_PAGE_SIZE + 1;
 
   const studiesRowEnd = Math.min(
     studiesPage * STUDIES_PAGE_SIZE,
-    studies.length
+    filteredStudies.length
   );
 
   useEffect(() => {
@@ -215,55 +225,55 @@ export default function AdminStudies({
         </div>
 
         <div className="admin-section-grid admin-section-grid--access">
-          <section className="admin-panel">
+          <section className="admin-panel admin-panel--status-chart">
             <div className="admin-panel__header">
               <div>
                 {/*<div className="admin-panel__hint">Distribuție statusuri</div>*/}
                 <h2>Starea studiilor</h2>
               </div>
             </div>
-        
+
             {studyStatusData.length === 0 ? (
               <p className="admin-empty">Nu există studii pentru afișare.</p>
             ) : (
-              <>
-                <div className="admin-chart-box">
+              <div className="admin-status-chart-layout">
+                <div className="admin-chart-box admin-chart-box--status">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={studyStatusData}
                         dataKey="value"
                         nameKey="name"
-                        innerRadius={58}
-                        outerRadius={86}
+                        innerRadius={44}
+                        outerRadius={66}
                         paddingAngle={3}
                       >
                         {studyStatusData.map((item) => (
                           <Cell key={item.key} fill={item.color} />
                         ))}
                       </Pie>
-        
+
                       <Tooltip formatter={(value) => [value, "Studii"]} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-        
-                <div className="admin-legend-list">
+
+                <div className="admin-legend-list admin-legend-list--status">
                   {studyStatusData.map((item) => (
-                    <div key={item.key} className="admin-chart-legend__item">
+                    <div key={item.key}>
                       <span
                         className="admin-legend-dot"
-                        style={{ backgroundColor: item.color }}
+                        style={{ background: item.color }}
                       />
-                      <strong>{item.name}</strong>
-                      <b>{item.value}</b>
+                      <span>{item.name}</span>
+                      <strong>{item.value}</strong>
                     </div>
                   ))}
                 </div>
-              </>
+              </div>
             )}
           </section>
-        
+
           <section className="admin-panel">
             <div className="admin-panel__header">
               <div>
@@ -290,8 +300,8 @@ export default function AdminStudies({
                   <Bar
                     dataKey="value"
                     fill="#76b65c"
-                    radius={[10, 10, 0, 0]}
-                    barSize={52}
+                    radius={[8, 8, 0, 0]}
+                    barSize={34}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -307,6 +317,41 @@ export default function AdminStudies({
               {/*<div className="admin-panel__hint">Administrare studii</div>*/}
               <h2>Toate studiile</h2>
             </div>
+          </div>
+
+          <div className="admin-filters">
+            <input
+              type="text"
+              placeholder="Caută după cod, titlu sau cercetător..."
+              value={studySearch}
+              onChange={(event) => {
+                setStudySearch(event.target.value);
+                setStudiesPage(1);
+              }}
+            />
+
+            <select
+              value={studyStatusFilter}
+              onChange={(event) => {
+                setStudyStatusFilter(event.target.value as StudyStatus | "");
+                setStudiesPage(1);
+              }}
+            >
+              <option value="">Toate statusurile</option>
+              <option value="draft">Ciornă</option>
+              <option value="active">Activ</option>
+              <option value="in_analysis">În analiză</option>
+              <option value="completed">Finalizat</option>
+            </select>
+
+            <button
+              type="button"
+              onClick={() => {
+                setStudiesPage(1);
+              }}
+            >
+              Aplică
+            </button>
           </div>
 
           {studiesLoading ? (
@@ -328,10 +373,10 @@ export default function AdminStudies({
                   </thead>
 
                   <tbody>
-                    {studies.length === 0 ? (
+                    {filteredStudies.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="admin-table__empty">
-                          Nu există studii disponibile.
+                          Nu există studii disponibile pentru filtrele selectate.
                         </td>
                       </tr>
                     ) : (
@@ -368,7 +413,7 @@ export default function AdminStudies({
 
               <div className="admin-table-footer">
                 <span>
-                  Afișare {studiesRowStart} - {studiesRowEnd} din {studies.length} studii
+                  Afișare {studiesRowStart} - {studiesRowEnd} din {filteredStudies.length} studii
                 </span>
 
                 <div className="admin-pagination">

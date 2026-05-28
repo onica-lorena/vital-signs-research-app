@@ -17,6 +17,7 @@ from app.schemas.study import (
     StudyAdminListItemResponse,
     StudyAdminListResponse,
     StudyAdminOverviewResponse,
+    StudyAdminSummaryResponse,
     StudyCreate,
     StudyDetailResponse,
     StudyListItemResponse,
@@ -32,6 +33,7 @@ from app.services.participant_service import (
 from app.services.study_service import (
     create_study as create_study_service,
     delete_study_for_current_user,
+    get_studies_admin_summary,
     get_studies_summary_for_user,
     get_study_admin_overview_by_id,
     get_study_by_id_for_current_user,
@@ -134,6 +136,19 @@ def list_studies_admin_overview(
         page_size=page_size,
         total_pages=total_pages,
     )
+
+
+@router.get(
+    "/admin-overview/summary",
+    response_model=StudyAdminSummaryResponse,
+    summary="Rezumat administrativ studii",
+)
+def read_studies_admin_summary(
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[User, Depends(require_role(UserRole.ADMIN))],
+):
+    summary = get_studies_admin_summary(db)
+    return StudyAdminSummaryResponse(**summary)
 
 
 @router.get(
