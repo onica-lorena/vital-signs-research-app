@@ -53,9 +53,15 @@ PARAMETER_LABELS = {
 }
 
 MODEL_LABELS = {
+    "logistic_regression": "Logistic Regression",
+    "decision_tree": "Decision Tree",
     "random_forest": "Random Forest",
+    "knn": "KNN",
     "xgboost": "XGBoost",
+    "rnn": "RNN",
     "lstm": "LSTM",
+    "lstm_rf": "LSTM + Random Forest",
+    "lstm_xgb": "LSTM + XGBoost",
 }
 
 RISK_LABELS = {

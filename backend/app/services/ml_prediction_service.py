@@ -37,37 +37,163 @@ from app.services.ml_feature_service import (
 from app.services.participant_service import get_study_for_current_user
 from app.schemas.analysis import AnalysisScope
 
-TASK_MODEL_CONFIG = {
+PARAMETER_TO_TASK = {
+    StudyParameterKey.HEART_RATE: "hr",
+    StudyParameterKey.RESPIRATORY_RATE: "rr",
+    StudyParameterKey.SPO2: "spo2",
+    StudyParameterKey.TEMPERATURE: "temp",
+}
+
+TASK_TO_PARAMETER = {
+    "hr": StudyParameterKey.HEART_RATE,
+    "rr": StudyParameterKey.RESPIRATORY_RATE,
+    "spo2": StudyParameterKey.SPO2,
+    "temp": StudyParameterKey.TEMPERATURE,
+}
+
+TASK_MODEL_OPTIONS = {
     "hr": {
-        "parameter_key": StudyParameterKey.HEART_RATE,
-        "model_type": AnalysisModelType.RANDOM_FOREST,
-        "model_name": "random_forest",
+        "logistic_regression": {
+            "parameter_key": StudyParameterKey.HEART_RATE,
+            "model_type": AnalysisModelType.LOGISTIC_REGRESSION,
+            "model_name": "logistic_regression",
+        },
+        "decision_tree": {
+            "parameter_key": StudyParameterKey.HEART_RATE,
+            "model_type": AnalysisModelType.DECISION_TREE,
+            "model_name": "decision_tree",
+        },
+        "random_forest": {
+            "parameter_key": StudyParameterKey.HEART_RATE,
+            "model_type": AnalysisModelType.RANDOM_FOREST,
+            "model_name": "random_forest",
+        },
+        "knn": {
+            "parameter_key": StudyParameterKey.HEART_RATE,
+            "model_type": AnalysisModelType.KNN,
+            "model_name": "knn",
+        },
+        "xgboost": {
+            "parameter_key": StudyParameterKey.HEART_RATE,
+            "model_type": AnalysisModelType.XGBOOST,
+            "model_name": "xgboost",
+        },
+        "rnn": {
+            "parameter_key": StudyParameterKey.HEART_RATE,
+            "model_type": AnalysisModelType.RNN,
+            "model_name": "rnn",
+        },
+        "lstm": {
+            "parameter_key": StudyParameterKey.HEART_RATE,
+            "model_type": AnalysisModelType.LSTM,
+            "model_name": "lstm",
+        },
+        "lstm_rf": {
+            "parameter_key": StudyParameterKey.HEART_RATE,
+            "model_type": AnalysisModelType.LSTM_RF,
+            "model_name": "lstm_rf",
+        },
+        "lstm_xgb": {
+            "parameter_key": StudyParameterKey.HEART_RATE,
+            "model_type": AnalysisModelType.LSTM_XGBOOST,
+            "model_name": "lstm_xgb",
+        }
+    },
+    "rr": {},
+    "spo2": {},
+    "temp": {},
+}
+
+CLASSICAL_MODEL_NAMES = {
+    "logistic_regression",
+    "decision_tree",
+    "random_forest",
+    "knn",
+    "xgboost",
+}
+
+SEQUENCE_MODEL_NAMES = {
+    "rnn",
+    "lstm",
+}
+
+HYBRID_MODEL_NAMES = {
+    "lstm_rf",
+    "lstm_xgb",
+}
+
+MODEL_LABELS = {
+    "logistic_regression": "Logistic Regression",
+    "decision_tree": "Decision Tree",
+    "random_forest": "Random Forest",
+    "knn": "KNN",
+    "xgboost": "XGBoost",
+    "rnn": "RNN",
+    "lstm": "LSTM",
+    "lstm_rf": "LSTM + Random Forest",
+    "lstm_xgb": "LSTM + XGBoost",
+}
+
+COLAB_MODEL_NAMES = SEQUENCE_MODEL_NAMES | HYBRID_MODEL_NAMES
+
+CLASSICAL_MODEL_THRESHOLDS = {
+    "hr": {
+        "logistic_regression": 0.5,
+        "decision_tree": 0.5,
+        "random_forest": 0.087,
+        "knn": 0.5,
+        "xgboost": 0.5,
     },
     "spo2": {
-        "parameter_key": StudyParameterKey.SPO2,
-        "model_type": AnalysisModelType.RANDOM_FOREST,
-        "model_name": "random_forest",
+        "logistic_regression": 0.5,
+        "decision_tree": 0.5,
+        "random_forest": 0.125,
+        "knn": 0.5,
+        "xgboost": 0.5,
     },
     "rr": {
-        "parameter_key": StudyParameterKey.RESPIRATORY_RATE,
-        "model_type": AnalysisModelType.LSTM,
-        "model_name": "lstm",
+        "logistic_regression": 0.5,
+        "decision_tree": 0.5,
+        "random_forest": 0.5,
+        "knn": 0.5,
+        "xgboost": 0.5,
     },
     "temp": {
-        "parameter_key": StudyParameterKey.TEMPERATURE,
-        "model_type": AnalysisModelType.XGBOOST,
-        "model_name": "xgboost",
+        "logistic_regression": 0.5,
+        "decision_tree": 0.5,
+        "random_forest": 0.5,
+        "knn": 0.5,
+        "xgboost": 0.728,
     },
 }
 
 TASK_RISK_THRESHOLDS = {
     "hr": 0.087,
     "spo2": 0.125,
-    "rr": 0.122,      
+    "rr": 0.122,
     "temp": 0.728,
 }
 
 _MODEL_CACHE = {}
+
+DEFAULT_TASK_MODEL_SELECTION = {
+    "hr": "random_forest",
+    "spo2": "random_forest",
+    "rr": "lstm",
+    "temp": "xgboost",
+}
+
+for task, parameter_key in TASK_TO_PARAMETER.items():
+    if task == "hr":
+        continue
+
+    TASK_MODEL_OPTIONS[task] = {
+        model_name: {
+            **config,
+            "parameter_key": parameter_key,
+        }
+        for model_name, config in TASK_MODEL_OPTIONS["hr"].items()
+    }
 
 def _resolve_analysis_interval(
     scope: AnalysisScope,
@@ -93,8 +219,70 @@ def _resolve_analysis_interval(
     return now - timedelta(hours=48), now
 
 
+def _predict_with_model(task: str, model_name: str, features_df) -> tuple[float, int | None]:
+    if model_name in CLASSICAL_MODEL_NAMES:
+        probability = _predict_classical(task, model_name, features_df)
+        return probability, None
+
+    if model_name in SEQUENCE_MODEL_NAMES:
+        return _predict_sequence_model(task, model_name, features_df)
+
+    if model_name in HYBRID_MODEL_NAMES:
+        return _predict_hybrid(task, model_name, features_df)
+
+    raise ValueError(f"Model necunoscut pentru analiză: {model_name}")
+
+
 def _artifact_path(*parts: str) -> Path:
     return Path(settings.ml_artifacts_dir).resolve().joinpath(*parts)
+
+
+def _load_threshold(task: str, model_name: str) -> float:
+    cache_key = f"threshold_{task}_{model_name}"
+
+    if cache_key in _MODEL_CACHE:
+        return _MODEL_CACHE[cache_key]
+
+    if model_name in CLASSICAL_MODEL_NAMES:
+        threshold = (
+            CLASSICAL_MODEL_THRESHOLDS
+            .get(task, {})
+            .get(model_name)
+        )
+
+        if threshold is not None:
+            threshold = float(threshold)
+            _MODEL_CACHE[cache_key] = threshold
+            return threshold
+
+    if model_name in COLAB_MODEL_NAMES:
+        threshold_path = _artifact_path(
+            "thresholds",
+            f"{task}_{model_name}_threshold.json",
+        )
+
+        if threshold_path.exists():
+            with open(threshold_path, encoding="utf-8") as f:
+                payload = json.load(f)
+
+            threshold = float(payload["threshold"])
+            _MODEL_CACHE[cache_key] = threshold
+            return threshold
+
+        print(
+            f"[THRESHOLD WARNING] Nu există fișier de prag pentru "
+            f"{task}_{model_name}: {threshold_path}. Se folosește fallback."
+        )
+
+    threshold = TASK_RISK_THRESHOLDS.get(
+        task,
+        settings.analysis_risk_threshold,
+    )
+
+    threshold = float(threshold)
+    _MODEL_CACHE[cache_key] = threshold
+
+    return threshold
 
 
 def _load_classical_model(task: str, model_name: str):
@@ -125,33 +313,6 @@ def _build_lstm_model(window_size: int, feature_count: int):
         ]
     )
     return model
-
-
-def _load_lstm(task: str):
-    cache_key = f"{task}_lstm"
-
-    if cache_key not in _MODEL_CACHE:
-        weights_path = _artifact_path("models", f"{task}_lstm_final.weights.h5")
-        scaler_path = _artifact_path("scalers", f"{task}_scaler_final.pkl")
-        config_path = _artifact_path("configs", f"{task}_config_hibrid.json")
-
-        with open(config_path, encoding="utf-8") as f:
-            config = json.load(f)
-
-        feature_cols = config.get("FEATURE_COLS", REQUIRED_FEATURE_COLUMNS)
-        window_size = int(config.get("WINDOW_SIZE", 24))
-
-        model = _build_lstm_model(
-            window_size=window_size,
-            feature_count=len(feature_cols),
-        )
-        model.load_weights(weights_path)
-
-        scaler = joblib.load(scaler_path)
-
-        _MODEL_CACHE[cache_key] = (model, scaler, config)
-
-    return _MODEL_CACHE[cache_key]
 
 def _load_participant_submissions(
     db: Session,
@@ -271,6 +432,7 @@ def run_analysis_for_study(
     activity_level: ActivityLevel | None = None,
     condition_type: ParticipantConditionType | None = None,
     measurement_context: MeasurementContext | None = None,
+    model_selection: dict[StudyParameterKey, object] | None = None,
 ) -> tuple[AnalysisRun, list[AnalysisResult]]:
     study = get_study_for_current_user(
         db=db,
@@ -351,6 +513,10 @@ def run_analysis_for_study(
         filter_activity_level=activity_level.value if activity_level else None,
         filter_condition_type=condition_type.value if condition_type else None,
         filter_measurement_context=measurement_context.value if measurement_context else None,
+        model_selection={
+            key.value: (value.value if hasattr(value, "value") else str(value))
+            for key, value in (model_selection or {}).items()
+        } if model_selection else None,
         participants_analyzed=0,
         total_results=0,
         high_risk_results=0,
@@ -379,11 +545,15 @@ def run_analysis_for_study(
         if not submissions:
             continue
 
-        for task, cfg in TASK_MODEL_CONFIG.items():
-            parameter_key = cfg["parameter_key"]
-
+        for task, parameter_key in TASK_TO_PARAMETER.items():
             if parameter_key not in study_parameters:
                 continue
+
+            cfg = _resolve_model_config(
+                task=task,
+                parameter_key=parameter_key,
+                model_selection=model_selection,
+            )
 
             features_df = build_prediction_features_from_submissions(
                 submissions=submissions,
@@ -401,17 +571,16 @@ def run_analysis_for_study(
                 if prediction_df.empty:
                     continue
 
-                if cfg["model_type"] == AnalysisModelType.LSTM:
-                    probability, window_size = _predict_lstm(task, prediction_df)
-                else:
-                    probability = _predict_classical(
-                        task=task,
-                        model_name=cfg["model_name"],
-                        features_df=prediction_df,
-                    )
-                    window_size = None
+                probability, window_size = _predict_with_model(
+                task=task,
+                model_name=cfg["model_name"],
+                features_df=prediction_df,
+            )
 
-                threshold = TASK_RISK_THRESHOLDS.get(task, settings.analysis_risk_threshold)
+                threshold = _load_threshold(
+                    task=task,
+                    model_name=cfg["model_name"],
+                )
 
                 risk_label = (
                     "high_risk"
@@ -477,3 +646,243 @@ def run_analysis_for_study(
         db.refresh(result)
 
     return analysis_run, results
+
+def _load_rnn(task: str):
+    cache_key = f"{task}_rnn"
+
+    if cache_key not in _MODEL_CACHE:
+        model_path = _artifact_path("models", f"{task}_rnn_final.keras")
+        scaler_path = _artifact_path("scalers", f"{task}_scaler_final.pkl")
+        config_path = _artifact_path("configs", f"{task}_rnn_config.json")
+
+        if not model_path.exists():
+            raise ValueError(f"Lipsește modelul RNN: {model_path}")
+
+        if not scaler_path.exists():
+            raise ValueError(f"Lipsește scalerul RNN: {scaler_path}")
+
+        if not config_path.exists():
+            raise ValueError(f"Lipsește configul RNN: {config_path}")
+
+        model = tf.keras.models.load_model(model_path)
+        scaler = joblib.load(scaler_path)
+
+        with open(config_path, encoding="utf-8") as f:
+            config = json.load(f)
+
+        _MODEL_CACHE[cache_key] = (model, scaler, config)
+
+    return _MODEL_CACHE[cache_key]
+
+def _predict_sequence_model(task: str, model_name: str, features_df) -> tuple[float, int]:
+    if model_name == "lstm":
+        model, scaler, config = _load_lstm(task)
+    elif model_name == "rnn":
+        model, scaler, config = _load_rnn(task)
+    else:
+        raise ValueError(f"Model secvențial necunoscut: {model_name}")
+
+    feature_cols = config.get("FEATURE_COLS", REQUIRED_FEATURE_COLUMNS)
+    window_size = int(config.get("WINDOW_SIZE", 24))
+
+    missing = [col for col in feature_cols if col not in features_df.columns]
+    if missing:
+        raise ValueError(
+            f"Date insuficiente pentru modelul {model_name} {task}. Lipsesc coloanele: {missing}"
+        )
+
+    if len(features_df) < window_size:
+        raise ValueError(
+            f"Modelul {model_name} necesită cel puțin {window_size} înregistrări orare valide."
+        )
+
+    X = features_df[feature_cols].copy()
+    X = X.ffill().bfill()
+
+    if X.isna().any().any():
+        raise ValueError("Datele conțin valori lipsă care nu pot fi completate.")
+
+    X_window = X.tail(window_size)
+    X_scaled = scaler.transform(X_window.values)
+    X_scaled = X_scaled.reshape(1, window_size, -1)
+
+    probability = model.predict(X_scaled, verbose=0)[0][0]
+
+    return float(probability), window_size
+
+
+def _load_hybrid_model(task: str, model_name: str):
+    cache_key = f"{task}_{model_name}"
+
+    if cache_key not in _MODEL_CACHE:
+        extractor_path = _artifact_path("models", f"{task}_lstm_hybrid_extractor.keras")
+        classifier_path = _artifact_path("models", f"{task}_{model_name}_classifier.pkl")
+        scaler_path = _artifact_path("scalers", f"{task}_hybrid_scaler.pkl")
+        config_path = _artifact_path("configs", f"{task}_{model_name}_config.json")
+
+        if not extractor_path.exists():
+            raise ValueError(f"Lipsește extractorul hibrid: {extractor_path}")
+
+        if not classifier_path.exists():
+            raise ValueError(f"Lipsește clasificatorul hibrid: {classifier_path}")
+
+        if not scaler_path.exists():
+            raise ValueError(f"Lipsește scalerul hibrid: {scaler_path}")
+
+        if not config_path.exists():
+            raise ValueError(f"Lipsește configul hibrid: {config_path}")
+
+        extractor = tf.keras.models.load_model(extractor_path)
+        classifier = joblib.load(classifier_path)
+        scaler = joblib.load(scaler_path)
+
+        with open(config_path, encoding="utf-8") as f:
+            config = json.load(f)
+
+        _MODEL_CACHE[cache_key] = (extractor, classifier, scaler, config)
+
+    return _MODEL_CACHE[cache_key]
+
+
+def _predict_hybrid(task: str, model_name: str, features_df) -> tuple[float, int]:
+    extractor, classifier, scaler, config = _load_hybrid_model(task, model_name)
+
+    feature_cols = config.get("FEATURE_COLS", REQUIRED_FEATURE_COLUMNS)
+    window_size = int(config.get("WINDOW_SIZE", 24))
+
+    missing = [col for col in feature_cols if col not in features_df.columns]
+    if missing:
+        raise ValueError(
+            f"Date insuficiente pentru modelul hibrid {task}_{model_name}. Lipsesc coloanele: {missing}"
+        )
+
+    if len(features_df) < window_size:
+        raise ValueError(
+            f"Modelul hibrid {model_name} necesită cel puțin {window_size} înregistrări orare valide."
+        )
+
+    X = features_df[feature_cols].copy()
+    X = X.ffill().bfill()
+
+    if X.isna().any().any():
+        raise ValueError("Datele conțin valori lipsă care nu pot fi completate.")
+
+    X_window = X.tail(window_size)
+    X_scaled = scaler.transform(X_window.values)
+    X_scaled = X_scaled.reshape(1, window_size, -1)
+
+    embedding = extractor.predict(X_scaled, verbose=0)
+
+    probability = float(classifier.predict_proba(embedding)[:, 1][0])
+
+    return probability, window_size
+
+def _resolve_model_config(
+    task: str,
+    parameter_key: StudyParameterKey,
+    model_selection: dict[StudyParameterKey, object] | None,
+):
+    selected_model = None
+
+    if model_selection:
+        selected_value = model_selection.get(parameter_key)
+        if selected_value is not None:
+            selected_model = selected_value.value if hasattr(selected_value, "value") else str(selected_value)
+
+    if not selected_model:
+        selected_model = DEFAULT_TASK_MODEL_SELECTION[task]
+
+    task_options = TASK_MODEL_OPTIONS.get(task, {})
+
+    if selected_model not in task_options:
+        raise ValueError(
+            f"Modelul {selected_model} nu este disponibil pentru parametrul {parameter_key.value}."
+        )
+
+    return task_options[selected_model]
+
+
+def _artifact_exists_for_model(task: str, model_name: str) -> bool:
+    if model_name in CLASSICAL_MODEL_NAMES:
+        return (
+            _artifact_path("models", f"{task}_{model_name}.pkl").exists()
+            and _artifact_path("scalers", f"{task}_{model_name}_preprocess.pkl").exists()
+        )
+
+    if model_name == "lstm":
+        return (
+            _artifact_path("models", f"{task}_lstm_final.keras").exists()
+            and _artifact_path("scalers", f"{task}_scaler_final.pkl").exists()
+            and _artifact_path("configs", f"{task}_config_hibrid.json").exists()
+        )
+
+    if model_name == "rnn":
+        return (
+            _artifact_path("models", f"{task}_rnn_final.keras").exists()
+            and _artifact_path("scalers", f"{task}_scaler_final.pkl").exists()
+            and _artifact_path("configs", f"{task}_rnn_config.json").exists()
+        )
+
+    if model_name in HYBRID_MODEL_NAMES:
+        return (
+            _artifact_path("models", f"{task}_lstm_hybrid_extractor.keras").exists()
+            and _artifact_path("models", f"{task}_{model_name}_classifier.pkl").exists()
+            and _artifact_path("scalers", f"{task}_hybrid_scaler.pkl").exists()
+            and _artifact_path("configs", f"{task}_{model_name}_config.json").exists()
+        )
+
+    return False
+
+
+def get_available_model_options_for_study(study):
+    response = {}
+
+    for parameter in study.parameters:
+        task = PARAMETER_TO_TASK.get(parameter.parameter_key)
+        if not task:
+            continue
+
+        options = []
+
+        for model_name in TASK_MODEL_OPTIONS[task].keys():
+            if not _artifact_exists_for_model(task, model_name):
+                continue
+
+            options.append(
+                {
+                    "value": model_name,
+                    "label": MODEL_LABELS.get(model_name, model_name),
+                    "default": DEFAULT_TASK_MODEL_SELECTION.get(task) == model_name,
+                }
+            )
+
+        response[parameter.parameter_key.value] = options
+
+    return response
+
+def _load_lstm(task: str):
+    cache_key = f"{task}_lstm"
+
+    if cache_key not in _MODEL_CACHE:
+        model_path = _artifact_path("models", f"{task}_lstm_final.keras")
+        scaler_path = _artifact_path("scalers", f"{task}_scaler_final.pkl")
+        config_path = _artifact_path("configs", f"{task}_config_hibrid.json")
+
+        if not model_path.exists():
+            raise ValueError(f"Lipsește modelul LSTM: {model_path}")
+
+        if not scaler_path.exists():
+            raise ValueError(f"Lipsește scalerul LSTM: {scaler_path}")
+
+        if not config_path.exists():
+            raise ValueError(f"Lipsește configul LSTM: {config_path}")
+
+        model = tf.keras.models.load_model(model_path, compile=False)
+        scaler = joblib.load(scaler_path)
+
+        with open(config_path, encoding="utf-8") as f:
+            config = json.load(f)
+
+        _MODEL_CACHE[cache_key] = (model, scaler, config)
+
+    return _MODEL_CACHE[cache_key]

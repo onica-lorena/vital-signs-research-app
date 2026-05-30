@@ -23,5 +23,6 @@
         "temp_mean_5h",
         "temp_std_5h"
     ],
-    "WINDOW_SIZE": 24
+    "WINDOW_SIZE": 24,
+    "created_at": "2026-05-30T13:45:48.995220+00:00"
 }

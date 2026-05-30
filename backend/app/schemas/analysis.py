@@ -26,6 +26,18 @@ class AnalysisResultSortBy(str, Enum):
     RECORDS_USED = "records_used"
 
 
+class AnalysisSelectableModel(str, Enum):
+    LOGISTIC_REGRESSION = "logistic_regression"
+    DECISION_TREE = "decision_tree"
+    RANDOM_FOREST = "random_forest"
+    KNN = "knn"
+    XGBOOST = "xgboost"
+    RNN = "rnn"
+    LSTM = "lstm"
+    LSTM_RF = "lstm_rf"
+    LSTM_XGBOOST = "lstm_xgb"
+
+
 class SortOrder(str, Enum):
     ASC = "asc"
     DESC = "desc"
@@ -54,6 +66,8 @@ class AnalysisRunRequest(BaseModel):
     activity_level: ActivityLevel | None = None
     condition_type: ParticipantConditionType | None = None
     measurement_context: MeasurementContext | None = None
+
+    model_selection: dict[StudyParameterKey, AnalysisSelectableModel] | None = None
 
     @field_validator("start_date", "end_date")
     @classmethod
@@ -92,6 +106,59 @@ class AnalysisRunRequest(BaseModel):
         ):
             raise ValueError("Vârsta maximă trebuie să fie mai mare sau egală cu vârsta minimă.")
 
+        if self.model_selection:
+            allowed_by_parameter = {
+                StudyParameterKey.HEART_RATE: {
+                    AnalysisSelectableModel.LOGISTIC_REGRESSION,
+                    AnalysisSelectableModel.DECISION_TREE,
+                    AnalysisSelectableModel.RANDOM_FOREST,
+                    AnalysisSelectableModel.KNN,
+                    AnalysisSelectableModel.XGBOOST,
+                    AnalysisSelectableModel.RNN,
+                    AnalysisSelectableModel.LSTM,
+                    AnalysisSelectableModel.LSTM_RF,
+                    AnalysisSelectableModel.LSTM_XGBOOST,
+                },
+                StudyParameterKey.RESPIRATORY_RATE: {
+                    AnalysisSelectableModel.LOGISTIC_REGRESSION,
+                    AnalysisSelectableModel.DECISION_TREE,
+                    AnalysisSelectableModel.RANDOM_FOREST,
+                    AnalysisSelectableModel.KNN,
+                    AnalysisSelectableModel.XGBOOST,
+                    AnalysisSelectableModel.RNN,
+                    AnalysisSelectableModel.LSTM,
+                    AnalysisSelectableModel.LSTM_RF,
+                    AnalysisSelectableModel.LSTM_XGBOOST,
+                },
+                StudyParameterKey.SPO2: {
+                    AnalysisSelectableModel.LOGISTIC_REGRESSION,
+                    AnalysisSelectableModel.DECISION_TREE,
+                    AnalysisSelectableModel.RANDOM_FOREST,
+                    AnalysisSelectableModel.KNN,
+                    AnalysisSelectableModel.XGBOOST,
+                    AnalysisSelectableModel.RNN,
+                    AnalysisSelectableModel.LSTM,
+                    AnalysisSelectableModel.LSTM_RF,
+                    AnalysisSelectableModel.LSTM_XGBOOST,
+                },
+                StudyParameterKey.TEMPERATURE: {
+                    AnalysisSelectableModel.LOGISTIC_REGRESSION,
+                    AnalysisSelectableModel.DECISION_TREE,
+                    AnalysisSelectableModel.RANDOM_FOREST,
+                    AnalysisSelectableModel.KNN,
+                    AnalysisSelectableModel.XGBOOST,
+                    AnalysisSelectableModel.RNN,
+                    AnalysisSelectableModel.LSTM,
+                    AnalysisSelectableModel.LSTM_RF,
+                    AnalysisSelectableModel.LSTM_XGBOOST,
+                },
+            }
+
+            for parameter_key, selected_model in self.model_selection.items():
+                if selected_model not in allowed_by_parameter.get(parameter_key, set()):
+                    raise ValueError(
+                        f"Modelul {selected_model.value} nu este disponibil pentru parametrul {parameter_key.value}."
+                    )
         return self
 
 
@@ -151,6 +218,7 @@ class AnalysisRunListItemResponse(BaseModel):
     analysis_scope: str
     analysis_start_date: datetime | None = None
     analysis_end_date: datetime | None = None
+    model_selection: dict[str, AnalysisModelType] | None = None
 
     filter_age_min: int | None = None
     filter_age_max: int | None = None

@@ -19,11 +19,21 @@ const PAGE_SIZE = 10;
 const API_PAGE_SIZE = 100;
 
 type StudyParameterKey = "heartRate" | "respiratoryRate" | "spo2" | "temperature";
-type AnalysisModelType = "random_forest" | "xgboost" | "lstm";
 type AnalysisRiskLabel = "high_risk" | "low_risk";
 type AnalysisScope = "last_24h" | "last_48h" | "last_7_days" | "custom";
 
 type StudyStatus = "draft" | "active" | "in_analysis" | "completed";
+
+type AnalysisModelType =
+  | "logistic_regression"
+  | "decision_tree"
+  | "random_forest"
+  | "knn"
+  | "xgboost"
+  | "rnn"
+  | "lstm"
+  | "lstm_rf"
+  | "lstm_xgb";
 
 type StudyListItemResponse = {
   id: number;

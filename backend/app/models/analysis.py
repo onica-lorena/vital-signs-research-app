@@ -1,4 +1,5 @@
 from __future__ import annotations
+from sqlalchemy.dialects.postgresql import JSONB
 
 from datetime import datetime, timezone
 from enum import Enum
@@ -15,9 +16,15 @@ if TYPE_CHECKING:
 
 
 class AnalysisModelType(str, Enum):
+    LOGISTIC_REGRESSION = "logistic_regression"
+    DECISION_TREE = "decision_tree"
     RANDOM_FOREST = "random_forest"
+    KNN = "knn"
     XGBOOST = "xgboost"
+    RNN = "rnn"
     LSTM = "lstm"
+    LSTM_RF = "lstm_rf"
+    LSTM_XGBOOST = "lstm_xgb"
 
 
 class AnalysisRun(Base):
@@ -38,6 +45,7 @@ class AnalysisRun(Base):
     )
 
     analysis_scope: Mapped[str] = mapped_column(String(50), nullable=False)
+    model_selection: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     analysis_start_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     analysis_end_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

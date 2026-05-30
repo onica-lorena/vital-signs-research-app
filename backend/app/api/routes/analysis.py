@@ -129,6 +129,7 @@ def run_study_analysis(
             activity_level=payload.activity_level,
             condition_type=payload.condition_type,
             measurement_context=payload.measurement_context,
+            model_selection=payload.model_selection,
         )
     except LookupError as exc:
         raise HTTPException(
@@ -637,3 +638,30 @@ def read_analysis_summary(
         risk_distribution=risk_distribution,
         timeline=timeline,
     )
+
+
+@router.get("/available-models")
+def read_available_analysis_models(
+    study_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_role(UserRole.RESEARCHER)),
+    ],
+):
+    study = get_study_for_current_user(
+        db=db,
+        study_id=study_id,
+        current_user=current_user,
+        load_parameters=True,
+    )
+
+    if study is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Studiul nu a fost găsit.",
+        )
+
+    from app.services.ml_prediction_service import get_available_model_options_for_study
+
+    return get_available_model_options_for_study(study)

@@ -19,11 +19,23 @@ const GROUP_PAGE_SIZE = 10;
 const RESULTS_FETCH_LIMIT = 100;
 
 type StudyParameterKey = "heartRate" | "respiratoryRate" | "spo2" | "temperature";
-type AnalysisModelType = "random_forest" | "xgboost" | "lstm";
 type AnalysisRiskLabel = "high_risk" | "low_risk";
 type AnalysisScope = "last_24h" | "last_48h" | "last_7_days" | "custom";
 type AnalysisSortBy = "created_at" | "risk_probability" | "records_used";
 type SortOrder = "asc" | "desc";
+
+type AnalysisModelType =
+  | "logistic_regression"
+  | "decision_tree"
+  | "random_forest"
+  | "knn"
+  | "xgboost"
+  | "rnn"
+  | "lstm"
+  | "lstm_rf"
+  | "lstm_xgb";
+
+type AnalysisModelSelection = Partial<Record<StudyParameterKey, AnalysisModelType>>;
 
 type ParticipantSex =
   | "female"
@@ -112,6 +124,7 @@ type AnalysisRunPayload = {
   activity_level?: ActivityLevel | null;
   condition_type?: ParticipantConditionType | null;
   measurement_context?: MeasurementContext | null;
+  model_selection?: AnalysisModelSelection | null;
 };
 
 type AnalysisRunResponse = {
@@ -272,10 +285,39 @@ const PARAMETER_SHORT_LABELS: Record<StudyParameterKey, string> = {
 };
 
 const MODEL_LABELS: Record<AnalysisModelType, string> = {
+  logistic_regression: "Logistic Regression",
+  decision_tree: "Decision Tree",
   random_forest: "Random Forest",
+  knn: "KNN",
   xgboost: "XGBoost",
+  rnn: "RNN",
   lstm: "LSTM",
+  lstm_rf: "LSTM + Random Forest",
+  lstm_xgb: "LSTM + XGBoost",
 };
+
+const DEFAULT_MODEL_SELECTION: Record<StudyParameterKey, AnalysisModelType> = {
+  heartRate: "random_forest",
+  respiratoryRate: "lstm",
+  spo2: "random_forest",
+  temperature: "xgboost",
+};
+
+const ANALYSIS_MODEL_OPTIONS: Array<{
+  value: AnalysisModelType;
+  label: string;
+  category: string;
+}> = [
+  { value: "logistic_regression", label: "Logistic Regression", category: "Model clasic" },
+  { value: "decision_tree", label: "Decision Tree", category: "Model clasic" },
+  { value: "random_forest", label: "Random Forest", category: "Model clasic" },
+  { value: "knn", label: "KNN", category: "Model clasic" },
+  { value: "xgboost", label: "XGBoost", category: "Model clasic" },
+  { value: "rnn", label: "RNN", category: "Model secvențial" },
+  { value: "lstm", label: "LSTM", category: "Model secvențial" },
+  { value: "lstm_rf", label: "LSTM + Random Forest", category: "Model hibrid" },
+  { value: "lstm_xgb", label: "LSTM + XGBoost", category: "Model hibrid" },
+];
 
 const RISK_LABELS: Record<AnalysisRiskLabel, string> = {
   high_risk: "Risc ridicat",
@@ -1175,6 +1217,7 @@ export default function StudyAnalysisTab({
   const [advancedRunFiltersOpen, setAdvancedRunFiltersOpen] = useState(false);
   const [tableFiltersOpen, setTableFiltersOpen] = useState(false);
   const [dateFilterOpen, setDateFilterOpen] = useState(false);
+  const [isModelSelectionOpen, setIsModelSelectionOpen] = useState(false);
 
   const [runForm, setRunForm] = useState({
     scope: "last_7_days" as AnalysisScope,
@@ -1188,7 +1231,15 @@ export default function StudyAnalysisTab({
     activityLevel: "" as ActivityLevel | "",
     conditionType: "" as ParticipantConditionType | "",
     measurementContext: "" as MeasurementContext | "",
+    modelSelection: DEFAULT_MODEL_SELECTION,
   });
+
+  const hasCustomModelSelection = (
+    ["heartRate", "respiratoryRate", "spo2", "temperature"] as StudyParameterKey[]
+  ).some(
+    (parameterKey) =>
+      runForm.modelSelection[parameterKey] !== DEFAULT_MODEL_SELECTION[parameterKey]
+  );
 
   const [filters, setFilters] = useState({
     participantId: "",
@@ -1685,25 +1736,26 @@ export default function StudyAnalysisTab({
     setPageError("");
     setSuccessMessage("");
 
-    const payload: AnalysisRunPayload = {
-      scope: runForm.scope,
-      participant_id: runForm.participantId ? Number(runForm.participantId) : null,
-      start_date:
-        runForm.scope === "custom" && runForm.startDate
-          ? new Date(`${runForm.startDate}T00:00:00`).toISOString()
-          : null,
-      end_date:
-        runForm.scope === "custom" && runForm.endDate
-          ? new Date(`${runForm.endDate}T23:59:59`).toISOString()
-          : null,
-      age_min: runForm.ageMin ? Number(runForm.ageMin) : null,
-      age_max: runForm.ageMax ? Number(runForm.ageMax) : null,
-      sex: runForm.sex || null,
-      participant_group: runForm.participantGroup.trim() || null,
-      activity_level: runForm.activityLevel || null,
-      condition_type: runForm.conditionType || null,
-      measurement_context: runForm.measurementContext || null,
-    };
+  const payload: AnalysisRunPayload = {
+    scope: runForm.scope,
+    participant_id: runForm.participantId ? Number(runForm.participantId) : null,
+    start_date:
+      runForm.scope === "custom" && runForm.startDate
+        ? new Date(`${runForm.startDate}T00:00:00`).toISOString()
+        : null,
+    end_date:
+      runForm.scope === "custom" && runForm.endDate
+        ? new Date(`${runForm.endDate}T23:59:59`).toISOString()
+        : null,
+    age_min: runForm.ageMin ? Number(runForm.ageMin) : null,
+    age_max: runForm.ageMax ? Number(runForm.ageMax) : null,
+    sex: runForm.sex || null,
+    participant_group: runForm.participantGroup.trim() || null,
+    activity_level: runForm.activityLevel || null,
+    condition_type: runForm.conditionType || null,
+    measurement_context: runForm.measurementContext || null,
+    model_selection: runForm.modelSelection,
+  };
 
     try {
       const response = await runAnalysisRequest(studyId, payload);
@@ -1841,8 +1893,7 @@ export default function StudyAnalysisTab({
           <div>
             <h2>Rulează o analiză nouă</h2>
             <p>
-              Selectează intervalul și cohorta pentru care vrei să evaluezi riscul
-              estimat pe baza datelor fiziologice colectate.
+              Selectează intervalul și cohorta pentru care vrei să rulezi analiza predictivă.
             </p>
           </div>
         </div>
@@ -1942,6 +1993,103 @@ export default function StudyAnalysisTab({
               {isRunLoading ? "Se rulează..." : "Rulează analiza"}
             </button>
           </div>
+
+          <div className="study-analysis-model-summary">
+            <div className="study-analysis-model-summary__content">
+              <strong>
+                {hasCustomModelSelection
+                  ? "Selecție manuală de modele"
+                  : "Modelele folosite pentru analiză"}
+              </strong>
+
+              <p>
+                {hasCustomModelSelection
+                  ? "Ai selectat manual cel puțin un model. Rezultatele acestei analize vor reflecta selecția curentă pentru fiecare semn vital."
+                  : "Aplicația folosește automat o selecție inițială de modele pentru fiecare semn vital. Poți ajusta selecția pentru a observa cum diferite modele estimează riscul pe datele acestui studiu."}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="study-analysis-model-toggle"
+              aria-expanded={isModelSelectionOpen}
+              onClick={() => setIsModelSelectionOpen((prev) => !prev)}
+            >
+              {isModelSelectionOpen ? "Ascunde modelele" : "Configurează modelele"}
+            </button>
+          </div>
+
+          {isModelSelectionOpen ? (
+            <div className="study-analysis-model-selection">
+              <div className="study-analysis-model-selection__header">
+                <div>
+                  <h3>Configurează modelul pentru fiecare semn vital</h3>
+                  <p>
+                    Modelele pot reacționa diferit în funcție de structura și volumul datelor analizate.
+                    Poți păstra selecția inițială sau poți alege manual un model pentru fiecare parametru.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="study-analysis-model-reset"
+                  onClick={() =>
+                    setRunForm((prev) => ({
+                      ...prev,
+                      modelSelection: DEFAULT_MODEL_SELECTION,
+                    }))
+                  }
+                >
+                  Revino la selecția inițială
+                </button>
+              </div>
+
+              <div className="study-analysis-model-grid">
+                {(["heartRate", "respiratoryRate", "spo2", "temperature"] as StudyParameterKey[]).map(
+                  (parameterKey) => {
+                    const isDefaultModel =
+                      runForm.modelSelection[parameterKey] ===
+                      DEFAULT_MODEL_SELECTION[parameterKey];
+
+                    return (
+                      <label key={parameterKey} className="study-analysis-model-card">
+                        <span
+                          className={`study-analysis-parameter ${getParameterClassName(
+                            parameterKey
+                          )}`}
+                        >
+                          {PARAMETER_LABELS[parameterKey]}
+                        </span>
+
+                        <select
+                          value={runForm.modelSelection[parameterKey]}
+                          onChange={(event) =>
+                            setRunForm((prev) => ({
+                              ...prev,
+                              modelSelection: {
+                                ...prev.modelSelection,
+                                [parameterKey]: event.target.value as AnalysisModelType,
+                              },
+                            }))
+                          }
+                        >
+                          {ANALYSIS_MODEL_OPTIONS.map((option) => (
+                            <option key={`${parameterKey}-${option.value}`} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+
+                        <small className={isDefaultModel ? "is-default" : "is-custom"}>
+                          {isDefaultModel ? "Selecție inițială" : "Selectat manual"}
+                        </small>
+                      </label>
+                    );
+                  }
+                )}
+              </div>
+            </div>
+          ) : null}
 
           {advancedRunFiltersOpen ? (
             <div className="study-analysis-advanced-filters">
@@ -2992,7 +3140,7 @@ export default function StudyAnalysisTab({
 
                             <div>
                               <dt>Model</dt>
-                              <dd>{MODEL_LABELS[result.model_type]}</dd>
+                              <dd>{MODEL_LABELS[result.model_type] ?? result.model_name}</dd>
                             </div>
 
                             <div>
@@ -3000,7 +3148,8 @@ export default function StudyAnalysisTab({
                               <dd>{formatNumber(result.records_used)}</dd>
                             </div>
 
-                            {result.model_type === "lstm" && result.window_size ? (
+                            {["rnn", "lstm", "lstm_rf", "lstm_xgb"].includes(result.model_type) &&
+                            result.window_size ? (
                               <div>
                                 <dt>Fereastră temporală</dt>
                                 <dd>{result.window_size} înregistrări</dd>

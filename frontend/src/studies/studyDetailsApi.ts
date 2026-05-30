@@ -57,6 +57,21 @@ export type AnalysisScope =
   | "last_7_days"
   | "custom";
 
+export type AnalysisModelType =
+  | "logistic_regression"
+  | "decision_tree"
+  | "random_forest"
+  | "knn"
+  | "xgboost"
+  | "rnn"
+  | "lstm"
+  | "lstm_rf"
+  | "lstm_xgb";
+
+export type AnalysisModelSelection = Partial<
+  Record<StudyParameterKey, AnalysisModelType>
+>;
+
 export type AnalysisRunPayload = {
   participant_id?: number | null;
   scope: AnalysisScope;
@@ -70,6 +85,8 @@ export type AnalysisRunPayload = {
   activity_level?: ActivityLevel | null;
   condition_type?: ParticipantConditionType | null;
   measurement_context?: MeasurementContext | null;
+
+  model_selection?: AnalysisModelSelection | null;
 };
 
 export type AnalysisResultResponse = {
@@ -77,7 +94,7 @@ export type AnalysisResultResponse = {
   study_id: number;
   participant_id: number;
   parameter_key: StudyParameterKey;
-  model_type: "random_forest" | "xgboost" | "lstm";
+  model_type: AnalysisModelType;
   model_name: string;
   risk_probability: number;
   risk_label: string;
@@ -89,8 +106,39 @@ export type AnalysisResultResponse = {
   created_at: string;
 };
 
+export type AnalysisRunListItemResponse = {
+  id: number;
+  study_id: number;
+  requested_participant_id: number | null;
+
+  analysis_scope: string;
+  analysis_start_date: string | null;
+  analysis_end_date: string | null;
+  model_selection: AnalysisModelSelection | null;
+
+  filter_age_min: number | null;
+  filter_age_max: number | null;
+  filter_sex: string | null;
+  filter_participant_group: string | null;
+  filter_activity_level: string | null;
+  filter_condition_type: string | null;
+  filter_measurement_context: string | null;
+
+  participants_analyzed: number;
+  total_results: number;
+  high_risk_results: number;
+  low_risk_results: number;
+  records_used: number;
+
+  max_risk_probability: number | null;
+  max_risk_parameter_key: StudyParameterKey | null;
+
+  created_at: string;
+};
+
 export type AnalysisRunResponse = {
   message: string;
+  analysis_run: AnalysisRunListItemResponse;
   results: AnalysisResultResponse[];
 };
 
