@@ -950,7 +950,7 @@ export default function ResearcherAnalysis() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={studyRiskChartData}
-                    margin={{ top: 16, right: 20, left: -10, bottom: 4 }}
+                    margin={{ top: 10, right: 20, left: -10, bottom: -13 }}
                   >
                     <CartesianGrid stroke="#e7eee8" vertical={false} />
                     <XAxis
@@ -983,8 +983,7 @@ export default function ResearcherAnalysis() {
               <div>
                 <h3>Risc mediu pe parametri</h3>
                 <p>
-                  Compară probabilitatea medie de risc pentru fiecare semn vital,
-                  agregată din analizele afișate.
+                  Compară probabilitatea medie de risc pentru fiecare semn vital.
                 </p>
               </div>
             </div>
@@ -1002,7 +1001,7 @@ export default function ResearcherAnalysis() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={parameterRiskChartData}
-                    margin={{ top: 16, right: 20, left: -10, bottom: 4 }}
+                    margin={{ top: 10, right: 20, left: -10, bottom: -13 }}
                   >
                     <CartesianGrid stroke="#e7eee8" vertical={false} />
                     <XAxis

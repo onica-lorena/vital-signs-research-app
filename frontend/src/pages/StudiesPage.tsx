@@ -317,6 +317,28 @@ function getInitials(fullName?: string | null): string {
   return value || "VS";
 }
 
+function HelpCircleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle
+        cx="12"
+        cy="12"
+        r="8.5"
+        stroke="currentColor"
+        strokeWidth="1.9"
+      />
+      <path
+        d="M9.75 9.55C9.75 8.25 10.78 7.3 12.15 7.3C13.45 7.3 14.35 8.08 14.35 9.2C14.35 10.08 13.86 10.62 13.08 11.1C12.36 11.55 12 11.94 12 12.85"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="16.35" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
 function formatDate(value?: string | null): string {
   if (!value) {
     return "—";
@@ -677,6 +699,16 @@ export default function StudiesPage() {
       contentWidth="wide"
       actions={
         <div className="studies-top-actions">
+          <button
+            type="button"
+            className="researcher-help-btn"
+            title="Ghid de utilizare"
+            aria-label="Deschide ghidul de utilizare"
+            onClick={() => navigate("/cercetator/ghid-utilizare")}
+          >
+            <HelpCircleIcon />
+          </button>
+
           <button
             type="button"
             className="researcher-create-btn"

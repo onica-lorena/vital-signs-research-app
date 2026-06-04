@@ -21,6 +21,7 @@ import ResearcherProfile from "../pages/ResearcherProfile";
 import ParticipantHistoryPage from "../pages/ParticipantHistory";
 import ResearcherAnalysis from "../pages/ResearcherAnalysis";
 import ResearcherActivity from "../pages/ResearcherActivity";
+import ResearcherGuidePage from "../pages/ResearcherGuidePage";
 
 function RoleRedirect() {
   const user = getCurrentUser();
@@ -103,6 +104,15 @@ export default function AppRouter() {
         }
       />
 
+      <Route
+        path="/cercetator/ghid-utilizare"
+        element={
+          <ProtectedRoute allowedRole="researcher">
+            <ResearcherGuidePage />
+          </ProtectedRoute>
+        }
+      />
+      
       <Route
         path="/cercetator/studii/:studyId"
         element={

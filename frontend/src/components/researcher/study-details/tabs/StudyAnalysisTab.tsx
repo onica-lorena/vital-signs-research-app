@@ -2824,10 +2824,6 @@ export default function StudyAnalysisTab({
                     : "Exportă raport PDF"}
                 </button>
               </div>
-              <p className="study-analysis-modal__description">
-                Această vizualizare reprezintă raportul generat pentru analiza selectată.
-                Raportul poate fi consultat în aplicație și exportat ulterior în format PDF.
-              </p>
             </div>
 
             <button

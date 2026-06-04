@@ -1,0 +1,1065 @@
+.researcher-guide-page {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.researcher-guide-back-btn {
+  border: 0;
+  border-radius: 15px;
+  padding: 10px 15px;
+  background: #ffffff;
+  color: #0a3032;
+  font-weight: 800;
+  font-size: 0.78rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(11, 59, 60, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.researcher-guide-back-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(11, 59, 60, 0.11);
+}
+
+.researcher-guide-back-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.researcher-guide-intro {
+  max-width: 720px;
+  margin-bottom: 0;
+}
+
+.researcher-guide-label {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(116, 180, 83, 0.14);
+  color: #5a9a3f;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+
+.researcher-guide-intro h2 {
+  margin: 0;
+  color: #082f31;
+  font-size: 1.18rem;
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+}
+
+.researcher-guide-intro p {
+  margin: 7px 0 0;
+  color: #617474;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.guide-split-section {
+  display: grid;
+  grid-template-columns: minmax(0, 0.98fr) minmax(290px, 0.62fr);
+  gap: 14px 20px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(13, 54, 56, 0.08);
+  border-radius: 22px;
+  padding: 16px;
+  box-shadow: 0 14px 34px rgba(7, 48, 50, 0.06);
+}
+
+.guide-section-header {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 0;
+}
+
+.guide-section-header h3 {
+  margin: 0;
+  color: #0a3032;
+  font-size: 0.95rem;
+  line-height: 1.18;
+  letter-spacing: -0.018em;
+  font-weight: 900;
+}
+
+.guide-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #74b453;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 0.68rem;
+  box-shadow: 0 7px 16px rgba(116, 180, 83, 0.22);
+}
+
+.guide-visual-card {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guide-browser-frame {
+  width: 100%;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(13, 54, 56, 0.08);
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(7, 48, 50, 0.06);
+}
+
+.guide-browser-bar {
+  height: 25px;
+  background: #f5f8f6;
+  border-bottom: 1px solid rgba(13, 54, 56, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 11px;
+}
+
+.guide-browser-bar span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #cfdad6;
+}
+
+.guide-image-wrap {
+  position: relative;
+  overflow: hidden;
+  background: #f7faf8;
+}
+
+.guide-image-wrap img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.guide-highlight {
+  position: absolute;
+  border: 2px solid #cf6b64;
+  border-radius: 11px;
+  background: rgba(207, 107, 100, 0.05);
+  box-shadow: 0 0 0 3px rgba(207, 107, 100, 0.075);
+  pointer-events: none;
+}
+
+.guide-highlight > span:first-child {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #cf6b64;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  font-weight: 900;
+  box-shadow: 0 6px 12px rgba(207, 107, 100, 0.22);
+}
+
+.guide-click-marker {
+  position: absolute;
+  right: -11px;
+  bottom: -15px;
+  color: #cf6b64;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 5px 8px rgba(207, 107, 100, 0.2));
+}
+
+.guide-click-marker svg {
+  width: 22px;
+  height: 22px;
+}
+
+.guide-text-card {
+  padding: 2px 2px 2px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.guide-text-card > p {
+  margin: 0;
+  color: #506969;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.guide-text-card strong {
+  color: #0a3032;
+}
+
+.guide-callout-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.guide-callout-list div {
+  display: grid;
+  grid-template-columns: 23px minmax(0, 1fr);
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.guide-callout-list span {
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: #cf6b64;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 900;
+  flex: 0 0 auto;
+  box-shadow: 0 7px 15px rgba(207, 107, 100, 0.2);
+}
+
+.guide-callout-list p {
+  margin: 1px 0 0;
+  color: #435f60;
+  font-size: 0.7rem;
+  line-height: 1.32;
+  font-weight: 650;
+}
+
+/* pozitii pagina studii */
+
+.guide-highlight--filters {
+  left: 17.2%;
+  top: 11%;
+  width: 79.5%;
+  height: 12.2%;
+}
+
+.guide-highlight--table {
+  left: 18.5%;
+  top: 31%;
+  width: 58.3%;
+  height: 8.5%;
+}
+
+.guide-highlight--table .guide-click-marker {
+  right: 12%;
+  top: 55%;
+  bottom: auto;
+  transform: translate(35%, -50%);
+}
+
+.guide-highlight--summary {
+  right: 3.6%;
+  top: 24.7%;
+  width: 17.8%;
+  height: 73%;
+}
+
+.guide-highlight--create {
+  right: 3.1%;
+  top: 1.5%;
+  width: 11.6%;
+  height: 5.5%;
+  border-radius: 999px;
+}
+
+.guide-highlight--help {
+  right: 15%;
+  top: 2.1%;
+  width: 4.3%;
+  height: 4.8%;
+  border-radius: 50%;
+}
+
+/* pozitii pagina creare studiu */
+
+/* pas 1 */
+.guide-section--create-general-top .guide-highlight--create-stepper {
+  left: 17.2%;
+  top: 12%;
+  width: 57.3%;
+  height: 8.5%;
+  border-radius: 999px;
+}
+
+.guide-section--create-general-top .guide-highlight--create-required-fields {
+  left: 18.2%;
+  top: 31%;
+  width: 55%;
+  height: 26.5%;
+}
+
+.guide-section--create-general-top .guide-highlight--create-status-target {
+  left: 18.2%;
+  top: 57.8%;
+  width: 55%;
+  height: 17%;
+}
+
+/* pas 1 - partea de jos */
+.guide-section--create-general-details .guide-highlight--create-description {
+  left: 17.5%;
+  top: 2.5%;
+  width: 56%;
+  height: 19%;
+}
+
+.guide-section--create-general-details .guide-highlight--create-rules {
+  left: 17.5%;
+  top: 22%;
+  width: 56%;
+  height: 22%;
+}
+
+.guide-section--create-general-details .guide-highlight--create-criteria {
+  left: 17.5%;
+  top: 44.5%;
+  width: 56%;
+  height: 21%;
+}
+
+.guide-section--create-general-details .guide-highlight--create-notes {
+  left: 17.5%;
+  top: 66%;
+  width: 56%;
+  height: 17%;
+}
+
+.guide-section--create-general-details .guide-highlight--create-continue {
+  right: 27%;
+  bottom: 5%;
+  width: 8.5%;
+  height: 5.3%;
+  border-radius: 999px;
+}
+
+/* pas 2 */
+.guide-section--create-parameters .guide-highlight--parameters-stepper {
+  left: 17.2%;
+  top: 12%;
+  width: 57.3%;
+  height: 8.5%;
+  border-radius: 999px;
+}
+
+.guide-section--create-parameters .guide-highlight--parameters-cards {
+  left: 18.3%;
+  top: 38.5%;
+  width: 55%;
+  height: 43%;
+}
+
+.guide-section--create-parameters .guide-highlight--parameters-frequency {
+  left: 19.5%;
+  top: 50.9%;
+  width: 52.7%;
+  height: 29%;
+}
+
+.guide-section--create-parameters .guide-highlight--parameters-next {
+  right: 27%;
+  bottom: 9%;
+  width: 8.6%;
+  height: 5.4%;
+  border-radius: 999px;
+}
+
+/* pas 3 */
+.guide-section--create-review-top .guide-highlight--review-stepper {
+  left: 17.2%;
+  top: 12%;
+  width: 57.3%;
+  height: 8.5%;
+  border-radius: 999px;
+}
+
+.guide-section--create-review-top .guide-highlight--review-general {
+  left: 18.2%;
+  top: 32%;
+  width: 26.8%;
+  height: 65%;
+}
+
+.guide-section--create-review-top .guide-highlight--review-details {
+  left: 46%;
+  top: 32%;
+  width: 27%;
+  height: 65%;
+}
+
+.guide-section--create-review-bottom .guide-highlight--review-parameters {
+  left: 18.2%;
+  top: 46%;
+  width: 55%;
+  height: 32%;
+}
+
+.guide-section--create-review-bottom .guide-highlight--review-info-box {
+  left: 18.2%;
+  top: 79%;
+  width: 55%;
+  height: 5.7%;
+  border-radius: 14px;
+}
+
+.guide-section--create-review-bottom .guide-highlight--review-create-button {
+  right: 27.2%;
+  bottom: 4.9%;
+  width: 11.5%;
+  height: 5.8%;
+  border-radius: 999px;
+}
+
+/* pozitii pagina detalii studiu - rezumat */
+
+.guide-section--study-details-summary .guide-highlight--details-header {
+  left: 17.2%;
+  top: 12.2%;
+  width: 78.5%;
+  height: 18.8%;
+}
+
+.guide-section--study-details-summary .guide-highlight--details-tabs {
+  left: 17.2%;
+  top: 32.7%;
+  width: 78.5%;
+  height: 8%;
+  border-radius: 999px;
+}
+
+.guide-section--study-details-summary .guide-highlight--details-info {
+  left: 17.2%;
+  top: 42.7%;
+  width: 38.2%;
+  height: 57%;
+}
+
+.guide-section--study-details-summary .guide-highlight--details-parameters {
+  left: 56.7%;
+  top: 42.7%;
+  width: 39%;
+  height: 57%;
+}
+
+.guide-section--study-details-summary .guide-highlight--details-edit {
+  right: 6%;
+  top: 15%;
+  width: 11.4%;
+  height: 5.6%;
+  border-radius: 999px;
+}
+
+/* pozitii pagina detalii studiu - participanti */
+
+.guide-section--study-details-participants .guide-highlight--participants-tabs {
+  left: 17.2%;
+  top: 32.7%;
+  width: 78.3%;
+  height: 8%;
+  border-radius: 999px;
+}
+
+.guide-section--study-details-participants .guide-highlight--participants-stats {
+  left: 17.2%;
+  top: 41.5%;
+  width: 78.3%;
+  height: 19.5%;
+}
+
+.guide-section--study-details-participants .guide-highlight--participants-actions {
+  right: 6%;
+  top: 65%;
+  width: 26%;
+  height: 5.4%;
+  border-radius: 999px;
+}
+
+.guide-section--study-details-participants .guide-highlight--participants-filters {
+  left: 18.3%;
+  top: 76.5%;
+  width: 76%;
+  height: 6.8%;
+}
+
+.guide-section--study-details-participants .guide-highlight--participants-table {
+  left: 18.3%;
+  top: 89.5%;
+  width: 76%;
+  height: 8%;
+}
+
+.guide-section--study-details-participants
+  .guide-highlight--participants-table
+  .guide-click-marker {
+  right: 5%;
+  top: 42%;
+  bottom: auto;
+  transform: translate(30%, -50%);
+}
+
+/* pozitii fereastra detalii participant  */
+
+.guide-section--participant-details-panel .guide-highlight--participant-panel-header {
+  right: 0.5%;
+  top: 1.2%;
+  width: 33.5%;
+  height: 11.5%;
+}
+
+.guide-section--participant-details-panel .guide-highlight--participant-profile {
+  right: 0.5%;
+  top: 13.5%;
+  width: 33.5%;
+  height: 28.5%;
+}
+
+.guide-section--participant-details-panel .guide-highlight--participant-activity {
+  right: 0.5%;
+  top: 42.2%;
+  width: 33.5%;
+  height: 21.2%;
+}
+
+.guide-section--participant-details-panel .guide-highlight--participant-extra {
+  right: 0.5%;
+  top: 63.6%;
+  width: 33.5%;
+  height: 23%;
+}
+
+.guide-section--participant-details-panel .guide-highlight--participant-actions {
+  right: 0.5%;
+  bottom: 5.7%;
+  width: 21.7%;
+  height: 7%;
+  border-radius: 999px;
+}
+
+.guide-section--participant-details-panel
+  .guide-highlight--participant-actions
+  .guide-click-marker {
+  right: 8%;
+  top: 95%;
+  bottom: auto;
+  transform: translate(35%, -50%);
+}
+
+/* pozitii pagina detalii studiu - date colectate */
+
+.guide-section--study-details-data-overview .guide-highlight--data-tabs {
+  left: 17.2%;
+  top: 32.7%;
+  width: 78.3%;
+  height: 8%;
+  border-radius: 999px;
+}
+
+.guide-section--study-details-data-overview .guide-highlight--data-stats {
+  left: 17.2%;
+  top: 41.8%;
+  width: 78.3%;
+  height: 19.5%;
+}
+
+.guide-section--study-details-data-overview .guide-highlight--data-chart {
+  left: 17.2%;
+  top: 63%;
+  width: 56%;
+  height: 37%;
+}
+
+.guide-section--study-details-data-overview .guide-highlight--data-period {
+  right: 6.2%;
+  top: 65%;
+  width: 16%;
+  height: 5.8%;
+  border-radius: 999px;
+}
+
+.guide-section--study-details-data-list .guide-highlight--data-list-filters {
+  left: 17.2%;
+  top: 2.3%;
+  width: 78%;
+  height: 10%;
+}
+
+.guide-section--study-details-data-list .guide-highlight--data-list-table {
+  left: 18%;
+  top: 26%;
+  width: 76.5%;
+  height: 8%;
+}
+
+.guide-section--study-details-data-list .guide-highlight--data-list-status {
+  left: 41.5%;
+  top: 19%;
+  width: 7.5%;
+  height: 78%;
+  border-radius: 14px;
+}
+
+.guide-section--study-details-data-list
+  .guide-highlight--data-list-table
+  .guide-click-marker {
+  right: 18%;
+  top: 45%;
+  bottom: auto;
+  transform: translate(35%, -50%);
+}
+
+/* pozitii fereastra detalii trimitere date */
+
+.guide-section--data-submission-details .guide-highlight--submission-header {
+  right: 0.8%;
+  top: 1.5%;
+  width: 52.2%;
+  height: 11%;
+}
+
+.guide-section--data-submission-details .guide-highlight--submission-actions {
+  right: 32.5%;
+  top: 13%;
+  width: 20%;
+  height: 6.3%;
+  border-radius: 999px;
+}
+
+.guide-section--data-submission-details .guide-highlight--submission-info {
+  right: 0.8%;
+  top: 20.2%;
+  width: 52.2%;
+  height: 28%;
+}
+
+.guide-section--data-submission-details .guide-highlight--submission-values {
+  right: 0.8%;
+  top: 48.5%;
+  width: 52.2%;
+  height: 51%;
+}
+
+.guide-section--data-submission-details .guide-highlight--submission-close {
+  right: 1.4%;
+  top: 2.2%;
+  width: 3%;
+  height: 4.5%;
+  border-radius: 50%;
+}
+
+.guide-section--data-submission-details
+  .guide-highlight--submission-actions
+  .guide-click-marker {
+  right: 8%;
+  top: 97%;
+  bottom: auto;
+  transform: translate(35%, -50%);
+}
+
+/* pozitii pagina analiza - rulare analiza */
+
+.guide-section--study-analysis-run .guide-highlight--analysis-tabs {
+  left: 17%;
+  top: 32%;
+  width: 78.2%;
+  height: 7.8%;
+  border-radius: 999px;
+}
+
+.guide-section--study-analysis-run .guide-highlight--analysis-form {
+  left: 17%;
+  top: 41%;
+  width: 78.2%;
+  height: 37%;
+}
+
+.guide-section--study-analysis-run .guide-highlight--analysis-models {
+  left: 18.5%;
+  top: 64%;
+  width: 75.5%;
+  height: 11%;
+}
+
+.guide-section--study-analysis-run .guide-highlight--analysis-run-button {
+  right: 5.8%;
+  top: 56.4%;
+  width: 10.8%;
+  height: 5.8%;
+  border-radius: 999px;
+}
+
+.guide-section--study-analysis-run .guide-highlight--analysis-stats {
+  left: 17%;
+  top: 78.5%;
+  width: 78.2%;
+  height: 21%;
+}
+
+/* pozitii pagina analiza - optiuni avansate */
+
+.guide-section--study-analysis-advanced-options .guide-highlight--advanced-analysis-form {
+  left: 17%;
+  top: 1.5%;
+  width: 78.2%;
+  height: 28%;
+}
+
+.guide-section--study-analysis-advanced-options .guide-highlight--advanced-models {
+  left: 17%;
+  top: 30%;
+  width: 78.2%;
+  height: 43%;
+}
+
+.guide-section--study-analysis-advanced-options .guide-highlight--advanced-cohort-filters {
+  left: 17%;
+  top: 73.5%;
+  width: 78.2%;
+  height: 26%;
+}
+
+.guide-section--study-analysis-advanced-options .guide-highlight--advanced-run-button {
+  left: 34.5%;
+  top: 22.5%;
+  width: 39%;
+  height: 6.5%;
+  border-radius: 999px;
+}
+
+.guide-section--study-analysis-advanced-options .guide-highlight--advanced-reset-filters {
+  left: 50.5%;
+  bottom: 5.5%;
+  width: 14.5%;
+  height: 5.7%;
+  border-radius: 999px;
+}
+
+.guide-section--study-analysis-advanced-options
+  .guide-highlight--advanced-run-button
+  .guide-click-marker {
+  right: 4%;
+  top: 50%;
+  bottom: auto;
+  transform: translate(35%, -50%);
+}
+
+.guide-section--study-analysis-advanced-options
+  .guide-highlight--advanced-reset-filters
+  .guide-click-marker {
+  right: 4%;
+  top: 95%;
+  bottom: auto;
+  transform: translate(35%, -50%);
+}
+
+/* pozitii pagina analiza - rezultate */
+
+.guide-section--study-analysis-results .guide-highlight--analysis-table-header {
+  left: 17.2%;
+  top: 46%;
+  width: 78.2%;
+  height: 54%;
+}
+
+.guide-section--study-analysis-results .guide-highlight--analysis-filter {
+  right: 5.5%;
+  top: 49.2%;
+  width: 9.5%;
+  height: 5.7%;
+  border-radius: 999px;
+}
+
+.guide-section--study-analysis-results .guide-highlight--analysis-report-row {
+  left: 18%;
+  top: 64%;
+  width: 77%;
+  height: 7%;
+}
+
+.guide-section--study-analysis-results
+  .guide-highlight--analysis-report-row
+  .guide-click-marker {
+  right: 9%;
+  top: 50%;
+  bottom: auto;
+  transform: translate(35%, -50%);
+}
+
+/* pozitii raport analiza */
+
+.guide-section--analysis-report-overview .guide-highlight--report-export {
+  left: 26%;
+  top: 10.4%;
+  width: 10.2%;
+  height: 4.8%;
+  border-radius: 999px;
+}
+
+.guide-section--analysis-report-overview .guide-highlight--report-context {
+  left: 18.5%;
+  top: 18.5%;
+  width: 42%;
+  height: 15.5%;
+}
+
+.guide-section--analysis-report-overview .guide-highlight--report-main-results {
+  left: 62%;
+  top: 47%;
+  width: 32.5%;
+  height: 37.5%;
+}
+
+.guide-section--analysis-report-overview
+  .guide-highlight--report-export
+  .guide-click-marker {
+  right: 4%;
+  top: 110%;
+  bottom: auto;
+  transform: translate(35%, -50%);
+}
+
+/* pozitii raport analiza - participant */
+
+.guide-section--analysis-report-participant .guide-highlight--report-vital-cards {
+  right: 5.5%;
+  top: 22%;
+  width: 35.8%;
+  height: 40%;
+}
+
+/* pozitii raport analiza - date observate */
+
+.guide-section--analysis-report-observed-data .guide-highlight--report-observed-cards {
+  left: 18.5%;
+  top: 38.5%;
+  width: 76%;
+  height: 27%;
+}
+
+.guide-section--analysis-report-observed-data .guide-highlight--report-view-all {
+  right: 7%;
+  bottom: 7%;
+  width: 14%;
+  height: 5.2%;
+  border-radius: 999px;
+}
+
+.guide-section--analysis-report-observed-data
+  .guide-highlight--report-view-all
+  .guide-click-marker {
+  right: 4%;
+  top: 45%;
+  bottom: auto;
+  transform: translate(35%, -50%);
+}
+
+
+/* pozitii pagina analize predictive globale */
+
+.guide-section--global-analyses .guide-highlight--global-analysis-filters {
+  left: 17%;
+  top: 26.5%;
+  width: 80.5%;
+  height: 13%;
+}
+
+.guide-section--global-analyses .guide-highlight--global-analysis-table {
+  left: 17%;
+  top: 76.5%;
+  width: 80.5%;
+  height: 23%;
+}
+
+.guide-section--global-analyses .guide-highlight--global-analysis-refresh {
+  right: 2.7%;
+  top: 1.7%;
+  width: 9.5%;
+  height: 5.5%;
+  border-radius: 999px;
+}
+
+.guide-section--global-analyses
+  .guide-highlight--global-analysis-refresh
+  .guide-click-marker {
+  right: 4%;
+  top: 50%;
+  bottom: auto;
+  transform: translate(35%, -50%);
+}
+
+.guide-section--global-analyses
+  .guide-highlight--global-analysis-table
+  .guide-click-marker {
+  right: 3%;
+  top: 90%;
+  bottom: auto;
+  transform: translate(35%, -50%);
+}
+
+/* pozitii pagina activitate */
+
+.guide-section--researcher-activity .guide-highlight--activity-alerts {
+  left: 17%;
+  top: 41.5%;
+  width: 52.5%;
+  height: 58%;
+}
+
+.guide-section--researcher-activity .guide-highlight--activity-validate-button {
+  left: 58%;
+  top: 58.2%;
+  width: 10%;
+  height: 6%;
+  border-radius: 18px;
+}
+
+.guide-section--researcher-activity
+  .guide-highlight--activity-validate-button
+  .guide-click-marker {
+  right: 4%;
+  top: 50%;
+  bottom: auto;
+  transform: translate(35%, -50%);
+}
+
+@media (max-width: 1280px) {
+  .researcher-guide-page {
+    max-width: 1080px;
+  }
+
+  .guide-split-section {
+    grid-template-columns: minmax(0, 0.95fr) minmax(280px, 0.62fr);
+    gap: 14px 18px;
+  }
+}
+
+@media (max-width: 1060px) {
+  .researcher-guide-page {
+    max-width: 920px;
+  }
+
+  .guide-split-section {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .guide-text-card {
+    padding: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .researcher-guide-page {
+    max-width: 100%;
+    gap: 14px;
+  }
+
+  .researcher-guide-intro h2 {
+    font-size: 1.05rem;
+  }
+
+  .researcher-guide-intro p {
+    font-size: 0.76rem;
+  }
+
+  .guide-split-section {
+    border-radius: 18px;
+    padding: 14px;
+  }
+
+  .guide-browser-frame {
+    border-radius: 14px;
+  }
+
+  .guide-browser-bar {
+    height: 24px;
+  }
+
+  .guide-section-header h3 {
+    font-size: 0.9rem;
+  }
+
+  .guide-step {
+    width: 24px;
+    height: 24px;
+    font-size: 0.64rem;
+  }
+
+  .guide-text-card > p {
+    font-size: 0.72rem;
+  }
+
+  .guide-highlight {
+    border-width: 2px;
+    box-shadow: 0 0 0 2px rgba(207, 107, 100, 0.07);
+  }
+
+  .guide-highlight > span:first-child {
+    width: 20px;
+    height: 20px;
+    top: -10px;
+    left: -10px;
+    font-size: 0.58rem;
+  }
+
+  .guide-click-marker {
+    width: 25px;
+    height: 25px;
+    right: -13px;
+    bottom: -17px;
+  }
+
+  .guide-click-marker svg {
+    width: 25px;
+    height: 25px;
+  }
+
+  .guide-callout-list {
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .guide-callout-list div {
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .guide-callout-list span {
+    width: 22px;
+    height: 22px;
+    font-size: 0.6rem;
+  }
+
+  .guide-callout-list p {
+    font-size: 0.68rem;
+  }
+}

@@ -917,6 +917,51 @@
   border-color: #c94844;
 }
 
+.studies-top-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.researcher-help-btn {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #0a3032;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: none;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.researcher-help-btn:hover {
+  transform: translateY(-1px);
+  color: #5a9a3f;
+  box-shadow: none;
+}
+
+.researcher-help-btn svg {
+  width: 26px;
+  height: 26px;
+}
+
+@media (max-width: 640px) {
+  .researcher-help-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .researcher-help-btn svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
 @media (max-width: 1180px) {
   .studies-page {
     gap: 9px;
